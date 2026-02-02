@@ -249,3 +249,33 @@ canvas {
   font-size: 13px;
   color: #555;
 }
+/* node image */
+
+.node-image-wrapper {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+.node-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* keep text above image */
+.node-text,
+.node-text-input {
+  position: relative;
+  z-index: 1;
+}
+
+/* optional: readability when image exists */
+.node-input.has-image .node-text {
+  background: rgba(255, 255, 255, 0.75);
+  padding: 4px 6px;
+  border-radius: 6px;
+}
