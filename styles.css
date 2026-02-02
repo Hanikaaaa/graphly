@@ -1,0 +1,251 @@
+/* global */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  background: #f6f7fb;
+  overflow: hidden;
+}
+
+/* canvas */
+canvas {
+  width: 100vw;
+  height: 100vh;
+  background-color: #fafafa;
+  display: block;
+}
+
+/* toolbar */
+.toolbar {
+  position: fixed;
+  right: 16px;
+  top: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 100;
+}
+
+.toolbar button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  background: white;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.toolbar button:hover {
+  background: #f0f0f0;
+}
+
+/* node-base */
+.node-input {
+  position: absolute;
+  background: white;
+  border-radius: 16px;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  pointer-events: auto;
+}
+
+/* subtle lift on hover */
+.node-input:hover {
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+}
+
+/* edge conectors */
+.node-connector {
+  position: absolute;
+  width: 10px;
+  height: 2px;
+  background: #7d7cbd;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: crosshair;
+}
+
+/* show only on hover */
+.node-input:hover .node-connector {
+  opacity: 1;
+}
+
+/* positions */
+.node-connector.top {
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.node-connector.bottom {
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.node-connector.left {
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.node-connector.right {
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+}
+
+
+/* edit mode */
+.node-input input,
+.node-input button {
+  display: none;
+}
+
+.node-input.editing input,
+.node-input.editing button {
+  display: block;
+}
+
+/* text input */
+.node-input input[type="text"] {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+/* delete button */
+.node-input button {
+  margin-top: 6px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.node-input button:hover {
+  background: #dc2626;
+}
+
+.node-input.selected {
+  box-shadow: 0 0 0 2px #7d7cbd, 0 10px 24px rgba(0,0,0,0.12);
+}
+/* transitions for zoom */
+.node-input,
+.red-dot {
+  will-change: transform;
+}
+
+.toolbar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* customisation panel */
+.custom-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 260px;
+  height: 100vh;
+  background: #ffffff;
+  border-left: 1px solid #e5e5e5;
+  padding: 16px;
+  box-shadow: -4px 0 16px rgba(0,0,0,0.06);
+  z-index: 200;
+}
+
+.custom-panel.hidden {
+  display: none;
+}
+
+.custom-panel h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.panel-section label {
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-section input[type="color"] {
+  border: none;
+  background: none;
+  width: 36px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.panel-section input[type="range"] {
+  width: 120px;
+}
+
+.panel-section.danger button {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.panel-section.danger button:last-child {
+  background: #7c2d12;
+}
+
+.panel-section.danger button:hover {
+  opacity: 0.9;
+}
+/* node text */
+.node-text {
+  font-size: 14px;
+  color: #555;
+  word-break: break-word;
+  cursor: text;
+}
+
+.node-input.editing .node-text {
+  display: none;
+}
+
+.node-text-input {
+  display: none;
+  width: 100%;
+  height: 100%;
+  resize: none;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  font-family: inherit;
+  background: transparent;
+}
+
+.node-input.editing .node-text-input {
+  display: block;
+}
+.custom-panel h4 {
+  margin: 8px 0 4px;
+  font-size: 13px;
+  color: #555;
+}
