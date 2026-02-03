@@ -1,4 +1,5 @@
 import { canvas, ctx } from "./elements.js";
+import * as State from "./state.js";
 
 // Canvas Setup
 export function resizeCanvas() {
@@ -51,8 +52,17 @@ function getNodeCenter(node) {
   };
 }
 
-export function drawBezier(fromX, fromY, toX, toY, style) {
+export function drawBezier(fromX, fromY, toX, toY, style, isSelected = false) {
   const controlY = (fromY + toY) / 2;
+
+  if (isSelected) {
+    ctx.strokeStyle = "#ff7a00";
+    ctx.lineWidth = style.width + 2;
+    ctx.beginPath();
+    ctx.moveTo(fromX, fromY);
+    ctx.quadraticCurveTo(fromX, controlY, toX, toY);
+    ctx.stroke();
+  }
 
   ctx.strokeStyle = style.color;
   ctx.lineWidth = style.width;
@@ -62,6 +72,7 @@ export function drawBezier(fromX, fromY, toX, toY, style) {
   ctx.quadraticCurveTo(fromX, controlY, toX, toY);
   ctx.stroke();
 }
+
 
 export function drawConnection(fromNode, toNode) {
   if (!fromNode || !toNode) return;
@@ -98,19 +109,34 @@ export function drawConnectionPreview(fromX, fromY, toX, toY) {
 
 // Full scene Render
 
-export function renderScene(nodes, zoomLevel) {
+export function renderScene(nodes, connections, zoomLevel) {
   clearCanvas(zoomLevel);
   drawGrid(zoomLevel);
 
   const nodeMap = new Map();
-  nodes.forEach(n => nodeMap.set(n.id, n));
+nodes.forEach(n => nodeMap.set(n.id, n));
 
-  nodes.forEach(node => {
-    node.connections.forEach(targetId => {
-      const target = nodeMap.get(targetId);
-      if (target) {
-        drawConnection(node, target);
-      }
-    });
-  });
+connections.forEach(conn => {
+  const from = nodeMap.get(conn.from);
+  const to = nodeMap.get(conn.to);
+  if (!from || !to) return;
+
+  const isSelected = conn.id === State.selectedConnectionId;
+  if (isSelected) {
+    console.log("[renderScene] selected connection:", conn.id);
+  }
+  drawBezier(
+    from.x + from.width / 2,
+    from.y + from.height / 2,
+    to.x + to.width / 2,
+    to.y + to.height / 2,
+    {
+      color: conn.color,
+      width: conn.width,
+    },
+    isSelected
+  );
+});
+
+
 }
