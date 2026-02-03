@@ -3,6 +3,7 @@ import * as Render from "./renderer.js";
 import * as DOM from "./dom-manager.js";
 import { canvas, buttons } from "./elements.js";
 import { updatePanel } from "./ui-panel.js";
+import { rebuild } from "./main.js";
 
 
 let isPointerDown = false;
@@ -55,23 +56,6 @@ function redraw() {
 
 registerRedraw(redraw);
 
-// function findConnectionAt(x, y) {
-//   const threshold = 6; // pixels
-//   for (const c of State.connections) {
-//     const from = State.getNodeById(c.from);
-//     const to = State.getNodeById(c.to);
-//     if (!from || !to) continue;
-
-//     const x1 = from.x + from.width / 2;
-//     const y1 = from.y + from.height / 2;
-//     const x2 = to.x + to.width / 2;
-//     const y2 = to.y + to.height / 2;
-
-//     const dist = pointToLineDistance(x, y, x1, y1, x2, y2);
-//     if (dist <= threshold) return c;
-//   }
-//   return null;
-// }
 function findConnectionAt(x, y) {
   const threshold = 20 / State.zoomLevel;
   console.log("[findConnectionAt] click at", x, y);
@@ -312,43 +296,25 @@ canvas.addEventListener("mousedown", (e) => {
   console.log("[cleared selection]");
 });
 
-
 canvas.addEventListener("mouseup", e => {
   if (!isDrawingConnection || !connectionSource) return;
 
+  const x = e.clientX / State.zoomLevel;
+  const y = e.clientY / State.zoomLevel;
+  const sourceNode = connectionSource;
+
   State.snapshotState();
 
-  const newNode = State.createNodeObject(
-    e.clientX / State.zoomLevel,
-    e.clientY / State.zoomLevel
-  );
+  const node = State.createNodeObject(x, y);
+  State.addNode(node);
+  State.addConnection(sourceNode.id, node.id);
+  attachNodeHandlers(node);
 
-  State.addNode(newNode);
-  State.addConnection(connectionSource.id, newNode.id);
-  attachNodeHandlers(newNode);
 
   isDrawingConnection = false;
   connectionSource = null;
   redraw();
 });
-
-
-// canvas.addEventListener("click", e => {
-//   if (e.target !== canvas) return;
-
-//   const x = e.clientX / State.zoomLevel;
-//   const y = e.clientY / State.zoomLevel;
-
-//   const hit = findConnectionAt(x, y);
-
-//   if (hit) {
-//     State.setSelectedConnectionId(hit.id);
-//   } else {
-//     State.clearSelection();
-//   }
-
-//   redraw();
-// });
 
 canvas.addEventListener("click", e => {
   if (e.target !== canvas) return;
@@ -389,6 +355,18 @@ buttons.zoomIn.onclick = () => {
 buttons.zoomOut.onclick = () => {
   State.setZoomLevel(Math.max(State.zoomLevel - 0.1, 0.3));
   redraw();
+};
+
+buttons.undo.onclick = () => {
+  if (State.undo()) {
+    rebuild();
+  }
+};
+
+buttons.redo.onclick = () => {
+  if (State.redo()) {
+    rebuild();
+  }
 };
 
 export function initInputHandler() {

@@ -11,7 +11,9 @@ let redoStack = [];
 function cloneState() {
   return structuredClone({
     nodes,
+    connections,
     selectedNodeId,
+    selectedConnectionId,
     editingNodeId,
     zoomLevel,
   });
@@ -19,10 +21,14 @@ function cloneState() {
 
 function restoreState(snapshot) {
   nodes = snapshot.nodes;
+  connections = snapshot.connections;
   zoomLevel = snapshot.zoomLevel;
 
   selectedNodeId = nodes.some(n => n.id === snapshot.selectedNodeId)
     ? snapshot.selectedNodeId
+    : null;
+  selectedConnectionId = nodes.some(n => n.id === snapshot.selectedConnectionId)
+    ? snapshot.selectedConnectionId
     : null;
 
   editingNodeId = nodes.some(n => n.id === snapshot.editingNodeId)
@@ -37,21 +43,22 @@ export function snapshotState() {
 }
 
 export function undo() {
-  if (undoStack.length === 0) return false;
+  const snapshot = undoStack.pop();
+  if (!snapshot) return false;
 
   redoStack.push(cloneState());
-  restoreState(undoStack.pop());
+  restoreState(snapshot);
   return true;
 }
 
 export function redo() {
-  if (redoStack.length === 0) return false;
+  const snapshot = redoStack.pop();
+  if (!snapshot) return false;
 
   undoStack.push(cloneState());
-  restoreState(redoStack.pop());
+  restoreState(snapshot);
   return true;
 }
-
 
 export function createNodeObject(x, y) {
   return {
@@ -101,7 +108,6 @@ export function getSelectedNode() {
 }
 
 export function addNode(node) {
-  snapshotState();
   nodes.push(node);
 }
 
@@ -139,7 +145,6 @@ export function addConnection(fromId, toId) {
   const to = getNodeById(toId);
   if (!from || !to) return;
 
-  snapshotState();
   if (!connections.some(c => c.from === fromId && c.to === toId)) {
     connections.push({
       id: crypto.randomUUID(),

@@ -12,12 +12,19 @@
   <div class="app-container">
 
     <canvas id="canvas"></canvas>
-    <div class="toolbar">
-  <button id="undo-btn" title="Undo (Ctrl+Z)">⟲</button>
-  <button id="redo-btn" title="Redo (Ctrl+Y)">⟳</button>
-  <button id="zoom-out">-</button>
-  <button id="zoom-in">+</button>
-</div>
+    <div class="topbar">
+  <div class="topbar-group">
+    <button id="undo-btn" title="Undo (Ctrl+Z)">⟲</button>
+    <button id="redo-btn" title="Redo (Ctrl+Y)">⟳</button>
+  </div>
+
+    <div class="topbar-group">
+      <button id="zoom-out">−</button>
+      <span class="zoom-label">Zoom</span>
+      <button id="zoom-in">+</button>
+    </div>
+  </div>
+
 <div id="custom-panel" class="custom-panel hidden">
 
   <h3>Node Settings</h3>

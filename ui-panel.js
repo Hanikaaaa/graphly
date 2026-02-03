@@ -22,11 +22,14 @@ export function updatePanel() {
   const conn = State.connections.find(c => c.id === State.selectedConnectionId);
 
   if (!node && !conn) {
-    panel.classList.add("hidden");
-    return;
+  panel.classList.add("hidden");
+  document.body.classList.remove("panel-open");
+  return;
   }
 
   panel.classList.remove("hidden");
+  document.body.classList.add("panel-open");
+
 
   if (node) {
     // Node properties (your current code)
