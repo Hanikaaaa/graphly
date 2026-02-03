@@ -1,5 +1,7 @@
 export let nodes = [];
+export let connections = []; 
 export let selectedNodeId = null;
+export let selectedConnectionId = null;
 export let editingNodeId = null;
 export let zoomLevel = 1;
 
@@ -105,7 +107,20 @@ export function addNode(node) {
 
 export function setSelectedNodeId(id) {
   selectedNodeId = getNodeById(id) ? id : null;
+  selectedConnectionId = null;
+  editingNodeId = null;
 }
+
+export function setSelectedConnectionId(id) {
+  console.log("[setSelectedConnectionId] called with", id);
+
+  selectedConnectionId = connections.some(c => c.id === id) ? id : null;
+  selectedNodeId = null;
+  editingNodeId = null;
+
+  console.log("[setSelectedConnectionId] final =", selectedConnectionId);
+}
+
 
 
 export function setEditingNodeId(id) {
@@ -118,20 +133,26 @@ export function setZoomLevel(val) {
 
 
 export function addConnection(fromId, toId) {
+  if (fromId === toId) return;
+
   const from = getNodeById(fromId);
   const to = getNodeById(toId);
   if (!from || !to) return;
 
   snapshotState();
-
-  if (!from.connections.includes(toId)) {
-    from.connections.push(toId);
+  if (!connections.some(c => c.from === fromId && c.to === toId)) {
+    connections.push({
+      id: crypto.randomUUID(),
+      from: fromId,
+      to: toId,
+      color: from.connectorColor || "#444",
+      width: from.connectorWidth || 3,
+    });
   }
 }
 
 export function deleteNodeLogic(rootId, cascade = false) {
   const root = getNodeById(rootId);
-  console.log("DELETE CALLED WITH:", rootId);
   if (!root) return new Set();
 
   snapshotState();
@@ -139,15 +160,18 @@ export function deleteNodeLogic(rootId, cascade = false) {
   const toDelete = new Set();
 
   if (cascade) {
+    // DFS over connection graph
     const dfs = (id) => {
       if (toDelete.has(id)) return;
       toDelete.add(id);
 
-      const node = getNodeById(id);
-      if (!node) return;
-
-      node.connections.forEach(childId => dfs(childId));
+      connections.forEach(c => {
+        if (c.from === id) {
+          dfs(c.to);
+        }
+      });
     };
+
     dfs(rootId);
   } else {
     toDelete.add(rootId);
@@ -156,19 +180,20 @@ export function deleteNodeLogic(rootId, cascade = false) {
   // remove nodes
   nodes = nodes.filter(n => !toDelete.has(n.id));
 
-  // remove incoming connections
-  nodes.forEach(n => {
-    n.connections = n.connections.filter(id => !toDelete.has(id));
-  });
+  // remove connections touching deleted nodes
+  connections = connections.filter(
+    c => !toDelete.has(c.from) && !toDelete.has(c.to)
+  );
 
   // clear selection / editing if needed
   if (toDelete.has(selectedNodeId)) selectedNodeId = null;
   if (toDelete.has(editingNodeId)) editingNodeId = null;
-  console.log("Remaining nodes:", nodes.map(n => n.id));
-  return toDelete; // caller decides how to update DOM
+
+  return toDelete;
 }
 
 export function clearSelection() {
   selectedNodeId = null;
+  selectedConnectionId = null;
   editingNodeId = null;
 }

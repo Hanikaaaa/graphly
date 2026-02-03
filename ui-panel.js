@@ -18,31 +18,40 @@ function mutateNode(fn) {
 }
 
 export function updatePanel() {
-  const node = getSelectedNode();
+  const node = State.getNodeById(State.selectedNodeId);
+  const conn = State.connections.find(c => c.id === State.selectedConnectionId);
 
-  if (!node) {
+  if (!node && !conn) {
     panel.classList.add("hidden");
     return;
   }
 
   panel.classList.remove("hidden");
 
-  inputs.bgColor.value = node.color;
-  inputs.borderColor.value = node.borderColor;
-  inputs.opacity.value = node.opacity;
-  inputs.borderRadius.value = node.borderRadius;
+  if (node) {
+    // Node properties (your current code)
+    inputs.bgColor.value = node.color;
+    inputs.borderColor.value = node.borderColor;
+    inputs.opacity.value = node.opacity;
+    inputs.borderRadius.value = node.borderRadius;
 
-  inputs.textColor.value = node.fontColor;
-  inputs.fontSize.value = node.fontSize;
-  inputs.textAlign.value = node.textAlign;
-  inputs.fontWeight.value = node.fontWeight;
-  inputs.fontFamily.value = node.fontFamily;
+    inputs.textColor.value = node.fontColor;
+    inputs.fontSize.value = node.fontSize;
+    inputs.textAlign.value = node.textAlign;
+    inputs.fontWeight.value = node.fontWeight;
+    inputs.fontFamily.value = node.fontFamily;
 
-  inputs.connectorColor.value = node.connectorColor;
-  inputs.connectorWidth.value = node.connectorWidth;
+    inputs.connectorColor.value = node.connectorColor;
+    inputs.connectorWidth.value = node.connectorWidth;
 
-  buttons.removeImage.classList.toggle("hidden", !node.image);
+    buttons.removeImage.classList.toggle("hidden", !node.image);
+  } else if (conn) {
+    // Connection properties
+    inputs.connectorColor.value = conn.color;
+    inputs.connectorWidth.value = conn.width;
+  }
 }
+
 
 
 inputs.bgColor.oninput = () => mutateNode(n => n.color = inputs.bgColor.value);
@@ -56,8 +65,40 @@ inputs.textAlign.onchange = () => mutateNode(n => n.textAlign = inputs.textAlign
 inputs.fontWeight.onchange = () => mutateNode(n => n.fontWeight = inputs.fontWeight.value);
 inputs.fontFamily.onchange = () => mutateNode(n => n.fontFamily = inputs.fontFamily.value);
 
-inputs.connectorColor.oninput = () => mutateNode(n => n.connectorColor = inputs.connectorColor.value);
-inputs.connectorWidth.oninput = () => mutateNode(n => n.connectorWidth = Number(inputs.connectorWidth.value));
+// inputs.connectorColor.oninput = () => mutateNode(n => n.connectorColor = inputs.connectorColor.value);
+// inputs.connectorWidth.oninput = () => mutateNode(n => n.connectorWidth = Number(inputs.connectorWidth.value));
+inputs.connectorColor.oninput = () => {
+  const node = State.getNodeById(State.selectedNodeId);
+  const conn = State.connections.find(c => c.id === State.selectedConnectionId);
+
+  if (node) {
+    mutateNode(n => {
+      n.connectorColor = inputs.connectorColor.value;
+      // State.connections.forEach(c => { if (c.from === n.id) c.color = n.connectorColor; });
+    });
+  } else if (conn) {
+    State.snapshotState();
+    conn.color = inputs.connectorColor.value;
+    triggerRedraw();
+  }
+};
+
+inputs.connectorWidth.oninput = () => {
+  const node = State.getNodeById(State.selectedNodeId);
+  const conn = State.connections.find(c => c.id === State.selectedConnectionId);
+
+  if (node) {
+    mutateNode(n => {
+      n.connectorWidth = Number(inputs.connectorWidth.value);
+      State.connections.forEach(c => { if (c.from === n.id) c.width = n.connectorWidth; });
+    });
+  } else if (conn) {
+    State.snapshotState();
+    conn.width = Number(inputs.connectorWidth.value);
+    triggerRedraw();
+  }
+};
+
 
 
 inputs.nodeImageInput.onchange = () => {

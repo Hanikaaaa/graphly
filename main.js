@@ -6,7 +6,7 @@ import { updatePanel } from "./ui-panel.js";
 import { canvas } from "./elements.js";
 
 function redraw() {
-  Render.renderScene(State.nodes, State.zoomLevel);
+  Render.renderScene(State.nodes, State.connections, State.zoomLevel);
 
   State.nodes.forEach(node => {
     DOM.syncNodeDOM(node, {

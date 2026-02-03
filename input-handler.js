@@ -40,7 +40,7 @@ export function triggerRedraw() {
 }
 
 function redraw() {
-  Render.renderScene(State.nodes, State.zoomLevel);
+  Render.renderScene(State.nodes, State.connections, State.zoomLevel);
 
   State.nodes.forEach(node => {
     DOM.syncNodeDOM(node, {
@@ -54,6 +54,94 @@ function redraw() {
 }
 
 registerRedraw(redraw);
+
+// function findConnectionAt(x, y) {
+//   const threshold = 6; // pixels
+//   for (const c of State.connections) {
+//     const from = State.getNodeById(c.from);
+//     const to = State.getNodeById(c.to);
+//     if (!from || !to) continue;
+
+//     const x1 = from.x + from.width / 2;
+//     const y1 = from.y + from.height / 2;
+//     const x2 = to.x + to.width / 2;
+//     const y2 = to.y + to.height / 2;
+
+//     const dist = pointToLineDistance(x, y, x1, y1, x2, y2);
+//     if (dist <= threshold) return c;
+//   }
+//   return null;
+// }
+function findConnectionAt(x, y) {
+  const threshold = 20 / State.zoomLevel;
+  console.log("[findConnectionAt] click at", x, y);
+
+  for (const c of State.connections) {
+    const from = State.getNodeById(c.from);
+    const to = State.getNodeById(c.to);
+    if (!from || !to) continue;
+
+    const x1 = from.x + from.width / 2;
+    const y1 = from.y + from.height / 2;
+    const x2 = to.x + to.width / 2;
+    const y2 = to.y + to.height / 2;
+    const cy = (y1 + y2) / 2; // SAME control point as renderer
+
+    // sample the curve
+    const steps = 20;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+
+      const bx =
+        (1 - t) * (1 - t) * x1 +
+        2 * (1 - t) * t * x1 +
+        t * t * x2;
+
+      const by =
+        (1 - t) * (1 - t) * y1 +
+        2 * (1 - t) * t * cy +
+        t * t * y2;
+
+      const d = Math.hypot(x - bx, y - by);
+      if (d <= threshold) {
+        console.log("[HIT connection]", c.id);
+        return c;
+      }
+    }
+  }
+
+  console.log("[NO connection hit]");
+  return null;
+}
+
+
+function pointToLineDistance(px, py, x1, y1, x2, y2) {
+  const A = px - x1;
+  const B = py - y1;
+  const C = x2 - x1;
+  const D = y2 - y1;
+
+  const dot = A * C + B * D;
+  const len_sq = C * C + D * D;
+  let param = len_sq !== 0 ? dot / len_sq : -1;
+
+  let xx, yy;
+
+  if (param < 0) {
+    xx = x1;
+    yy = y1;
+  } else if (param > 1) {
+    xx = x2;
+    yy = y2;
+  } else {
+    xx = x1 + param * C;
+    yy = y1 + param * D;
+  }
+
+  const dx = px - xx;
+  const dy = py - yy;
+  return Math.sqrt(dx * dx + dy * dy);
+}
 
 export function attachNodeHandlers(node) {
   DOM.createNodeDOM(node, {
@@ -203,14 +291,27 @@ window.addEventListener("mouseup", () => {
     return;
   }
 
-  if (isPointerDown && potentialDragNodeId) {
-    State.setSelectedNodeId(potentialDragNodeId);
-  }
+  if (isPointerDown && potentialDragNodeId && !isDraggingNode && !State.selectedConnectionId) {
+  State.setSelectedNodeId(potentialDragNodeId);
+}
+
 
   isPointerDown = false;
   potentialDragNodeId = null;
   redraw();
 });
+canvas.addEventListener("mousedown", (e) => {
+  console.log("[canvas click]", e.target);
+
+  if (State.selectedConnectionId) {
+    console.log("[canvas] connection already selected, not clearing");
+    return;
+  }
+
+  State.clearSelection();
+  console.log("[cleared selection]");
+});
+
 
 canvas.addEventListener("mouseup", e => {
   if (!isDrawingConnection || !connectionSource) return;
@@ -232,9 +333,42 @@ canvas.addEventListener("mouseup", e => {
 });
 
 
+// canvas.addEventListener("click", e => {
+//   if (e.target !== canvas) return;
+
+//   const x = e.clientX / State.zoomLevel;
+//   const y = e.clientY / State.zoomLevel;
+
+//   const hit = findConnectionAt(x, y);
+
+//   if (hit) {
+//     State.setSelectedConnectionId(hit.id);
+//   } else {
+//     State.clearSelection();
+//   }
+
+//   redraw();
+// });
+
 canvas.addEventListener("click", e => {
   if (e.target !== canvas) return;
-  State.clearSelection();
+
+  const x = e.clientX / State.zoomLevel;
+  const y = e.clientY / State.zoomLevel;
+
+  const hit = findConnectionAt(x, y);
+
+  console.log("[canvas click]", { x, y, hit });
+
+  if (hit) {
+    console.log("[before] selectedConnectionId =", State.selectedConnectionId);
+    State.setSelectedConnectionId(hit.id);
+    console.log("[after] selectedConnectionId =", State.selectedConnectionId);
+  } else {
+    State.clearSelection();
+    console.log("[cleared selection]");
+  }
+
   redraw();
 });
 
