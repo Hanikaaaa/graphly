@@ -3,7 +3,7 @@ export function createNodeDOM(node, handlers) {
   el.className = "node-input";
   el.id = node.id;
 
-  
+  // Image
   if (node.image) {
     const imageWrapper = document.createElement("div");
     imageWrapper.className = "node-image-wrapper";
@@ -57,12 +57,34 @@ export function createNodeDOM(node, handlers) {
     el.appendChild(connector);
   });
 
+  // Resize Handles
+  const resizePositions = [
+    "top-left",
+    "top-right",
+    "bottom-right",
+    "bottom-left"
+  ];
+
+  resizePositions.forEach(pos => {
+    const handle = document.createElement("div");
+    handle.className = `node-resize-handle ${pos}`;
+    handle.dataset.direction = pos;
+
+    handle.onmousedown = (e) => {
+      e.stopPropagation();
+      handlers.onResizeStart(e, node.id, pos);
+    };
+
+    el.appendChild(handle);
+  });
+
   // Drag
   el.onmousedown = (e) => {
     if (
       e.target.classList.contains("node-text") ||
       e.target.classList.contains("node-text-input") ||
-      e.target.classList.contains("node-connector")
+      e.target.classList.contains("node-connector") ||
+      e.target.classList.contains("node-resize-handle")
     ) return;
 
     handlers.onDragStart(e, node.id);
@@ -81,6 +103,7 @@ export function syncNodeDOM(node, {
 }) {
   const el = document.getElementById(node.id);
   if (!el) return;
+
   // IMAGE SYNC
 let imgWrapper = el.querySelector(".node-image-wrapper");
 
@@ -106,14 +129,17 @@ if (node.image) {
   //Position and Size
   el.style.left = `${node.x * zoomLevel}px`;
   el.style.top = `${node.y * zoomLevel}px`;
-  el.style.width = `${node.width * zoomLevel}px`;
-  el.style.height = `${node.height * zoomLevel}px`;
+  el.style.width = `${node.width}px`;
+  el.style.height = `${node.height}px`;
+  el.style.transform = `scale(${zoomLevel})`;
+  el.style.transformOrigin = "top left";
 
   // Box Styles
   el.style.backgroundColor = node.color;
   el.style.opacity = node.opacity;
   el.style.borderRadius = `${node.borderRadius}px`;
-  el.style.border = `1px ${node.borderStyle} ${node.borderColor}`;
+  el.style.border = `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
+
 
   // Text Styles
   const text = el.querySelector(".node-text");
@@ -136,6 +162,15 @@ if (node.image) {
 
   text.style.fontWeight = node.fontWeight;
   input.style.fontWeight = node.fontWeight;
+
+  // preventing UI Scaling
+  el.querySelectorAll(".node-resize-handle").forEach(h => {
+    h.style.transform = `scale(${1 / zoomLevel})`;
+  });
+
+  el.querySelectorAll(".node-connector").forEach(c => {
+    c.style.transform = `scale(${1 / zoomLevel})`;
+  });
 
   // State Classes
   el.classList.toggle("selected", isSelected);

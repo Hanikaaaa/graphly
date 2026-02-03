@@ -279,3 +279,44 @@ canvas {
   padding: 4px 6px;
   border-radius: 6px;
 }
+
+
+/* Node Resize Handler*/
+.node-resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #7d7cbd;
+  border-radius: 2px;
+  z-index: 3;
+}
+
+/* positions */
+.node-resize-handle.top-left {
+  top: -5px;
+  left: -5px;
+  cursor: nwse-resize;
+}
+.node-resize-handle.top-right {
+   top: -5px;
+   right: -5px; 
+   cursor: nesw-resize;
+}
+.node-resize-handle.bottom-right { 
+   bottom: -5px;
+   right: -5px; 
+   cursor: nwse-resize;
+}
+.node-resize-handle.bottom-left { 
+  bottom: -5px;
+  left: -5px; 
+  cursor: nesw-resize;
+}
+
+/* show only on hover */
+.node-resize-handle {
+  opacity: 0;
+}
+.node-input:hover .node-resize-handle {
+  opacity: 1;
+}

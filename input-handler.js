@@ -17,6 +17,17 @@ let dragOffsetY = 0;
 let isDrawingConnection = false;
 let connectionSource = null;
 
+let isResizing = false;
+let resizeNodeId = null;
+let resizeDir = null;
+
+let startX = 0;
+let startY = 0;
+let startW = 0;
+let startH = 0;
+let startNodeX = 0;
+let startNodeY = 0;
+
 const DRAG_THRESHOLD = 4;
 let externalRedraw = null;
 
@@ -78,6 +89,27 @@ export function attachNodeHandlers(node) {
       isDrawingConnection = true;
       connectionSource = node;
     },
+
+    onResizeStart(e, id, direction) {
+      e.stopPropagation();
+
+      const node = State.getNodeById(id);
+      if (!node) return;
+
+      State.snapshotState();
+
+      isResizing = true;
+      resizeNodeId = id;
+      resizeDir = direction;
+
+      startX = e.clientX;
+      startY = e.clientY;
+
+      startW = node.width;
+      startH = node.height;
+      startNodeX = node.x;
+      startNodeY = node.y;
+    },
   });
 }
 
@@ -117,10 +149,53 @@ canvas.addEventListener("mousemove", e => {
       e.clientY / State.zoomLevel
     );
   }
+
+  if (isResizing && resizeNodeId) {
+  const node = State.getNodeById(resizeNodeId);
+  if (!node) return;
+
+  const dx = (e.clientX - startX) / State.zoomLevel;
+  const dy = (e.clientY - startY) / State.zoomLevel;
+
+  const minW = 80;
+  const minH = 40;
+
+  if (resizeDir.includes("right")) {
+    node.width = Math.max(minW, startW + dx);
+  }
+
+  if (resizeDir.includes("left")) {
+    const newW = Math.max(minW, startW - dx);
+    node.x = startNodeX + (startW - newW);
+    node.width = newW;
+  }
+
+  if (resizeDir.includes("bottom")) {
+    node.height = Math.max(minH, startH + dy);
+  }
+
+  if (resizeDir.includes("top")) {
+    const newH = Math.max(minH, startH - dy);
+    node.y = startNodeY + (startH - newH);
+    node.height = newH;
+  }
+
+  redraw();
+  return;
+}
 });
 
 
 window.addEventListener("mouseup", () => {
+
+  if (isResizing) {
+    isResizing = false;
+    resizeNodeId = null;
+    resizeDir = null;
+    redraw();
+    return;
+  }
+
   if (isDraggingNode) {
     isDraggingNode = false;
     potentialDragNodeId = null;
