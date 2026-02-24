@@ -2,6 +2,7 @@ import * as State from "./state.js";
 import { inputs, buttons, panel } from "./elements.js";
 import { triggerRedraw } from "./input-handler.js";
 import { rebuild } from "./main.js";
+import { queueStateSync } from "./collaboration.js";
 
 panel.addEventListener("mousedown", e => e.stopPropagation());
 panel.addEventListener("click", e => e.stopPropagation());
@@ -15,6 +16,8 @@ function mutateNode(fn) {
   if (!node) return;
   State.snapshotState();
   fn(node);
+  triggerRedraw();
+  queueStateSync("node_update");
 }
 
 export function updatePanel() {
@@ -83,6 +86,7 @@ inputs.connectorColor.oninput = () => {
     State.snapshotState();
     conn.color = inputs.connectorColor.value;
     triggerRedraw();
+    queueStateSync("node_update");
   }
 };
 
@@ -99,6 +103,7 @@ inputs.connectorWidth.oninput = () => {
     State.snapshotState();
     conn.width = Number(inputs.connectorWidth.value);
     triggerRedraw();
+    queueStateSync("node_update");
   }
 };
 
@@ -116,6 +121,7 @@ inputs.nodeImageInput.onchange = () => {
     State.snapshotState();
     node.image = reader.result;
     triggerRedraw();
+    queueStateSync("node_update");
     inputs.nodeImageInput.value = "";
   };
 
@@ -132,10 +138,12 @@ buttons.deleteNode.onclick = () => {
   if (!State.selectedNodeId) return;
   State.deleteNodeLogic(State.selectedNodeId, false);
   rebuild();
+  queueStateSync("node_delete");
 };
 
 buttons.deleteSubtree.onclick = () => {
   if (!State.selectedNodeId) return;
   State.deleteNodeLogic(State.selectedNodeId, true);
   rebuild();
+  queueStateSync("node_delete");
 };

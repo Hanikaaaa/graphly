@@ -8,6 +8,14 @@ export let zoomLevel = 1;
 let undoStack = [];
 let redoStack = [];
 
+function generateId() {
+  if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 function cloneState() {
   return structuredClone({
     nodes,
@@ -62,7 +70,7 @@ export function redo() {
 
 export function createNodeObject(x, y) {
   return {
-    id: crypto.randomUUID(),
+    id: generateId(),
     x,
     y,
     width: 140,
@@ -147,7 +155,7 @@ export function addConnection(fromId, toId) {
 
   if (!connections.some(c => c.from === fromId && c.to === toId)) {
     connections.push({
-      id: crypto.randomUUID(),
+      id: generateId(),
       from: fromId,
       to: toId,
       color: from.connectorColor || "#444",
@@ -201,4 +209,28 @@ export function clearSelection() {
   selectedNodeId = null;
   selectedConnectionId = null;
   editingNodeId = null;
+}
+
+export function exportCollabState() {
+  return structuredClone({
+    nodes,
+    connections,
+    zoomLevel,
+  });
+}
+
+export function importCollabState(snapshot) {
+  if (!snapshot || !Array.isArray(snapshot.nodes) || !Array.isArray(snapshot.connections)) {
+    return false;
+  }
+
+  nodes = structuredClone(snapshot.nodes);
+  connections = structuredClone(snapshot.connections);
+  zoomLevel = typeof snapshot.zoomLevel === "number" ? snapshot.zoomLevel : zoomLevel;
+
+  selectedNodeId = null;
+  selectedConnectionId = null;
+  editingNodeId = null;
+
+  return true;
 }

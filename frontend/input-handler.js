@@ -4,6 +4,7 @@ import * as DOM from "./dom-manager.js";
 import { canvas, buttons } from "./elements.js";
 import { updatePanel } from "./ui-panel.js";
 import { rebuild } from "./main.js";
+import { queueStateSync } from "./collaboration.js";
 
 
 let isPointerDown = false;
@@ -142,6 +143,7 @@ export function attachNodeHandlers(node) {
       n.text = value.trim();
       State.setEditingNodeId(null);
       redraw();
+      queueStateSync("node_update");
     },
 
     onDragStart(e, id) {
@@ -265,6 +267,7 @@ window.addEventListener("mouseup", () => {
     resizeNodeId = null;
     resizeDir = null;
     redraw();
+    queueStateSync("node_update");
     return;
   }
 
@@ -272,6 +275,7 @@ window.addEventListener("mouseup", () => {
     isDraggingNode = false;
     potentialDragNodeId = null;
     redraw();
+    queueStateSync("node_update");
     return;
   }
 
@@ -314,6 +318,7 @@ canvas.addEventListener("mouseup", e => {
   isDrawingConnection = false;
   connectionSource = null;
   redraw();
+  queueStateSync("node_create");
 });
 
 canvas.addEventListener("click", e => {
@@ -321,6 +326,17 @@ canvas.addEventListener("click", e => {
 
   const x = e.clientX / State.zoomLevel;
   const y = e.clientY / State.zoomLevel;
+
+  if (State.nodes.length === 0) {
+    State.snapshotState();
+    const node = State.createNodeObject(x - 70, y - 40);
+    State.addNode(node);
+    attachNodeHandlers(node);
+    State.setSelectedNodeId(node.id);
+    redraw();
+    queueStateSync("node_create");
+    return;
+  }
 
   const hit = findConnectionAt(x, y);
 
@@ -338,11 +354,27 @@ canvas.addEventListener("click", e => {
   redraw();
 });
 
+canvas.addEventListener("dblclick", e => {
+  if (e.target !== canvas) return;
+
+  const x = e.clientX / State.zoomLevel;
+  const y = e.clientY / State.zoomLevel;
+
+  State.snapshotState();
+  const node = State.createNodeObject(x - 70, y - 40);
+  State.addNode(node);
+  attachNodeHandlers(node);
+  State.setSelectedNodeId(node.id);
+  redraw();
+  queueStateSync("node_create");
+});
+
 
 window.addEventListener("keydown", e => {
   if (e.key === "Delete" && State.selectedNodeId) {
     State.deleteNodeLogic(State.selectedNodeId, e.shiftKey);
     redraw();
+    queueStateSync("node_delete");
   }
 });
 
@@ -360,12 +392,14 @@ buttons.zoomOut.onclick = () => {
 buttons.undo.onclick = () => {
   if (State.undo()) {
     rebuild();
+    queueStateSync("node_update");
   }
 };
 
 buttons.redo.onclick = () => {
   if (State.redo()) {
     rebuild();
+    queueStateSync("node_update");
   }
 };
 

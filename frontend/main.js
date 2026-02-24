@@ -3,6 +3,7 @@ import * as Render from "./renderer.js";
 import * as DOM from "./dom-manager.js";
 import { initInputHandler, attachNodeHandlers } from "./input-handler.js";
 import { updatePanel } from "./ui-panel.js";
+import { initCollaboration, queueStateSync } from "./collaboration.js";
 import { canvas } from "./elements.js";
 
 function redraw() {
@@ -37,6 +38,7 @@ function createInitialNode() {
 
   State.addNode(node);
   attachNodeHandlers(node);
+  queueStateSync("node_create");
 }
 
 function init() {
@@ -49,12 +51,19 @@ function init() {
   });
 
   createInitialNode();
+  initCollaboration({
+    onRemoteState(snapshot) {
+      if (!State.importCollabState(snapshot)) return;
+      rebuild();
+    },
+  });
 
   // Attach input system
   initInputHandler();
 
   // Initial render
   redraw();
+  queueStateSync("cursor_move");
 }
 
 init();
