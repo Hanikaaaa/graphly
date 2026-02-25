@@ -13,8 +13,8 @@ export const inputs = {
   borderRadius: document.getElementById("border-radius"),
   connectorColor: document.getElementById("connector-color"),
   connectorWidth: document.getElementById("connector-width"),
+  connectorStyle: document.getElementById("connector-style"),
   fontFamily: document.getElementById("font-family"),
-
   // FILE INPUTS BELONG HERE
   nodeImageInput: document.getElementById("node-image-input"),
 };

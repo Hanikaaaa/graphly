@@ -455,6 +455,17 @@ canvas {
   padding: 16px;
   box-shadow: -4px 0 16px rgba(0,0,0,0.06);
   z-index: 200;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.custom-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-panel::-webkit-scrollbar {
+  width: 6px;
 }
 
 .custom-panel.hidden {

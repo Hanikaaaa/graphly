@@ -160,6 +160,7 @@ export function addConnection(fromId, toId) {
       to: toId,
       color: from.connectorColor || "#444",
       width: from.connectorWidth || 3,
+      style: "solid",         
     });
   }
 }

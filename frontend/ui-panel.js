@@ -55,10 +55,9 @@ export function updatePanel() {
     // Connection properties
     inputs.connectorColor.value = conn.color;
     inputs.connectorWidth.value = conn.width;
+    inputs.connectorStyle.value = conn.style || "solid";
   }
 }
-
-
 
 inputs.bgColor.oninput = () => mutateNode(n => n.color = inputs.bgColor.value);
 inputs.borderColor.oninput = () => mutateNode(n => n.borderColor = inputs.borderColor.value);
@@ -107,7 +106,19 @@ inputs.connectorWidth.oninput = () => {
   }
 };
 
+inputs.connectorStyle.onchange = () => {
+  const conn = State.connections.find(
+    c => c.id === State.selectedConnectionId
+  );
 
+  if (!conn) return;
+
+  State.snapshotState();
+  conn.style = inputs.connectorStyle.value;
+
+  triggerRedraw();
+  queueStateSync("node_update");
+};
 
 inputs.nodeImageInput.onchange = () => {
   const node = getSelectedNode();

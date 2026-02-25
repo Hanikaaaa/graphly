@@ -55,13 +55,25 @@ function getNodeCenter(node) {
 export function drawBezier(fromX, fromY, toX, toY, style, isSelected = false) {
   const controlY = (fromY + toY) / 2;
 
+  ctx.save();
   if (isSelected) {
+    ctx.setLineDash([]);
     ctx.strokeStyle = "#ff7a00";
-    ctx.lineWidth = style.width + 2;
+    ctx.lineWidth = style.width + 4;
+
     ctx.beginPath();
     ctx.moveTo(fromX, fromY);
     ctx.quadraticCurveTo(fromX, controlY, toX, toY);
     ctx.stroke();
+  }
+
+  // Line style
+  if (style.type === "dashed") {
+    ctx.setLineDash([16, 10]);
+  } else if (style.type === "dotted") {
+    ctx.setLineDash([3, 10]);
+  } else {
+    ctx.setLineDash([]);
   }
 
   ctx.strokeStyle = style.color;
@@ -71,8 +83,8 @@ export function drawBezier(fromX, fromY, toX, toY, style, isSelected = false) {
   ctx.moveTo(fromX, fromY);
   ctx.quadraticCurveTo(fromX, controlY, toX, toY);
   ctx.stroke();
+  ctx.restore();
 }
-
 
 export function drawConnection(fromNode, toNode) {
   if (!fromNode || !toNode) return;
@@ -122,17 +134,19 @@ connections.forEach(conn => {
   if (!from || !to) return;
 
   const isSelected = conn.id === State.selectedConnectionId;
-  if (isSelected) {
-    console.log("[renderScene] selected connection:", conn.id);
-  }
+  const fromX = from.x + from.width / 2;
+  const fromY = from.y + from.height / 2;
+  const toX = to.x + to.width / 2;
+  const toY = to.y + to.height / 2;
   drawBezier(
-    from.x + from.width / 2,
-    from.y + from.height / 2,
-    to.x + to.width / 2,
-    to.y + to.height / 2,
+    fromX,
+    fromY,
+    toX,
+    toY,
     {
       color: conn.color,
       width: conn.width,
+      type: conn.style,
     },
     isSelected
   );
