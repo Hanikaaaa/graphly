@@ -1,9 +1,20 @@
 # Graphly (PixPlot)
 
-Collaborative canvas app with:
-- Go backend (`Gin` + `Gorilla WebSocket`)
+Graphly is a mind-map/canvas app with:
+- Go backend (`Gin`)
+- PostgreSQL persistence
+- JWT-based authentication
 - Static frontend (`HTML/CSS/JS`)
-- Room-based real-time sync
+
+## Current Status
+
+The app currently supports:
+- User register/login
+- Per-user canvas dashboard
+- Canvas create/open/save through REST APIs
+- Autosave of canvas JSON to PostgreSQL
+
+The backend also exposes WebSocket room endpoints (`/ws/:roomId`), but the current frontend flow is API-driven and does not actively use that room-based realtime sync path.
 
 ## Project Layout
 
@@ -11,157 +22,261 @@ Collaborative canvas app with:
 graphly/
 ├── backend/
 │   ├── cmd/server/main.go
-│   ├── internal/api/routes.go
-│   ├── internal/models/message.go
+│   ├── internal/api/
+│   ├── internal/auth/
+│   ├── internal/db/
+│   ├── internal/models/
 │   └── internal/websocket/
 └── frontend/
     ├── index.html
     ├── main.js
-    ├── collaboration.js
+    ├── api-client.js
+    ├── auth.js
+    ├── canvas-api.js
     └── ...
 ```
 
 ## Prerequisites
 
-- Go (latest stable recommended)
-- Python 3 (for static frontend hosting)
+- Go `1.24+`
+- PostgreSQL `14+` (or compatible)
+- Python `3.x`
 
-Check:
+Check versions:
 
 ```powershell
 go version
 python --version
+psql --version
 ```
 
-## Run Locally (Same Machine)
+## Detailed Local Setup (Windows + PowerShell)
 
-### 1) Backend
+Use two PowerShell terminals:
+- Terminal A: backend
+- Terminal B: frontend
 
-From `graphly/backend`:
+### Step 1: Confirm PostgreSQL is running
+
+If PostgreSQL is not running, start it from Windows Services or pgAdmin first.
+
+Quick check:
+
+```powershell
+psql -h 127.0.0.1 -U postgres -d postgres -c "select version();"
+```
+
+If prompted for password, enter your PostgreSQL `postgres` user password.
+
+### Step 2: Create the database (one-time)
+
+```powershell
+psql -h 127.0.0.1 -U postgres -d postgres
+```
+
+In `psql`:
+
+```sql
+CREATE DATABASE graphly;
+```
+
+If you see `database "graphly" already exists`, that is fine.
+
+Connect to graphly DB:
+
+```sql
+\c graphly
+```
+
+### Step 3: Create schema tables (one-time)
+
+Run in `psql`:
+
+```sql
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS canvases (
+  id UUID PRIMARY KEY,
+  owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT 'Untitled Canvas',
+  data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+Verify:
+
+```sql
+\dt
+```
+
+Expected tables:
+- `users`
+- `canvases`
+
+Exit `psql`:
+
+```sql
+\q
+```
+
+### Step 4: Start backend (Terminal A)
+
+Go to backend:
+
+```powershell
+cd graphly\backend
+```
+
+Set environment variables in the same terminal session:
+
+```powershell
+$pw = Read-Host "Enter Postgres password" -AsSecureString
+$plain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($pw))
+$enc = [uri]::EscapeDataString($plain)
+
+$env:DATABASE_URL = "postgres://postgres:$enc@127.0.0.1:5432/graphly?sslmode=disable"
+$env:JWT_SECRET = "dev-secret-change-me"
+$env:PORT = "8080"
+```
+
+Install modules and run:
 
 ```powershell
 go mod tidy
 go run cmd/server/main.go
 ```
 
-Default backend address: `http://localhost:8080`
+Backend should be available at:
+- `http://localhost:8080`
+- Health check: `http://localhost:8080/health`
 
-Optional port override:
-
-```powershell
-$env:PORT="9090"
-go run cmd/server/main.go
-```
-
-### 2) Frontend
-
-From `graphly/frontend`:
+### Step 5: Start frontend (Terminal B)
 
 ```powershell
+cd graphly\frontend
 python -m http.server 5500
 ```
 
-Open:
-- `http://localhost:5500/?room=demo`
+Open in browser:
+- `http://localhost:5500`
 
-## Room Usage
+## Daily Run (After One-Time Setup)
 
-Room ID is read from URL:
-- Query param: `?room=team-alpha`
-- Hash: `#team-alpha`
-- Fallback: `default-room`
+Each time you develop:
 
-Examples:
-- `http://localhost:5500/?room=team-alpha`
-- `http://localhost:5500/#team-alpha`
+1. Start backend in `graphly/backend`
+2. Set `DATABASE_URL`, `JWT_SECRET`, and `PORT` in that terminal
+3. Run `go run cmd/server/main.go`
+4. Start frontend in `graphly/frontend` with `python -m http.server 5500`
+5. Open `http://localhost:5500`
 
-Do **not** use path-based rooms on the static server (this causes 404):
-- `http://localhost:5500/team-alpha`  <- wrong
+## Backend Environment Variables
 
-## Collaboration Behavior
+Required:
+- `DATABASE_URL` (PostgreSQL DSN)
+- `JWT_SECRET` (token signing secret)
 
-- Room is auto-created on first WebSocket join.
-- Room is removed when last client disconnects.
-- State is in-memory only (no database).
-- If canvas is empty, click/double-click canvas to create first node.
+Optional:
+- `PORT` (default: `8080`)
+
+Example:
+
+```powershell
+$env:DATABASE_URL = "postgres://postgres:<PASSWORD>@127.0.0.1:5432/graphly?sslmode=disable"
+$env:JWT_SECRET = "replace-with-a-long-random-secret"
+$env:PORT = "8080"
+```
+
+## Frontend API Base URL
+
+Frontend default API base URL:
+- `http://localhost:8080`
+
+To use a different backend URL, define `window.GRAPHLY_API_BASE_URL` before loading `main.js` in `frontend/index.html`:
+
+```html
+<script>
+  window.GRAPHLY_API_BASE_URL = "http://192.168.1.15:8080";
+</script>
+<script type="module" src="./main.js"></script>
+```
 
 ## API Endpoints
 
+Public:
 - `GET /health` -> `{ "status": "ok" }`
-- `GET /rooms` -> active room list
-- `GET /rooms/:id/clients` -> client count in room
-- `GET /ws/:roomId` -> WebSocket endpoint
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /rooms`
+- `GET /rooms/:id/clients`
+- `GET /ws/:roomId` (WebSocket)
 
-## WebSocket Message Format
-
-```json
-{
-  "type": "node_update",
-  "roomId": "string",
-  "userId": "string",
-  "payload": {}
-}
-```
-
-Supported `type` values:
-- `node_create`
-- `node_update`
-- `node_delete`
-- `cursor_move`
+Protected (`Authorization: Bearer <token>`):
+- `GET /auth/me`
+- `POST /canvases`
+- `GET /canvases`
+- `GET /canvases/:id`
+- `PUT /canvases/:id`
 
 ## LAN Setup (Multiple Devices, Same Network)
 
-### 1) Start backend and frontend on host machine
-
-Backend:
+1. Run backend on host:
 
 ```powershell
 cd graphly\backend
 go run cmd/server/main.go
 ```
 
-Frontend (bind all interfaces):
+2. Run frontend on host (bind all interfaces):
 
 ```powershell
 cd graphly\frontend
 python -m http.server 5500 --bind 0.0.0.0
 ```
 
-### 2) Find host LAN IP
+3. Find host IPv4:
 
 ```powershell
 ipconfig
 ```
 
-Use IPv4 like `192.168.x.x`.
+4. Open from another device:
+- `http://<HOST_IP>:5500`
 
-### 3) Open firewall ports (host machine, Admin PowerShell)
-
-```powershell
-New-NetFirewallRule -DisplayName "Graphly Frontend 5500" -Direction Inbound -Protocol TCP -LocalPort 5500 -Action Allow
-New-NetFirewallRule -DisplayName "Graphly Backend 8080" -Direction Inbound -Protocol TCP -LocalPort 8080 -Action Allow
-```
-
-### 4) Open app from other devices
-
-- `http://<HOST_IP>:5500/?room=team-alpha`
-
-### 5) Validate connectivity from another device
-
+5. Validate connectivity from another device:
 - `http://<HOST_IP>:5500/index.html`
 - `http://<HOST_IP>:8080/health`
 
-If these fail, network/firewall is blocking access.
+## Troubleshooting
 
-## Different Networks (Internet Access)
+### `database init failed` + `password authentication failed for user "postgres"`
 
-Local IPs (`192.168.x.x`, `172.x.x.x`) do not work across different networks.
+Cause:
+- Password inside `DATABASE_URL` does not match PostgreSQL password.
 
-Use one of:
-- Tunnel (quick testing): `ngrok` / `cloudflared`
-- Deploy backend + frontend publicly with HTTPS/WSS (recommended)
+Fix:
+1. Verify login manually:
+   ```powershell
+   psql -h 127.0.0.1 -U postgres -d postgres -c "select 1;"
+   ```
+2. Re-export `DATABASE_URL` using the correct password (URL-encoded).
+3. Restart backend in the same terminal.
 
-## Quick Troubleshooting
+### `DATABASE_URL is not set`
+
+- Set `DATABASE_URL` in the same terminal where you run `go run`.
+
+### `JWT_SECRET is not set`
+
+- Set `JWT_SECRET` before starting backend.
 
 ### Port 8080 already in use
 
@@ -170,20 +285,19 @@ Get-NetTCPConnection -LocalPort 8080 -State Listen | Select-Object OwningProcess
 Stop-Process -Id <PID> -Force
 ```
 
-### Blank canvas
+### 401 Unauthorized on protected APIs
 
-- Use a new room URL (`?room=new-name`)
-- Hard refresh (`Ctrl+Shift+R`)
-- Click canvas to create first node
+- Ensure login/register completed and token is stored in browser localStorage.
+- Re-login if token expired or secret changed.
 
-### Second device timeout
+### Frontend loads but requests fail
 
-- Ensure both devices are on same network
-- Use reachable host LAN IP (`192.168.x.x` usually)
-- Confirm firewall rules for ports `5500` and `8080`
+- Confirm backend is running on `http://localhost:8080`.
+- Visit `http://localhost:8080/health`.
+- Ensure no mixed API base URL override in `index.html`.
 
 ## Notes
 
-- No auth/authorization is enabled yet.
-- Anyone with room URL can join that room.
-- Restarting backend clears all active rooms and state.
+- Authentication is enabled.
+- Canvas data is persisted in PostgreSQL.
+- WebSocket backend exists, but current UI persistence path is REST + autosave.

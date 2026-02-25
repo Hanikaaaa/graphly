@@ -211,6 +211,17 @@ export function clearSelection() {
   editingNodeId = null;
 }
 
+export function resetCanvasState() {
+  nodes = [];
+  connections = [];
+  selectedNodeId = null;
+  selectedConnectionId = null;
+  editingNodeId = null;
+  zoomLevel = 1;
+  undoStack = [];
+  redoStack = [];
+}
+
 export function exportCollabState() {
   return structuredClone({
     nodes,

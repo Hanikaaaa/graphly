@@ -9,122 +9,133 @@
 </head>
 
 <body>
-  <div class="app-container">
+  <div id="auth-root" class="auth-overlay hidden"></div>
 
+  <div class="app-container app-hidden">
     <canvas id="canvas"></canvas>
+
     <div class="topbar">
-  <div class="topbar-group">
-    <button id="undo-btn" title="Undo (Ctrl+Z)">⟲</button>
-    <button id="redo-btn" title="Redo (Ctrl+Y)">⟳</button>
-  </div>
+      <div class="topbar-group">
+        <button id="undo-btn" title="Undo (Ctrl+Z)">⟲</button>
+        <button id="redo-btn" title="Redo (Ctrl+Y)">⟳</button>
+      </div>
 
-    <div class="topbar-group">
-      <button id="zoom-out">−</button>
-      <span class="zoom-label">Zoom</span>
-      <button id="zoom-in">+</button>
-    </div>
-  </div>
+      <div class="topbar-group">
+        <button id="zoom-out">−</button>
+        <span class="zoom-label">Zoom</span>
+        <button id="zoom-in">+</button>
+        <span id="save-indicator" class="save-indicator">Saved</span>
+      </div>
 
-<div id="custom-panel" class="custom-panel hidden">
-
-  <h3>Node Settings</h3>
-  <div class="panel-section">
-    <h4>Text</h4>
-    <label>
-  Font
-  <select id="font-family">
-    <option value="Arial">Arial</option>
-    <option value="Inter">Inter</option>
-    <option value="Georgia">Georgia</option>
-    <option value="Times New Roman">Times New Roman</option>
-    <option value="Courier New">Courier New</option>
-    <option value="Monospace">Monospace</option>
-  </select>
-</label>
-    <label>Color
-      <input type="color" id="text-color">
-    </label>
-
-    <label>Size
-      <input type="range" id="font-size" min="10" max="28">
-    </label>
-
-    <label>Align
-      <select id="text-align">
-        <option value="left">Left</option>
-        <option value="center">Center</option>
-        <option value="right">Right</option>
-      </select>
-    </label>
-
-    <label>Weight
-      <select id="font-weight">
-        <option value="normal">Normal</option>
-        <option value="bold">Bold</option>
-      </select>
-    </label>
-  </div>
-
-<div class="panel-section">
-  <h4>Node</h4>
-
-  <label>
-    Background
-    <input type="color" id="bg-color">
-  </label>
-
-  <label>
-    Border
-    <input type="color" id="border-color">
-  </label>
-
-  <label>
-    Opacity
-    <input type="range" id="opacity" min="0.2" max="1" step="0.1">
-  </label>
-</div>
-<div class="panel-section">
-  <h4>Image</h4>
-
-  <label>
-    Upload
-    <input type="file" id="node-image-input" accept="image/*">
-  </label>
-
-  <button id="remove-image" class="hidden">
-    Remove Image
-  </button>
-</div>
-
-  <div class="panel-section">
-    <h4>Shape</h4>
-
-    <label>Corner radius
-      <input type="range" id="border-radius" min="0" max="40">
-    </label>
-  </div>
-
-  <div class="panel-section">
-    <h4>Connector</h4>
-
-    <label>Color
-      <input type="color" id="connector-color">
-    </label>
-
-    <label>Thickness
-      <input type="range" id="connector-width" min="1" max="6">
-    </label>
-  </div>
-
-  <div class="panel-section danger">
-    <button id="delete-node">Delete Node</button>
-    <button id="delete-subtree">Delete Subtree</button>
-  </div>
-
-</div>
-
+      <div class="topbar-group">
+        <button id="dashboard-btn" title="My Canvases">Canvases</button>
+        <button id="auth-action-btn" title="Logout">Logout</button>
+      </div>
     </div>
 
+    <div id="custom-panel" class="custom-panel hidden">
+      <h3>Node Settings</h3>
+
+      <div class="panel-section">
+        <h4>Text</h4>
+        <label>
+          Font
+          <select id="font-family">
+            <option value="Arial">Arial</option>
+            <option value="Inter">Inter</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Monospace">Monospace</option>
+          </select>
+        </label>
+
+        <label>
+          Color
+          <input type="color" id="text-color" />
+        </label>
+
+        <label>
+          Size
+          <input type="range" id="font-size" min="10" max="28" />
+        </label>
+
+        <label>
+          Align
+          <select id="text-align">
+            <option value="left">Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+          </select>
+        </label>
+
+        <label>
+          Weight
+          <select id="font-weight">
+            <option value="normal">Normal</option>
+            <option value="bold">Bold</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="panel-section">
+        <h4>Node</h4>
+
+        <label>
+          Background
+          <input type="color" id="bg-color" />
+        </label>
+
+        <label>
+          Border
+          <input type="color" id="border-color" />
+        </label>
+
+        <label>
+          Opacity
+          <input type="range" id="opacity" min="0.2" max="1" step="0.1" />
+        </label>
+      </div>
+
+      <div class="panel-section">
+        <h4>Image</h4>
+
+        <label>
+          Upload
+          <input type="file" id="node-image-input" accept="image/*" />
+        </label>
+
+        <button id="remove-image" class="hidden">Remove Image</button>
+      </div>
+
+      <div class="panel-section">
+        <h4>Shape</h4>
+
+        <label>
+          Corner radius
+          <input type="range" id="border-radius" min="0" max="40" />
+        </label>
+      </div>
+
+      <div class="panel-section">
+        <h4>Connector</h4>
+
+        <label>
+          Color
+          <input type="color" id="connector-color" />
+        </label>
+
+        <label>
+          Thickness
+          <input type="range" id="connector-width" min="1" max="6" />
+        </label>
+      </div>
+
+      <div class="panel-section danger">
+        <button id="delete-node">Delete Node</button>
+        <button id="delete-subtree">Delete Subtree</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="./main.js"></script>
