@@ -9,11 +9,16 @@ export async function listCanvases() {
   return Array.isArray(response) ? response : [];
 }
 
-export async function createCanvas(title = "") {
+export async function createCanvas(title = "Untitled Canvas", accessType = "private", sharedWith=[]) {
+  console.log("createCanvas:", { title, accessType, sharedWith });
   return apiRequest("/canvases", {
     method: "POST",
     auth: true,
-    body: { title },
+    body: { 
+      title: title || "Untitled Canvas",
+      accessType,
+      sharedWith
+    },
   });
 }
 
