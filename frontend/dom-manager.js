@@ -1,4 +1,5 @@
 import * as State from "./state.js";
+import { ShapeRegistry } from "./shapes.js";
 
 export function createNodeDOM(node, handlers) {
   const el = document.createElement("div");
@@ -97,7 +98,6 @@ export function createNodeDOM(node, handlers) {
   document.body.appendChild(el);
 }
 
-
 export function syncNodeDOM(node, {
   isSelected,
   isEditing,
@@ -106,9 +106,7 @@ export function syncNodeDOM(node, {
   const el = document.getElementById(node.id);
   if (!el) return;
 
-  /* =========================
-     IMAGE SYNC
-  ========================== */
+  // IMAGE SYNC
   let imgWrapper = el.querySelector(".node-image-wrapper");
 
   if (node.image) {
@@ -130,9 +128,7 @@ export function syncNodeDOM(node, {
     el.classList.remove("has-image");
   }
 
-  /* =========================
-     POSITION + SIZE
-  ========================== */
+  // POSITION + SIZE
   el.style.left = `${node.x * zoomLevel + State.offsetX}px`;
   el.style.top = `${node.y * zoomLevel + State.offsetY}px`;
   el.style.width = `${node.width}px`;
@@ -140,28 +136,15 @@ export function syncNodeDOM(node, {
   el.style.transform = `scale(${zoomLevel})`;
   el.style.transformOrigin = "top left";
 
-  /* =========================
-     BOX STYLES
-  ========================== */
+  // BOX STYLES
   el.style.backgroundColor = node.color;
   el.style.opacity = node.opacity;
   el.style.border = `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
 
-  if (node.shape === "circle") {
-    el.style.borderRadius = "50%";
-    el.style.padding = "0";
-    el.style.display = "flex";
-    el.style.alignItems = "center";
-    el.style.justifyContent = "center";
-  } else {
-    el.style.borderRadius = `${node.borderRadius}px`;
-    el.style.padding = "10px";
-    el.style.display = "block";
-  }
+  const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
+  shape.applyLayout(node, el);
 
-  /* =========================
-     TEXT STYLES
-  ========================== */
+  // TEXT
   const text = el.querySelector(".node-text");
   const input = el.querySelector(".node-text-input");
 
@@ -177,72 +160,22 @@ export function syncNodeDOM(node, {
   text.style.fontFamily = node.fontFamily;
   input.style.fontFamily = node.fontFamily;
 
-  text.style.textAlign =
-    node.shape === "circle" ? "center" : node.textAlign;
-
-  input.style.textAlign =
-    node.shape === "circle" ? "center" : node.textAlign;
+  text.style.textAlign = node.textAlign;
+  input.style.textAlign = node.textAlign;
 
   text.style.fontWeight = node.fontWeight;
   input.style.fontWeight = node.fontWeight;
 
-  /* =========================
-     CONNECTOR POSITIONING
-     (Circle-specific edge logic)
-  ========================== */
-  const connectors = el.querySelectorAll(".node-connector");
-
-  connectors.forEach(conn => {
-    // reset first
-    conn.style.top = "";
-    conn.style.bottom = "";
-    conn.style.left = "";
-    conn.style.right = "";
-
-    conn.style.transform = `scale(${1 / zoomLevel})`;
-
-    if (node.shape === "circle") {
-      if (conn.classList.contains("top")) {
-        conn.style.top = "-5px";
-        conn.style.left = "50%";
-        conn.style.transform += " translateX(-50%)";
-      }
-
-      if (conn.classList.contains("bottom")) {
-        conn.style.bottom = "-5px";
-        conn.style.left = "50%";
-        conn.style.transform += " translateX(-50%)";
-      }
-
-      if (conn.classList.contains("left")) {
-        conn.style.left = "-5px";
-        conn.style.top = "50%";
-        conn.style.transform += " translateY(-50%) rotate(90deg)";
-      }
-
-      if (conn.classList.contains("right")) {
-        conn.style.right = "-5px";
-        conn.style.top = "50%";
-        conn.style.transform += " translateY(-50%) rotate(90deg)";
-      }
-    }
-
-    if (node.shape !== "circle") {
-      el.style.padding = "10px";
-    }
-
-  });
-
-  /* =========================
-     PREVENT UI SCALING
-  ========================== */
+  // PREVENT UI SCALING
   el.querySelectorAll(".node-resize-handle").forEach(h => {
     h.style.transform = `scale(${1 / zoomLevel})`;
   });
 
-  /* =========================
-     STATE CLASSES
-  ========================== */
+  el.querySelectorAll(".node-connector").forEach(c => {
+    c.style.transform = `scale(${1 / zoomLevel})`;
+  });
+
+  // STATE CLASSES
   el.classList.toggle("selected", isSelected);
   el.classList.toggle("editing", isEditing);
 }

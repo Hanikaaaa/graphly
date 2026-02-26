@@ -5,7 +5,7 @@ import { canvas, buttons } from "./elements.js";
 import { updatePanel } from "./ui-panel.js";
 import { rebuild } from "./main.js";
 import { queueStateSync } from "./collaboration.js";
-
+import { ShapeRegistry } from "./shapes.js";
 
 let isPointerDown = false;
 let pointerDownX = 0;
@@ -259,52 +259,29 @@ canvas.addEventListener("mousemove", e => {
   }
 
   if (isResizing && resizeNodeId) {
-  const node = State.getNodeById(resizeNodeId);
-  if (!node) return;
-  
-  const dx = (e.clientX - startX) / State.zoomLevel;
-  const dy = (e.clientY - startY) / State.zoomLevel;
+    const node = State.getNodeById(resizeNodeId);
+    if (!node) return;
 
-  const minSize = 80;
+    const dx = (e.clientX - startX) / State.zoomLevel;
+    const dy = (e.clientY - startY) / State.zoomLevel;
 
-  if (node.shape === "circle") {
+    const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
 
-    const delta = Math.max(dx, dy);
-    const newSize = Math.max(minSize, startW + delta);
+    shape.applyResize(node, {
+      dx,
+      dy,
+      startW,
+      startH,
+      startNodeX,
+      startNodeY,
+      resizeDir
+    });
 
-    node.width = newSize;
-    node.height = newSize;
-
-    redraw();
-    return;
-  }
-
-  const minW = 80;
-  const minH = 40;
-  
-  if (resizeDir.includes("right")) {
-    node.width = Math.max(minW, startW + dx);
-  }
-
-  if (resizeDir.includes("left")) {
-    const newW = Math.max(minW, startW - dx);
-    node.x = startNodeX + (startW - newW);
-    node.width = newW;
-  }
-
-  if (resizeDir.includes("bottom")) {
-    node.height = Math.max(minH, startH + dy);
-  }
-
-  if (resizeDir.includes("top")) {
-    const newH = Math.max(minH, startH - dy);
-    node.y = startNodeY + (startH - newH);
-    node.height = newH;
-  }
+  shape.enforceConstraints(node);
 
   redraw();
   return;
-}
+  }
 });
 
 

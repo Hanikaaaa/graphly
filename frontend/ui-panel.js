@@ -3,6 +3,7 @@ import { inputs, buttons, panel } from "./elements.js";
 import { triggerRedraw } from "./input-handler.js";
 import { rebuild } from "./main.js";
 import { queueStateSync } from "./collaboration.js";
+import { ShapeRegistry } from "./shapes.js";
 
 panel.addEventListener("mousedown", e => e.stopPropagation());
 panel.addEventListener("click", e => e.stopPropagation());
@@ -120,11 +121,8 @@ inputs.nodeShape.onchange = () => {
   mutateNode(n => {
     n.shape = inputs.nodeShape.value;
 
-    if (n.shape === "circle") {
-      const size = Math.max(n.width, n.height);
-      n.width = size;
-      n.height = size;
-    }
+    const shape = ShapeRegistry[n.shape] || ShapeRegistry.rectangle;
+    shape.enforceConstraints(n);
   });
 };
 
