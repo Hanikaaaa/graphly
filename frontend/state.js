@@ -8,11 +8,24 @@ export let offsetX = 0;
 export let offsetY = 0;
 
 export let background = {
-  type: "grid",       
-  color: "#fafafa",  
+  type: "grid",
+
+  // base
+  color: "#fafafa",
+
+  // grid
   gridColor: "#e6e6e6",
+  gridSpacing: 40,
+  gridLineWidth: 1,
+  gridOpacity: 1,
+
+  // dots
   dotColor: "#d0d0d0",
-  spacing: 40,
+  dotSpacing: 40,
+  dotRadius: 1.5,
+  dotOpacity: 1,
+
+  parallaxStrength: 0, // 0 = fixed, >0 = slow movement
 };
 
 let undoStack = [];

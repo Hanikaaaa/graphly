@@ -30,7 +30,7 @@ export function clearCanvas(zoomLevel) {
 
 export function drawGrid(zoomLevel) {
   ctx.save();
-  const spacing = State.background.spacing;
+  const spacing = State.background.gridSpacing;
 
   const startWorldX = -State.offsetX / zoomLevel;
   const startWorldY = -State.offsetY / zoomLevel;
@@ -42,7 +42,8 @@ export function drawGrid(zoomLevel) {
   const firstY = Math.floor(startWorldY / spacing) * spacing;
 
   ctx.strokeStyle = State.background.gridColor;
-  ctx.lineWidth = 1 / zoomLevel;
+  ctx.globalAlpha = State.background.gridOpacity;
+  ctx.lineWidth = State.background.gridLineWidth / zoomLevel;
   ctx.translate(0.5 / zoomLevel, 0.5 / zoomLevel);
   for (let x = firstX; x < endWorldX; x += spacing) {
     ctx.beginPath();
@@ -57,13 +58,15 @@ export function drawGrid(zoomLevel) {
     ctx.lineTo(endWorldX, y);
     ctx.stroke();
   }
+  ctx.globalAlpha = 1;
   ctx.restore();
 }
 
 export function drawDots(zoomLevel) {
   ctx.save();
-  const spacing = State.background.spacing;
-  const radius = 1.5 / zoomLevel;
+  const spacing = State.background.dotSpacing;
+  const radius = State.background.dotRadius / zoomLevel;
+  ctx.globalAlpha = State.background.dotOpacity;
 
   const startWorldX = -State.offsetX / zoomLevel;
   const startWorldY = -State.offsetY / zoomLevel;
@@ -83,6 +86,7 @@ export function drawDots(zoomLevel) {
       ctx.fill();
     }
   }
+  ctx.globalAlpha = 1;
   ctx.restore();
 }
 

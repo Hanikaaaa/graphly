@@ -225,14 +225,28 @@ canvas.addEventListener("mousemove", e => {
   }
 
   if (isDraggingNode && potentialDragNodeId) {
-    const node = State.getNodeById(potentialDragNodeId);
-    if (!node) return;
+  const node = State.getNodeById(potentialDragNodeId);
+  if (!node) return;
 
-    node.x = ((e.clientX - State.offsetX)/ State.zoomLevel) - dragOffsetX;
-    node.y = ((e.clientY - State.offsetY) / State.zoomLevel) - dragOffsetY;
-    redraw();
-    return;
+  let newX =
+    ((e.clientX - State.offsetX) / State.zoomLevel) - dragOffsetX;
+
+  let newY =
+    ((e.clientY - State.offsetY) / State.zoomLevel) - dragOffsetY;
+
+  if (State.background.snapToGrid) {
+    const spacing = State.background.gridSpacing;
+
+    newX = Math.round(newX / spacing) * spacing;
+    newY = Math.round(newY / spacing) * spacing;
   }
+
+  node.x = newX;
+  node.y = newY;
+
+  redraw();
+  return;
+}
 
   if (isDrawingConnection && connectionSource) {
     redraw();

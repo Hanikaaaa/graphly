@@ -27,6 +27,13 @@ export function updatePanel() {
   inputs.bgCanvasColor.value = State.background.color;
   inputs.bgGridColor.value = State.background.gridColor;
   inputs.bgDotColor.value = State.background.dotColor;
+  inputs.bgGridSpacing.value = State.background.gridSpacing;
+  inputs.bgGridWidth.value = State.background.gridLineWidth;
+  inputs.bgGridOpacity.value = State.background.gridOpacity;
+
+  inputs.bgDotSpacing.value = State.background.dotSpacing;
+  inputs.bgDotRadius.value = State.background.dotRadius;
+  inputs.bgDotOpacity.value = State.background.dotOpacity;
   if (!node && !conn) {
   panel.classList.add("hidden");
   document.body.classList.remove("panel-open");
@@ -164,6 +171,42 @@ inputs.bgGridColor.oninput = () => {
 inputs.bgDotColor.oninput = () => {
   State.snapshotState();
   State.background.dotColor = inputs.bgDotColor.value;
+  triggerRedraw();
+};
+
+inputs.bgGridSpacing.oninput = () => {
+  State.snapshotState();
+  State.background.gridSpacing = Number(inputs.bgGridSpacing.value);
+  triggerRedraw();
+};
+
+inputs.bgGridWidth.oninput = () => {
+  State.snapshotState();
+  State.background.gridLineWidth = Number(inputs.bgGridWidth.value);
+  triggerRedraw();
+};
+
+inputs.bgGridOpacity.oninput = () => {
+  State.snapshotState();
+  State.background.gridOpacity = Number(inputs.bgGridOpacity.value);
+  triggerRedraw();
+};
+
+inputs.bgDotSpacing.oninput = () => {
+  State.snapshotState();
+  State.background.dotSpacing = Number(inputs.bgDotSpacing.value);
+  triggerRedraw();
+};
+
+inputs.bgDotRadius.oninput = () => {
+  State.snapshotState();
+  State.background.dotRadius = Number(inputs.bgDotRadius.value);
+  triggerRedraw();
+};
+
+inputs.bgDotOpacity.oninput = () => {
+  State.snapshotState();
+  State.background.dotOpacity = Number(inputs.bgDotOpacity.value);
   triggerRedraw();
 };
 

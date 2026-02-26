@@ -19,6 +19,12 @@ export const inputs = {
   bgCanvasColor: document.getElementById("bg-canvas-color"),
   bgGridColor: document.getElementById("bg-grid-color"),
   bgDotColor: document.getElementById("bg-dot-color"),
+  bgGridSpacing: document.getElementById("bg-grid-spacing"),
+  bgGridWidth: document.getElementById("bg-grid-width"),
+  bgGridOpacity: document.getElementById("bg-grid-opacity"),
+  bgDotSpacing: document.getElementById("bg-dot-spacing"),
+  bgDotRadius: document.getElementById("bg-dot-radius"),
+  bgDotOpacity: document.getElementById("bg-dot-opacity"),
   // FILE INPUTS BELONG HERE
   nodeImageInput: document.getElementById("node-image-input"),
 };
