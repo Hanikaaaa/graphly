@@ -303,20 +303,15 @@ window.addEventListener("mouseup", () => {
   State.setSelectedNodeId(potentialDragNodeId);
   }
 
-
   isPointerDown = false;
   potentialDragNodeId = null;
   isPanning = false;
   redraw();
 });
-canvas.addEventListener("mousedown", (e) => {
-  console.log("[canvas click]", e.target);
 
-  if (State.selectedConnectionId) {
-    console.log("[canvas] connection already selected, not clearing");
-    return;
-  }
-  if (e.button === 1) { // middle mouse
+canvas.addEventListener("mousedown", (e) => {
+  
+  if (e.button === 1) {
     isPanning = true;
     panStartX = e.clientX;
     panStartY = e.clientY;
@@ -334,8 +329,11 @@ canvas.addEventListener("mousedown", (e) => {
     return;
   }
 
+  if (e.target !== canvas) return;
+  if (State.selectedConnectionId) return;
+
   State.clearSelection();
-  console.log("[cleared selection]");
+  triggerRedraw();
 });
 
 canvas.addEventListener("mouseup", e => {

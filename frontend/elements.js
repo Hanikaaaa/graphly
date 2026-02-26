@@ -15,6 +15,10 @@ export const inputs = {
   connectorWidth: document.getElementById("connector-width"),
   connectorStyle: document.getElementById("connector-style"),
   fontFamily: document.getElementById("font-family"),
+  bgType: document.getElementById("bg-type"),
+  bgCanvasColor: document.getElementById("bg-canvas-color"),
+  bgGridColor: document.getElementById("bg-grid-color"),
+  bgDotColor: document.getElementById("bg-dot-color"),
   // FILE INPUTS BELONG HERE
   nodeImageInput: document.getElementById("node-image-input"),
 };

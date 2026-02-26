@@ -219,8 +219,9 @@ body.panel-open canvas {
 
 /* canvas */
 canvas {
-  width: 100vw;
-  height: 100vh;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
   background-color: #fafafa;
   display: block;
 }
@@ -233,6 +234,10 @@ canvas {
   display: flex;
   gap: 8px;
   z-index: 100;
+}
+
+.app-container {
+  position: relative;
 }
 
 .toolbar button {
@@ -263,7 +268,7 @@ canvas {
   border: 1px solid #e5e5e5;
   border-radius: 12px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-  z-index: 150;
+  z-index: 300;
   backdrop-filter: blur(6px);
 }
 

@@ -7,6 +7,14 @@ export let zoomLevel = 1;
 export let offsetX = 0;
 export let offsetY = 0;
 
+export let background = {
+  type: "grid",       
+  color: "#fafafa",  
+  gridColor: "#e6e6e6",
+  dotColor: "#d0d0d0",
+  spacing: 40,
+};
+
 let undoStack = [];
 let redoStack = [];
 
@@ -28,6 +36,7 @@ function cloneState() {
     zoomLevel,
     offsetX,
     offsetY,
+    background,
   });
 }
 
@@ -37,6 +46,7 @@ function restoreState(snapshot) {
   zoomLevel = snapshot.zoomLevel;
   offsetX = snapshot.offsetX;
   offsetY = snapshot.offsetY;
+  background = snapshot.background || background;
 
   selectedNodeId = nodes.some(n => n.id === snapshot.selectedNodeId)
     ? snapshot.selectedNodeId
@@ -241,6 +251,7 @@ export function exportCollabState() {
     zoomLevel,
     offsetX,
     offsetY,
+    background,
   });
 }
 
@@ -251,6 +262,7 @@ export function importCollabState(snapshot) {
 
   nodes = structuredClone(snapshot.nodes);
   connections = structuredClone(snapshot.connections);
+  background = snapshot.background || background;
   zoomLevel = typeof snapshot.zoomLevel === "number" ? snapshot.zoomLevel : zoomLevel;
   offsetX = typeof snapshot.offsetX === "number" ? snapshot.offsetX : 0;
   offsetY = typeof snapshot.offsetY === "number" ? snapshot.offsetY : 0;

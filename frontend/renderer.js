@@ -12,8 +12,9 @@ export function resizeCanvas() {
 export function clearCanvas(zoomLevel) {
   // reset transform
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+  ctx.fillStyle = State.background.color;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
   // apply zoom
   ctx.setTransform(
     zoomLevel,
@@ -28,39 +29,59 @@ export function clearCanvas(zoomLevel) {
 // Grid
 
 export function drawGrid(zoomLevel) {
-  const gridSize = 40;
-
-  const width = canvas.width;
-  const height = canvas.height;
-
   ctx.save();
+  const spacing = State.background.spacing;
 
-  ctx.strokeStyle = "#e6e6e6";
-  ctx.lineWidth = 1;
-
-  // visible world bounds
   const startWorldX = -State.offsetX / zoomLevel;
   const startWorldY = -State.offsetY / zoomLevel;
 
-  const endWorldX = startWorldX + width / zoomLevel;
-  const endWorldY = startWorldY + height / zoomLevel;
+  const endWorldX = startWorldX + canvas.width / zoomLevel;
+  const endWorldY = startWorldY + canvas.height / zoomLevel;
 
-  // snap to grid
-  const firstX = Math.floor(startWorldX / gridSize) * gridSize;
-  const firstY = Math.floor(startWorldY / gridSize) * gridSize;
+  const firstX = Math.floor(startWorldX / spacing) * spacing;
+  const firstY = Math.floor(startWorldY / spacing) * spacing;
 
-  for (let x = firstX; x < endWorldX; x += gridSize) {
+  ctx.strokeStyle = State.background.gridColor;
+  ctx.lineWidth = 1 / zoomLevel;
+  ctx.translate(0.5 / zoomLevel, 0.5 / zoomLevel);
+  for (let x = firstX; x < endWorldX; x += spacing) {
     ctx.beginPath();
     ctx.moveTo(x, startWorldY);
     ctx.lineTo(x, endWorldY);
     ctx.stroke();
   }
 
-  for (let y = firstY; y < endWorldY; y += gridSize) {
+  for (let y = firstY; y < endWorldY; y += spacing) {
     ctx.beginPath();
     ctx.moveTo(startWorldX, y);
     ctx.lineTo(endWorldX, y);
     ctx.stroke();
+  }
+  ctx.restore();
+}
+
+export function drawDots(zoomLevel) {
+  ctx.save();
+  const spacing = State.background.spacing;
+  const radius = 1.5 / zoomLevel;
+
+  const startWorldX = -State.offsetX / zoomLevel;
+  const startWorldY = -State.offsetY / zoomLevel;
+
+  const endWorldX = startWorldX + canvas.width / zoomLevel;
+  const endWorldY = startWorldY + canvas.height / zoomLevel;
+
+  const firstX = Math.floor(startWorldX / spacing) * spacing;
+  const firstY = Math.floor(startWorldY / spacing) * spacing;
+
+  ctx.fillStyle = State.background.dotColor;
+
+  for (let x = firstX; x < endWorldX; x += spacing) {
+    for (let y = firstY; y < endWorldY; y += spacing) {
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
   ctx.restore();
 }
@@ -145,7 +166,17 @@ export function drawConnectionPreview(fromX, fromY, toX, toY) {
 
 export function renderScene(nodes, connections, zoomLevel) {
   clearCanvas(zoomLevel);
-  drawGrid(zoomLevel);
+  switch (State.background.type) {
+  case "grid":
+    drawGrid(zoomLevel);
+    break;
+  case "dots":
+    drawDots(zoomLevel);
+    break;
+  case "none":
+  default:
+    break;
+}
 
   const nodeMap = new Map();
 nodes.forEach(n => nodeMap.set(n.id, n));

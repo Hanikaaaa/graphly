@@ -23,7 +23,10 @@ function mutateNode(fn) {
 export function updatePanel() {
   const node = State.getNodeById(State.selectedNodeId);
   const conn = State.connections.find(c => c.id === State.selectedConnectionId);
-
+  inputs.bgType.value = State.background.type;
+  inputs.bgCanvasColor.value = State.background.color;
+  inputs.bgGridColor.value = State.background.gridColor;
+  inputs.bgDotColor.value = State.background.dotColor;
   if (!node && !conn) {
   panel.classList.add("hidden");
   document.body.classList.remove("panel-open");
@@ -137,6 +140,31 @@ inputs.nodeImageInput.onchange = () => {
   };
 
   reader.readAsDataURL(file);
+};
+
+
+inputs.bgType.onchange = () => {
+  State.snapshotState();
+  State.background.type = inputs.bgType.value;
+  triggerRedraw();
+};
+
+inputs.bgCanvasColor.oninput = () => {
+  State.snapshotState();
+  State.background.color = inputs.bgCanvasColor.value;
+  triggerRedraw();
+};
+
+inputs.bgGridColor.oninput = () => {
+  State.snapshotState();
+  State.background.gridColor = inputs.bgGridColor.value;
+  triggerRedraw();
+};
+
+inputs.bgDotColor.oninput = () => {
+  State.snapshotState();
+  State.background.dotColor = inputs.bgDotColor.value;
+  triggerRedraw();
 };
 
 buttons.removeImage.onclick = () => {
