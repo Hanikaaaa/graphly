@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"graphly/backend/internal/db"
+	"graphly/backend/internal/auth"
 )
 
 const authUserIDContextKey = "userId"
@@ -21,6 +22,7 @@ type CanvasHandlers struct {
 
 type createCanvasRequest struct {
 	Title string `json:"title"`
+	AccessType string `json:"accessType"`
 }
 
 type updateCanvasRequest struct {
@@ -32,7 +34,7 @@ func NewCanvasHandlers(repo *db.CanvasRepository) *CanvasHandlers {
 }
 
 func (h *CanvasHandlers) CreateCanvas(c *gin.Context) {
-	userID, ok := userIDFromContext(c)
+	userID, ok := auth.UserIDFromContext(c)
 	if !ok {
 		writeError(c, http.StatusUnauthorized, "unauthorized")
 		return
@@ -44,7 +46,7 @@ func (h *CanvasHandlers) CreateCanvas(c *gin.Context) {
 		return
 	}
 
-	canvas, err := h.repo.CreateCanvas(c.Request.Context(), userID, req.Title)
+	canvas, err := h.repo.CreateCanvas(c.Request.Context(), userID, req.Title, req.AccessType)
 	if err != nil {
 		writeError(c, http.StatusInternalServerError, "failed to create canvas")
 		return
@@ -53,6 +55,7 @@ func (h *CanvasHandlers) CreateCanvas(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"id":        canvas.ID,
 		"title":     canvas.Title,
+		"accessType": canvas.AccessType,
 		"ownerId":   canvas.OwnerID,
 		"createdAt": canvas.CreatedAt,
 		"updatedAt": canvas.UpdatedAt,
@@ -60,7 +63,7 @@ func (h *CanvasHandlers) CreateCanvas(c *gin.Context) {
 }
 
 func (h *CanvasHandlers) ListCanvases(c *gin.Context) {
-	userID, ok := userIDFromContext(c)
+	userID, ok := auth.UserIDFromContext(c)
 	if !ok {
 		writeError(c, http.StatusUnauthorized, "unauthorized")
 		return
@@ -76,7 +79,7 @@ func (h *CanvasHandlers) ListCanvases(c *gin.Context) {
 }
 
 func (h *CanvasHandlers) GetCanvas(c *gin.Context) {
-	userID, ok := userIDFromContext(c)
+	userID, ok := auth.UserIDFromContext(c)
 	if !ok {
 		writeError(c, http.StatusUnauthorized, "unauthorized")
 		return
@@ -88,18 +91,13 @@ func (h *CanvasHandlers) GetCanvas(c *gin.Context) {
 		return
 	}
 
-	canvas, err := h.repo.GetCanvasByID(c.Request.Context(), canvasID)
+	canvas, err := h.repo.GetCanvasByID(c.Request.Context(), canvasID, userID)
 	if err != nil {
 		if errors.Is(err, db.ErrCanvasNotFound) {
 			writeError(c, http.StatusNotFound, "canvas not found")
 			return
 		}
 		writeError(c, http.StatusInternalServerError, "failed to fetch canvas")
-		return
-	}
-
-	if canvas.OwnerID != userID {
-		writeError(c, http.StatusForbidden, "forbidden")
 		return
 	}
 
@@ -112,7 +110,7 @@ func (h *CanvasHandlers) GetCanvas(c *gin.Context) {
 }
 
 func (h *CanvasHandlers) UpdateCanvas(c *gin.Context) {
-	userID, ok := userIDFromContext(c)
+	userID, ok := auth.UserIDFromContext(c)
 	if !ok {
 		writeError(c, http.StatusUnauthorized, "unauthorized")
 		return
@@ -140,7 +138,7 @@ func (h *CanvasHandlers) UpdateCanvas(c *gin.Context) {
 		return
 	}
 
-	updatedAt, err := h.repo.UpdateCanvasDataForOwner(c.Request.Context(), canvasID, userID, normalizedData)
+	updatedAt, err := h.repo.UpdateCanvasData(c.Request.Context(), canvasID, userID, normalizedData)
 	if err != nil {
 		switch {
 		case errors.Is(err, db.ErrCanvasNotFound):
@@ -157,29 +155,6 @@ func (h *CanvasHandlers) UpdateCanvas(c *gin.Context) {
 		"status":    "saved",
 		"updatedAt": updatedAt,
 	})
-}
-
-func userIDFromContext(c *gin.Context) (string, bool) {
-	value, exists := c.Get(authUserIDContextKey)
-	if !exists {
-		return "", false
-	}
-
-	userID, ok := value.(string)
-	if !ok {
-		return "", false
-	}
-
-	userID = strings.TrimSpace(userID)
-	if userID == "" {
-		return "", false
-	}
-
-	if _, err := uuid.Parse(userID); err != nil {
-		return "", false
-	}
-
-	return userID, true
 }
 
 func normalizeCanvasJSON(raw json.RawMessage) (json.RawMessage, error) {

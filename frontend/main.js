@@ -163,6 +163,8 @@ async function openCanvas(canvasID) {
     updatedAt: canvas.updatedAt,
   };
 
+  initCollaboration({ room: canvas.id });
+
   setSyncHandler(() => {
     enqueueAutosave();
   });
@@ -182,13 +184,13 @@ function renderDashboard() {
     loading: dashboardState.loading,
     creating: dashboardState.creating,
     error: dashboardState.error,
-    onCreate: async () => {
+    onCreate: async ({ title, accessType, sharedWith }) => {
       dashboardState.creating = true;
       dashboardState.error = "";
       renderDashboard();
 
       try {
-        const created = await createCanvas("");
+        const created = await createCanvas(title, accessType, sharedWith);
         await refreshDashboard();
         await openCanvas(created.id);
       } catch (error) {
