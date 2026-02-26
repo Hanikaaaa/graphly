@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Graphly | Visual Collaboration Canvas</title>
+  <meta name="description" content="Graphly is a collaborative visual canvas to map thoughts, connect ideas, and build knowledge visually." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sora: ["Sora", "sans-serif"],
+          },
+          colors: {
+            graphly: {
+              bg: "#081C3A",
+              surface: "#0F2A52",
+              "surface-hover": "#143766",
+              "accent-mint": "#34F5C5",
+              "accent-mint-hover": "#2EE6A6",
+              "accent-blue": "#4F8CFF",
+              "accent-purple": "#8B5CF6",
+              heading: "#F8FAFC",
+              text: "#D6E1F0",
+              "text-muted": "#9FB3C8",
+              border: "#1E3A6B",
+            },
+          },
+          boxShadow: {
+            panel: "0 22px 52px -28px rgba(2, 10, 28, 0.78)",
+            "mint-glow": "0 12px 34px -12px rgba(52, 245, 197, 0.35)",
+            "mint-soft": "0 18px 44px -20px rgba(52, 245, 197, 0.22)",
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      font-family: "Sora", sans-serif;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(52, 245, 197, 0.12), transparent 34%),
+        radial-gradient(circle at 84% 11%, rgba(79, 140, 255, 0.16), transparent 40%),
+        #081c3a;
+    }
+
+    .cluster-orb {
+      border-radius: 9999px;
+      box-shadow: inset 0 -12px 20px rgba(2, 12, 27, 0.45), 0 16px 28px -20px rgba(2, 12, 27, 0.65);
+    }
+
+    .section-anchor {
+      scroll-margin-top: 96px;
+    }
+  </style>
+</head>
+<body class="bg-graphly-bg text-graphly-text antialiased">
+  <header data-navbar class="sticky top-0 z-50 border-b border-graphly-border/90 bg-graphly-bg/90 backdrop-blur">
+    <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <!-- <a href="#home" data-scroll-target="home" class="text-2xl font-extrabold tracking-tight text-graphly-heading transition-colors duration-200 hover:text-graphly-accent-mint-hover">Graphly</a> -->
+      <a href="#home" data-scroll-target="home" class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-[#4F8CFF] via-[#8B5CF6] to-[#34F5C5] bg-clip-text text-transparent transition-all duration-300 hover:brightness-110 hover:text-graphly-accent-mint-hover">Graphly</a> 
+      <nav class="hidden items-center gap-7 md:flex">
+        <a href="#home" data-scroll-target="home" data-nav-link="home" class="text-sm font-medium text-graphly-text-muted transition-colors duration-200 hover:text-graphly-heading">Home</a>
+        <a href="#features" data-scroll-target="features" data-nav-link="features" class="text-sm font-medium text-graphly-text-muted transition-colors duration-200 hover:text-graphly-heading">Features</a>
+        <a href="#how-it-works" data-scroll-target="how-it-works" data-nav-link="how-it-works" class="text-sm font-medium text-graphly-text-muted transition-colors duration-200 hover:text-graphly-heading">How it Works</a>
+        <a href="#contact_us" data-scroll-target="contact_us" data-nav-link="contact_us" class="text-sm font-medium text-graphly-text-muted transition-colors duration-200 hover:text-graphly-heading">Contact</a>
+      </nav>
+
+      <div class="hidden items-center gap-3 md:flex">
+        <a href="/login" class="text-sm font-semibold text-graphly-text-muted transition-colors duration-200 hover:text-graphly-heading">Log in</a>
+        <a href="/signup" class="rounded-xl bg-graphly-accent-mint px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-mint-glow transition-all duration-300 hover:bg-graphly-accent-mint-hover hover:scale-[1.04]">Sign up</a>
+      </div>
+
+      <button id="mobile-menu-button" type="button" class="rounded-lg border border-graphly-border p-2 text-graphly-text-muted transition-colors duration-200 hover:text-graphly-heading md:hidden" aria-expanded="false" aria-controls="mobile-menu" aria-label="Toggle menu">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div id="mobile-menu" class="hidden border-t border-graphly-border bg-graphly-surface px-4 py-4 md:hidden">
+      <div class="flex flex-col gap-3">
+        <a href="#home" data-scroll-target="home" data-nav-link="home" class="rounded-md px-2 py-1 text-sm font-medium text-graphly-text-muted transition-colors duration-200 hover:text-graphly-heading">Home</a>
+        <a href="#features" data-scroll-target="features" data-nav-link="features" class="rounded-md px-2 py-1 text-sm font-medium text-graphly-text-muted transition-colors duration-200 hover:text-graphly-heading">Features</a>
+        <a href="#how-it-works" data-scroll-target="how-it-works" data-nav-link="how-it-works" class="rounded-md px-2 py-1 text-sm font-medium text-graphly-text-muted transition-colors duration-200 hover:text-graphly-heading">How it Works</a>
+        <a href="#contact_us" data-scroll-target="contact_us" data-nav-link="contact_us" class="rounded-md px-2 py-1 text-sm font-medium text-graphly-text-muted transition-colors duration-200 hover:text-graphly-heading">Contact</a>
+        <div class="mt-2 flex gap-2">
+          <a href="/login" class="flex-1 rounded-lg border border-graphly-border px-3 py-2 text-center text-sm font-semibold text-graphly-text-muted transition-colors duration-200 hover:text-graphly-heading">Log in</a>
+          <a href="/signup" class="flex-1 rounded-lg bg-graphly-accent-mint px-3 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-mint-glow transition-all duration-300 hover:bg-graphly-accent-mint-hover hover:scale-[1.04]">Sign up</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="home" class="section-anchor relative isolate mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 px-4 pb-16 pt-16 sm:px-6 lg:grid-cols-2 lg:px-8 lg:pt-24">
+      <div aria-hidden="true" class="pointer-events-none absolute left-20 top-[63%] h-56 w-56 -translate-y-1/2 rounded-full bg-graphly-accent-mint/20 blur-3xl"></div>
+      <div aria-hidden="true" class="pointer-events-none absolute right-4 top-20 h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(79,140,255,0.22)_0%,rgba(139,92,246,0.18)_48%,rgba(139,92,246,0)_76%)] blur-3xl"></div>
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-graphly-text-muted">COLLABORATIVE VISUAL WORKSPACE</p>
+        <h1 class="mt-4 text-4xl font-extrabold leading-tight text-graphly-heading sm:text-5xl">Visualize. Connect.</h1>
+        <h1 class="mt-1 text-4xl font-extrabold leading-tight text-graphly-heading sm:text-5xl">Create - with Graphly</h1>
+        <p class="mt-5 max-w-xl text-base leading-relaxed text-graphly-text sm:text-lg">Stop juggling notes and tabs. Graphly gives you one infinite canvas to think clearly, connect ideas faster, and build smarter - together.</p>
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <a href="/signup" class="rounded-xl bg-graphly-accent-mint px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-mint-glow transition-all duration-300 hover:bg-graphly-accent-mint-hover hover:scale-[1.04]">Start for free</a>
+          <button type="button" data-scroll-target="features" class="rounded-xl border border-graphly-accent-blue bg-transparent px-6 py-3 text-sm font-semibold text-graphly-heading transition-colors duration-300 hover:bg-graphly-accent-blue/10">See Graphly in Action</button>
+        </div>
+      </div>
+
+      <div class="relative mx-auto w-full max-w-xl rounded-lg border border-graphly-border bg-graphly-surface p-2 shadow-panel transition-all duration-300 hover:translate-x-2 hover:translate-y-2 hover:border-graphly-accent-mint hover:bg-graphly-surface-hover hover:shadow-xl">
+        <div class="grid grid-cols-4 items-end gap-3">
+          <img src="/assets/hero_landing_page.png" alt="Graphly canvas preview" class="col-span-4 rounded-lg border border-graphly-border shadow-sm" />
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section-anchor mx-auto w-full max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+      <div class="rounded-3xl border border-graphly-border bg-graphly-surface p-8 shadow-panel sm:p-10">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-graphly-text-muted">EVERYTHING YOU NEED</p>
+        <h2 class="mt-3 text-3xl font-bold text-graphly-heading">Built for the way modern teams think</h2>
+        <div class="mt-8 grid gap-5 md:grid-cols-3">
+          <div class="min-h-[240px] rounded-2xl border border-graphly-border bg-graphly-surface p-8 shadow-xl shadow-black/40 transition-all duration-300 hover:-translate-y-[4px] hover:bg-graphly-surface-hover hover:border-graphly-accent-mint hover:shadow-mint-soft md:p-8">
+            <h3 class="mb-3 text-xl font-semibold text-graphly-heading">Visual Mind Mapping</h3>
+            <div class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-graphly-surface-hover text-graphly-accent-mint">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                <path d="M8 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                <path d="M12 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                <path d="M20 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                <path d="M4 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                <path d="M16 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                <path d="M5 17l2 -3" />
+                <path d="M9 10l2 -3" />
+                <path d="M13 7l2 3" />
+                <path d="M17 14l2 3" />
+                <path d="M15 14l-2 3" />
+                <path d="M9 14l2 3" />
+              </svg>
+            </div>
+            <p class="leading-relaxed text-graphly-text">Turn scattered thoughts into structured visual maps using flexible nodes, smart connectors, and layouts that grow with your ideas.</p>
+          </div>
+          <div class="min-h-[240px] rounded-2xl border border-graphly-border bg-graphly-surface p-8 shadow-xl shadow-black/40 transition-all duration-300 hover:-translate-y-[4px] hover:bg-graphly-surface-hover hover:border-graphly-accent-mint hover:shadow-mint-soft md:p-8">
+            <h3 class="mb-3 text-xl font-semibold text-graphly-heading">Real-time Collaboration</h3>
+            <div class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-graphly-surface-hover text-graphly-accent-mint">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+              </svg>
+            </div>
+            <p class="leading-relaxed text-graphly-text">Work together seamlessly on shared canvases. Brainstorm, edit, and refine ideas with your team in one live workspace.</p>
+          </div>
+          <div class="min-h-[240px] rounded-2xl border border-graphly-border bg-graphly-surface p-8 shadow-xl shadow-black/40 transition-all duration-300 hover:-translate-y-[4px] hover:bg-graphly-surface-hover hover:border-graphly-accent-mint hover:shadow-mint-soft md:p-8">
+            <h3 class="mb-3 text-xl font-semibold text-graphly-heading">Infinite Canvas</h3>
+            <div class="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-graphly-surface-hover text-graphly-accent-mint">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+              </svg>
+            </div>
+            <p class="leading-relaxed text-graphly-text">Never run out of space. Explore complex workflows and large knowledge systems on a canvas that scales with your thinking.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-10 px-4 py-6 sm:px-6 lg:grid-cols-2 lg:px-8">
+      <div class="rounded-3xl border border-graphly-border bg-graphly-surface p-8 shadow-panel">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-graphly-text-muted">Why Graphly</p>
+        <h2 class="mt-3 text-3xl font-bold text-graphly-heading">Focus less on tools. More on ideas.</h2>
+        <p class="mt-4 text-sm leading-relaxed text-graphly-text">Graphly brings brainstorming, mapping, and collaboration into one focused workspace so your team spends less time switching tools and more time building what matters.</p>
+      </div>
+      <div class="grid grid-cols-4 items-end gap-3 rounded-3xl border border-graphly-border bg-graphly-surface p-8 shadow-panel"></div>
+    </section>
+
+    <section class="mx-auto mb-20 grid w-full max-w-6xl grid-cols-1 items-center gap-10 px-4 py-6 sm:px-6 lg:grid-cols-2 lg:px-8">
+      <div class="grid grid-cols-4 items-end gap-3 rounded-3xl border border-graphly-border bg-graphly-surface p-8 shadow-panel"></div>
+      <div class="rounded-3xl border border-graphly-border bg-graphly-surface p-8 shadow-panel">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-graphly-text-muted">Use Cases</p>
+        <h2 class="mt-3 text-3xl font-bold text-graphly-heading">One canvas. Endless possibilities.</h2>
+        <p class="mt-4 text-sm leading-relaxed text-graphly-text">Work together on shared canvases in real time. Brainstorm, review, and refine ideas with your team in one focused workspace.</p>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="section-anchor mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
+      <div class="rounded-3xl border border-graphly-border bg-graphly-surface p-8 shadow-panel sm:p-10">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-graphly-text-muted">How it works</p>
+        <h2 class="mt-3 text-3xl font-bold text-graphly-heading">Go from idea to aligned execution</h2>
+        <div class="mt-8 grid gap-6 md:grid-cols-2">
+          <div class="rounded-2xl border border-graphly-border bg-graphly-surface p-6 shadow-lg shadow-black/35 transition-all duration-300 hover:-translate-y-[4px] hover:bg-graphly-surface-hover hover:border-graphly-accent-mint hover:shadow-mint-soft">
+            <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-graphly-accent-mint text-sm font-semibold text-white">01</div>
+            <div class="mb-4 overflow-hidden rounded-xl border border-graphly-border">
+              <img src="/assets/steps01.png" alt="Create your canvas" class="h-40 w-full object-cover transition-transform duration-300 hover:scale-105" />
+            </div>
+            <h3 class="mb-2 text-lg font-semibold text-graphly-heading">Create your canvas</h3>
+            <p class="text-sm text-graphly-text">Start a fresh infinite workspace for mapping ideas and workflows.</p>
+          </div>
+
+          <div class="rounded-2xl border border-graphly-border bg-graphly-surface p-6 shadow-lg shadow-black/35 transition-all duration-300 hover:-translate-y-[4px] hover:bg-graphly-surface-hover hover:border-graphly-accent-mint hover:shadow-mint-soft">
+            <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-graphly-accent-mint text-sm font-semibold text-white">02</div>
+            <div class="mb-4 overflow-hidden rounded-xl border border-graphly-border">
+              <img src="/assets/step02.png" alt="Add and organize ideas" class="h-40 w-full object-cover transition-transform duration-300 hover:scale-105" />
+            </div>
+            <h3 class="mb-2 text-lg font-semibold text-graphly-heading">Add and organize ideas</h3>
+            <p class="text-sm text-graphly-text">Drop nodes, format text, and structure your thinking visually.</p>
+          </div>
+
+          <div class="rounded-2xl border border-graphly-border bg-graphly-surface p-6 shadow-lg shadow-black/35 transition-all duration-300 hover:-translate-y-[4px] hover:bg-graphly-surface-hover hover:border-graphly-accent-mint hover:shadow-mint-soft">
+            <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-graphly-accent-mint text-sm font-semibold text-white">03</div>
+            <div class="mb-4 overflow-hidden rounded-xl border border-graphly-border">
+              <img src="/assets/step03.png" alt="Connect relationships" class="h-40 w-full object-cover transition-transform duration-300 hover:scale-105" />
+            </div>
+            <h3 class="mb-2 text-lg font-semibold text-graphly-heading">Connect relationships</h3>
+            <p class="text-sm text-graphly-text">Link concepts with smart connectors so insights emerge clearly.</p>
+          </div>
+
+          <div class="rounded-2xl border border-graphly-border bg-graphly-surface p-6 shadow-lg shadow-black/35 transition-all duration-300 hover:-translate-y-[4px] hover:bg-graphly-surface-hover hover:border-graphly-accent-mint hover:shadow-mint-soft">
+            <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-graphly-accent-mint text-sm font-semibold text-white">04</div>
+            <div class="mb-4 overflow-hidden rounded-xl border border-graphly-border">
+              <img src="/assets/hero_landing_page.png" alt="Collaborate in real time" class="h-40 w-full object-cover transition-transform duration-300 hover:scale-105" />
+            </div>
+            <h3 class="mb-2 text-lg font-semibold text-graphly-heading">Collaborate in real time</h3>
+            <p class="text-sm text-graphly-text">Invite teammates and work together on the same canvas.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-anchor mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6 lg:px-8" id="contact_us">
+      <div class="rounded-3xl border border-graphly-border bg-graphly-surface p-8 shadow-panel sm:p-10">
+        <div class="grid items-center gap-12 md:grid-cols-2">
+          <div class="mb-4 overflow-hidden rounded-xl border border-graphly-border">
+            <img src="/assets/hero_landing_page.png" alt="Graphly preview" class="col-span-4 rounded-lg border border-graphly-border shadow-sm" />
+          </div>
+
+          <div>
+            <h2 class="mb-3 text-4xl font-bold text-graphly-heading">Contact Us</h2>
+            <p class="mb-8 text-graphly-text">Explore the future with us.<br />Feel free to get in touch.</p>
+            <form class="space-y-5">
+              <div>
+                <label class="mb-2 block text-sm text-graphly-text-muted">Name</label>
+                <input type="text" placeholder="Full Name" class="w-full rounded-xl border border-graphly-border bg-graphly-surface-hover px-4 py-3 text-graphly-text outline-none transition-colors duration-200 placeholder:text-graphly-text-muted focus:ring-2 focus:ring-graphly-accent-mint" />
+              </div>
+
+              <div>
+                <label class="mb-2 block text-sm text-graphly-text-muted">Email</label>
+                <input type="email" placeholder="Email address" class="w-full rounded-xl border border-graphly-border bg-graphly-surface-hover px-4 py-3 text-graphly-text outline-none transition-colors duration-200 placeholder:text-graphly-text-muted focus:ring-2 focus:ring-graphly-accent-mint" />
+              </div>
+
+              <div>
+                <label class="mb-2 block text-sm text-graphly-text-muted">Message</label>
+                <textarea rows="4" placeholder="How can we get better?" class="w-full resize-none rounded-xl border border-graphly-border bg-graphly-surface-hover px-4 py-3 text-graphly-text outline-none transition-colors duration-200 placeholder:text-graphly-text-muted focus:ring-2 focus:ring-graphly-accent-mint"></textarea>
+              </div>
+
+              <button type="submit" class="w-full rounded-xl bg-graphly-accent-mint py-3 font-medium text-white shadow-lg shadow-mint-glow transition-all duration-300 hover:bg-graphly-accent-mint-hover hover:scale-[1.04]">Send message</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
+      <div class="rounded-3xl border border-graphly-border bg-graphly-surface p-8 shadow-panel sm:flex sm:items-center sm:justify-between sm:p-10">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-graphly-text-muted">Ready to start</p>
+          <h2 class="mt-3 text-3xl font-bold text-graphly-heading">Bring your next idea to life in Graphly</h2>
+          <p class="mt-3 text-sm text-graphly-text">Create your first collaborative canvas in minutes.</p>
+        </div>
+        <a href="/signup" class="mt-6 inline-flex rounded-xl bg-graphly-accent-mint px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-mint-glow transition-all duration-300 hover:bg-graphly-accent-mint-hover hover:scale-[1.04] sm:mt-0">Start for free</a>
+      </div>
+    </section>
+  </main>
+
+  <footer id="contact" class="section-anchor border-t border-graphly-border bg-graphly-surface/80">
+    <div class="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
+      <div>
+        <h3 class="text-lg font-extrabold text-graphly-heading">Graphly</h3>
+        <p class="mt-3 text-sm text-graphly-text-muted">Collaborative visual canvas for modern teams.</p>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-graphly-heading">Product</p>
+        <ul class="mt-3 space-y-2 text-sm text-graphly-text-muted">
+          <li><a href="#features" data-scroll-target="features" class="transition-colors duration-200 hover:text-graphly-accent-mint-hover">Features</a></li>
+          <li><a href="#how-it-works" data-scroll-target="how-it-works" class="transition-colors duration-200 hover:text-graphly-accent-mint-hover">How it Works</a></li>
+          <li><a href="/app" class="transition-colors duration-200 hover:text-graphly-accent-mint-hover">Canvas App</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-graphly-heading">Account</p>
+        <ul class="mt-3 space-y-2 text-sm text-graphly-text-muted">
+          <li><a href="/login" class="transition-colors duration-200 hover:text-graphly-accent-mint-hover">Log in</a></li>
+          <li><a href="/signup" class="transition-colors duration-200 hover:text-graphly-accent-mint-hover">Sign up</a></li>
+          <li><a href="mailto:hello@graphly.app" class="transition-colors duration-200 hover:text-graphly-accent-mint-hover">hello@graphly.app</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-graphly-heading">Team</p>
+        <ul class="mt-3 space-y-2 text-sm text-graphly-text-muted">
+          <li><a href="https://www.linkedin.com/in/amollychoudhary/" class="transition-colors duration-200 hover:text-graphly-accent-mint-hover">Amolly Choudhary</a></li>
+          <li><a href="https://www.linkedin.com/in/ananyakuchhal/" class="transition-colors duration-200 hover:text-graphly-accent-mint-hover">Ananya Kuchhal</a></li>
+          <li><a href="http://linkedin.com/in/hanika-vasu/" class="transition-colors duration-200 hover:text-graphly-accent-mint-hover">Hanika Reddy</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/landing.js" defer></script>
+</body>
+</html>
+
