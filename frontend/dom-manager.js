@@ -143,6 +143,7 @@ export function syncNodeDOM(node, {
 
   const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
   shape.applyLayout(node, el);
+  shape.applyConnectorLayout?.(node, el, zoomLevel);
 
   // TEXT
   const text = el.querySelector(".node-text");
@@ -169,10 +170,6 @@ export function syncNodeDOM(node, {
   // PREVENT UI SCALING
   el.querySelectorAll(".node-resize-handle").forEach(h => {
     h.style.transform = `scale(${1 / zoomLevel})`;
-  });
-
-  el.querySelectorAll(".node-connector").forEach(c => {
-    c.style.transform = `scale(${1 / zoomLevel})`;
   });
 
   // STATE CLASSES
