@@ -585,9 +585,53 @@ canvas {
   box-shadow: 0 6px 16px rgba(0,0,0,.08);
   transition: box-shadow .2s ease, transform .2s ease;
   pointer-events: auto;
+  padding: 0;
 }
 .node-input:hover { box-shadow: 0 10px 24px rgba(0,0,0,.12); }
-.node-input.selected { box-shadow: 0 0 0 2px #7d7cbd, 0 10px 24px rgba(0,0,0,.12); }
+
+.node-input.selected {
+  outline: 2px dashed #7d7cbd;
+  outline-offset: 4px;
+}
+
+.node-resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: white;
+  border: 2px solid #7d7cbd;
+  border-radius: 2px;
+  display: none;
+  z-index: 10;
+}
+
+.node-input.selected .node-resize-handle {
+  display: block;
+}
+
+.node-resize-handle.top-left {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+
+.node-resize-handle.top-right {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+
+.node-resize-handle.bottom-left {
+  bottom: -6px;
+  left: -6px;
+  cursor: nesw-resize;
+}
+
+.node-resize-handle.bottom-right {
+  bottom: -6px;
+  right: -6px;
+  cursor: nwse-resize;
+}
 
 .node-connector {
   position: absolute;

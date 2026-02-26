@@ -261,13 +261,27 @@ canvas.addEventListener("mousemove", e => {
   if (isResizing && resizeNodeId) {
   const node = State.getNodeById(resizeNodeId);
   if (!node) return;
-
+  
   const dx = (e.clientX - startX) / State.zoomLevel;
   const dy = (e.clientY - startY) / State.zoomLevel;
 
+  const minSize = 80;
+
+  if (node.shape === "circle") {
+
+    const delta = Math.max(dx, dy);
+    const newSize = Math.max(minSize, startW + delta);
+
+    node.width = newSize;
+    node.height = newSize;
+
+    redraw();
+    return;
+  }
+
   const minW = 80;
   const minH = 40;
-
+  
   if (resizeDir.includes("right")) {
     node.width = Math.max(minW, startW + dx);
   }

@@ -15,6 +15,7 @@ export const inputs = {
   connectorWidth: document.getElementById("connector-width"),
   connectorStyle: document.getElementById("connector-style"),
   fontFamily: document.getElementById("font-family"),
+  nodeShape: document.getElementById("node-shape"),
   bgType: document.getElementById("bg-type"),
   bgCanvasColor: document.getElementById("bg-canvas-color"),
   bgGridColor: document.getElementById("bg-grid-color"),

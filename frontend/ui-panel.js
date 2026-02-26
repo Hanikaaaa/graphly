@@ -50,7 +50,7 @@ export function updatePanel() {
     inputs.borderColor.value = node.borderColor;
     inputs.opacity.value = node.opacity;
     inputs.borderRadius.value = node.borderRadius;
-
+    inputs.nodeShape.value = node.shape;
     inputs.textColor.value = node.fontColor;
     inputs.fontSize.value = node.fontSize;
     inputs.textAlign.value = node.textAlign;
@@ -114,6 +114,18 @@ inputs.connectorWidth.oninput = () => {
     triggerRedraw();
     queueStateSync("node_update");
   }
+};
+
+inputs.nodeShape.onchange = () => {
+  mutateNode(n => {
+    n.shape = inputs.nodeShape.value;
+
+    if (n.shape === "circle") {
+      const size = Math.max(n.width, n.height);
+      n.width = size;
+      n.height = size;
+    }
+  });
 };
 
 inputs.connectorStyle.onchange = () => {

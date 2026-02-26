@@ -106,29 +106,33 @@ export function syncNodeDOM(node, {
   const el = document.getElementById(node.id);
   if (!el) return;
 
-  // IMAGE SYNC
-let imgWrapper = el.querySelector(".node-image-wrapper");
+  /* =========================
+     IMAGE SYNC
+  ========================== */
+  let imgWrapper = el.querySelector(".node-image-wrapper");
 
-if (node.image) {
-  if (!imgWrapper) {
-    imgWrapper = document.createElement("div");
-    imgWrapper.className = "node-image-wrapper";
+  if (node.image) {
+    if (!imgWrapper) {
+      imgWrapper = document.createElement("div");
+      imgWrapper.className = "node-image-wrapper";
 
-    const img = document.createElement("img");
-    img.className = "node-image";
-    imgWrapper.appendChild(img);
+      const img = document.createElement("img");
+      img.className = "node-image";
+      imgWrapper.appendChild(img);
 
-    el.prepend(imgWrapper);
+      el.prepend(imgWrapper);
+    }
+
+    imgWrapper.querySelector("img").src = node.image;
+    el.classList.add("has-image");
+  } else {
+    imgWrapper?.remove();
+    el.classList.remove("has-image");
   }
 
-  imgWrapper.querySelector("img").src = node.image;
-  el.classList.add("has-image");
-} else {
-  imgWrapper?.remove();
-  el.classList.remove("has-image");
-}
-
-  //Position and Size
+  /* =========================
+     POSITION + SIZE
+  ========================== */
   el.style.left = `${node.x * zoomLevel + State.offsetX}px`;
   el.style.top = `${node.y * zoomLevel + State.offsetY}px`;
   el.style.width = `${node.width}px`;
@@ -136,14 +140,28 @@ if (node.image) {
   el.style.transform = `scale(${zoomLevel})`;
   el.style.transformOrigin = "top left";
 
-  // Box Styles
+  /* =========================
+     BOX STYLES
+  ========================== */
   el.style.backgroundColor = node.color;
   el.style.opacity = node.opacity;
-  el.style.borderRadius = `${node.borderRadius}px`;
   el.style.border = `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
 
+  if (node.shape === "circle") {
+    el.style.borderRadius = "50%";
+    el.style.padding = "0";
+    el.style.display = "flex";
+    el.style.alignItems = "center";
+    el.style.justifyContent = "center";
+  } else {
+    el.style.borderRadius = `${node.borderRadius}px`;
+    el.style.padding = "10px";
+    el.style.display = "block";
+  }
 
-  // Text Styles
+  /* =========================
+     TEXT STYLES
+  ========================== */
   const text = el.querySelector(".node-text");
   const input = el.querySelector(".node-text-input");
 
@@ -159,22 +177,72 @@ if (node.image) {
   text.style.fontFamily = node.fontFamily;
   input.style.fontFamily = node.fontFamily;
 
-  text.style.textAlign = node.textAlign;
-  input.style.textAlign = node.textAlign;
+  text.style.textAlign =
+    node.shape === "circle" ? "center" : node.textAlign;
+
+  input.style.textAlign =
+    node.shape === "circle" ? "center" : node.textAlign;
 
   text.style.fontWeight = node.fontWeight;
   input.style.fontWeight = node.fontWeight;
 
-  // preventing UI Scaling
+  /* =========================
+     CONNECTOR POSITIONING
+     (Circle-specific edge logic)
+  ========================== */
+  const connectors = el.querySelectorAll(".node-connector");
+
+  connectors.forEach(conn => {
+    // reset first
+    conn.style.top = "";
+    conn.style.bottom = "";
+    conn.style.left = "";
+    conn.style.right = "";
+
+    conn.style.transform = `scale(${1 / zoomLevel})`;
+
+    if (node.shape === "circle") {
+      if (conn.classList.contains("top")) {
+        conn.style.top = "-5px";
+        conn.style.left = "50%";
+        conn.style.transform += " translateX(-50%)";
+      }
+
+      if (conn.classList.contains("bottom")) {
+        conn.style.bottom = "-5px";
+        conn.style.left = "50%";
+        conn.style.transform += " translateX(-50%)";
+      }
+
+      if (conn.classList.contains("left")) {
+        conn.style.left = "-5px";
+        conn.style.top = "50%";
+        conn.style.transform += " translateY(-50%) rotate(90deg)";
+      }
+
+      if (conn.classList.contains("right")) {
+        conn.style.right = "-5px";
+        conn.style.top = "50%";
+        conn.style.transform += " translateY(-50%) rotate(90deg)";
+      }
+    }
+
+    if (node.shape !== "circle") {
+      el.style.padding = "10px";
+    }
+
+  });
+
+  /* =========================
+     PREVENT UI SCALING
+  ========================== */
   el.querySelectorAll(".node-resize-handle").forEach(h => {
     h.style.transform = `scale(${1 / zoomLevel})`;
   });
 
-  el.querySelectorAll(".node-connector").forEach(c => {
-    c.style.transform = `scale(${1 / zoomLevel})`;
-  });
-
-  // State Classes
+  /* =========================
+     STATE CLASSES
+  ========================== */
   el.classList.toggle("selected", isSelected);
   el.classList.toggle("editing", isEditing);
 }
