@@ -4,6 +4,8 @@ export let selectedNodeId = null;
 export let selectedConnectionId = null;
 export let editingNodeId = null;
 export let zoomLevel = 1;
+export let offsetX = 0;
+export let offsetY = 0;
 
 let undoStack = [];
 let redoStack = [];
@@ -24,6 +26,8 @@ function cloneState() {
     selectedConnectionId,
     editingNodeId,
     zoomLevel,
+    offsetX,
+    offsetY,
   });
 }
 
@@ -31,6 +35,8 @@ function restoreState(snapshot) {
   nodes = snapshot.nodes;
   connections = snapshot.connections;
   zoomLevel = snapshot.zoomLevel;
+  offsetX = snapshot.offsetX;
+  offsetY = snapshot.offsetY;
 
   selectedNodeId = nodes.some(n => n.id === snapshot.selectedNodeId)
     ? snapshot.selectedNodeId
@@ -66,6 +72,11 @@ export function redo() {
   undoStack.push(cloneState());
   restoreState(snapshot);
   return true;
+}
+
+export function setOffset(x, y) {
+  offsetX = x;
+  offsetY = y;
 }
 
 export function createNodeObject(x, y) {
@@ -228,6 +239,8 @@ export function exportCollabState() {
     nodes,
     connections,
     zoomLevel,
+    offsetX,
+    offsetY,
   });
 }
 
@@ -239,6 +252,8 @@ export function importCollabState(snapshot) {
   nodes = structuredClone(snapshot.nodes);
   connections = structuredClone(snapshot.connections);
   zoomLevel = typeof snapshot.zoomLevel === "number" ? snapshot.zoomLevel : zoomLevel;
+  offsetX = typeof snapshot.offsetX === "number" ? snapshot.offsetX : 0;
+  offsetY = typeof snapshot.offsetY === "number" ? snapshot.offsetY : 0;
 
   selectedNodeId = null;
   selectedConnectionId = null;

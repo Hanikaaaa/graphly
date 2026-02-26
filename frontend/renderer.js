@@ -15,32 +15,54 @@ export function clearCanvas(zoomLevel) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // apply zoom
-  ctx.setTransform(zoomLevel, 0, 0, zoomLevel, 0, 0);
+  ctx.setTransform(
+    zoomLevel,
+    0,
+    0,
+    zoomLevel,
+    State.offsetX,
+    State.offsetY
+  );
 }
 
 // Grid
 
 export function drawGrid(zoomLevel) {
-  const gridSize = 14;
-  const width = canvas.width / zoomLevel;
-  const height = canvas.height / zoomLevel;
+  const gridSize = 40;
+
+  const width = canvas.width;
+  const height = canvas.height;
+
+  ctx.save();
 
   ctx.strokeStyle = "#e6e6e6";
-  ctx.lineWidth = 0.5;
+  ctx.lineWidth = 1;
 
-  for (let x = 0; x <= width; x += gridSize) {
+  // visible world bounds
+  const startWorldX = -State.offsetX / zoomLevel;
+  const startWorldY = -State.offsetY / zoomLevel;
+
+  const endWorldX = startWorldX + width / zoomLevel;
+  const endWorldY = startWorldY + height / zoomLevel;
+
+  // snap to grid
+  const firstX = Math.floor(startWorldX / gridSize) * gridSize;
+  const firstY = Math.floor(startWorldY / gridSize) * gridSize;
+
+  for (let x = firstX; x < endWorldX; x += gridSize) {
     ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, height);
+    ctx.moveTo(x, startWorldY);
+    ctx.lineTo(x, endWorldY);
     ctx.stroke();
   }
 
-  for (let y = 0; y <= height; y += gridSize) {
+  for (let y = firstY; y < endWorldY; y += gridSize) {
     ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
+    ctx.moveTo(startWorldX, y);
+    ctx.lineTo(endWorldX, y);
     ctx.stroke();
   }
+  ctx.restore();
 }
 
 // Connection Drawing

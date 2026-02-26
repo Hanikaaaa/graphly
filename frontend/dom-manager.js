@@ -1,3 +1,5 @@
+import * as State from "./state.js";
+
 export function createNodeDOM(node, handlers) {
   const el = document.createElement("div");
   el.className = "node-input";
@@ -127,8 +129,8 @@ if (node.image) {
 }
 
   //Position and Size
-  el.style.left = `${node.x * zoomLevel}px`;
-  el.style.top = `${node.y * zoomLevel}px`;
+  el.style.left = `${node.x * zoomLevel + State.offsetX}px`;
+  el.style.top = `${node.y * zoomLevel + State.offsetY}px`;
   el.style.width = `${node.width}px`;
   el.style.height = `${node.height}px`;
   el.style.transform = `scale(${zoomLevel})`;

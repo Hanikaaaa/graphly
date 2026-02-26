@@ -30,6 +30,13 @@ let startH = 0;
 let startNodeX = 0;
 let startNodeY = 0;
 
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
+let startOffsetX = 0;
+let startOffsetY = 0;
+let isSpacePressed = false;
+
 const DRAG_THRESHOLD = 4;
 let externalRedraw = null;
 
@@ -189,6 +196,19 @@ export function attachNodeHandlers(node) {
 
 
 canvas.addEventListener("mousemove", e => {
+  if (isPanning) {
+    const dx = e.clientX - panStartX;
+    const dy = e.clientY - panStartY;
+
+    State.setOffset(
+      startOffsetX + dx,
+      startOffsetY + dy
+    );
+
+     redraw();
+     return;
+  }
+
   if (isPointerDown && potentialDragNodeId && !isDraggingNode) {
     const dx = e.clientX - pointerDownX;
     const dy = e.clientY - pointerDownY;
@@ -199,8 +219,8 @@ canvas.addEventListener("mousemove", e => {
 
       State.snapshotState();
       isDraggingNode = true;
-      dragOffsetX = (pointerDownX / State.zoomLevel) - node.x;
-      dragOffsetY = (pointerDownY / State.zoomLevel) - node.y;
+      dragOffsetX = ((pointerDownX - State.offsetX) / State.zoomLevel) - node.x;
+      dragOffsetY = ((pointerDownY - State.offsetY) / State.zoomLevel) - node.y;
     }
   }
 
@@ -208,8 +228,8 @@ canvas.addEventListener("mousemove", e => {
     const node = State.getNodeById(potentialDragNodeId);
     if (!node) return;
 
-    node.x = (e.clientX / State.zoomLevel) - dragOffsetX;
-    node.y = (e.clientY / State.zoomLevel) - dragOffsetY;
+    node.x = ((e.clientX - State.offsetX)/ State.zoomLevel) - dragOffsetX;
+    node.y = ((e.clientY - State.offsetY) / State.zoomLevel) - dragOffsetY;
     redraw();
     return;
   }
@@ -219,8 +239,8 @@ canvas.addEventListener("mousemove", e => {
     Render.drawConnectionPreview(
       connectionSource.x + connectionSource.width / 2,
       connectionSource.y + connectionSource.height / 2,
-      e.clientX / State.zoomLevel,
-      e.clientY / State.zoomLevel
+      (e.clientX - State.offsetX) / State.zoomLevel,
+      (e.clientY - State.offsetY) / State.zoomLevel
     );
   }
 
@@ -281,11 +301,12 @@ window.addEventListener("mouseup", () => {
 
   if (isPointerDown && potentialDragNodeId && !isDraggingNode && !State.selectedConnectionId) {
   State.setSelectedNodeId(potentialDragNodeId);
-}
+  }
 
 
   isPointerDown = false;
   potentialDragNodeId = null;
+  isPanning = false;
   redraw();
 });
 canvas.addEventListener("mousedown", (e) => {
@@ -293,6 +314,23 @@ canvas.addEventListener("mousedown", (e) => {
 
   if (State.selectedConnectionId) {
     console.log("[canvas] connection already selected, not clearing");
+    return;
+  }
+  if (e.button === 1) { // middle mouse
+    isPanning = true;
+    panStartX = e.clientX;
+    panStartY = e.clientY;
+    startOffsetX = State.offsetX;
+    startOffsetY = State.offsetY;
+    return;
+  }
+
+  if (isSpacePressed) {
+    isPanning = true;
+    panStartX = e.clientX;
+    panStartY = e.clientY;
+    startOffsetX = State.offsetX;
+    startOffsetY = State.offsetY;
     return;
   }
 
@@ -303,8 +341,8 @@ canvas.addEventListener("mousedown", (e) => {
 canvas.addEventListener("mouseup", e => {
   if (!isDrawingConnection || !connectionSource) return;
 
-  const x = e.clientX / State.zoomLevel;
-  const y = e.clientY / State.zoomLevel;
+  const x = (e.clientX - State.offsetX) / State.zoomLevel;
+  const y = (e.clientY - State.offsetY) / State.zoomLevel;
   const sourceNode = connectionSource;
 
   State.snapshotState();
@@ -321,11 +359,26 @@ canvas.addEventListener("mouseup", e => {
   queueStateSync("node_create");
 });
 
+canvas.addEventListener(
+  "wheel",
+  (e) => {
+    e.preventDefault();
+
+    State.setOffset(
+      State.offsetX - e.deltaX,
+      State.offsetY - e.deltaY
+    );
+
+    triggerRedraw();
+  },
+  { passive: false }
+);
+
 canvas.addEventListener("click", e => {
   if (e.target !== canvas) return;
 
-  const x = e.clientX / State.zoomLevel;
-  const y = e.clientY / State.zoomLevel;
+  const x = (e.clientX - State.offsetX) / State.zoomLevel;
+  const y = (e.clientY - State.offsetY) / State.zoomLevel;
 
   if (State.nodes.length === 0) {
     State.snapshotState();
@@ -357,8 +410,8 @@ canvas.addEventListener("click", e => {
 canvas.addEventListener("dblclick", e => {
   if (e.target !== canvas) return;
 
-  const x = e.clientX / State.zoomLevel;
-  const y = e.clientY / State.zoomLevel;
+  const x = (e.clientX - State.offsetX) / State.zoomLevel;
+  const y = (e.clientY - State.offsetY) / State.zoomLevel;
 
   State.snapshotState();
   const node = State.createNodeObject(x - 70, y - 40);
@@ -375,6 +428,17 @@ window.addEventListener("keydown", e => {
     State.deleteNodeLogic(State.selectedNodeId, e.shiftKey);
     redraw();
     queueStateSync("node_delete");
+  }
+  if (e.code === "Space") {
+    isSpacePressed = true;
+    canvas.style.cursor = "grab";
+  }
+});
+
+window.addEventListener("keyup", (e) => {
+  if (e.code === "Space") {
+    isSpacePressed = false;
+    canvas.style.cursor = "default";
   }
 });
 
