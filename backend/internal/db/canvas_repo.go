@@ -4,14 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"strings"
 	"time"
 
+	"graphly/backend/internal/models"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/pgtype"
-	"graphly/backend/internal/models"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const defaultDBTimeout = 5 * time.Second
@@ -29,7 +31,7 @@ func NewCanvasRepository(pool *pgxpool.Pool) *CanvasRepository {
 	return &CanvasRepository{pool: pool}
 }
 
-func (r *CanvasRepository) CreateCanvas(ctx context.Context, ownerID, title string, accessType string) (*models.Canvas, error) {
+func (r *CanvasRepository) CreateCanvas(ctx context.Context, ownerID, title string, accessType string, sharedWith []string) (*models.Canvas, error) {
 	queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
 	defer cancel()
 
@@ -39,7 +41,7 @@ func (r *CanvasRepository) CreateCanvas(ctx context.Context, ownerID, title stri
 		Title:   normalizeCanvasTitle(title),
 		Data:    json.RawMessage("{}"),
 		AccessType: accessType,
-		SharedWith: []string{},
+		SharedWith: sharedWith,
 	}
 
 	query := `
@@ -54,6 +56,16 @@ func (r *CanvasRepository) CreateCanvas(ctx context.Context, ownerID, title stri
 	)
 	if err != nil {
 		return nil, err
+	}
+	for _, userID := range sharedWith {
+		_, err := r.pool.Exec(queryCtx, `
+			INSERT INTO canvas_shares (canvas_id, user_id)
+			VALUES ($1, $2)
+			ON CONFLICT DO NOTHING
+		`, canvas.ID, userID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return canvas, nil
@@ -277,6 +289,7 @@ func (r *CanvasRepository) canUserEditCanvas(ctx context.Context, canvasID, user
     if err != nil {
         return false, err
     }
+	log.Println("CHECK EDIT:", canvasID, userID, canEdit)
     return canEdit, nil
 }
 func normalizeCanvasTitle(title string) string {

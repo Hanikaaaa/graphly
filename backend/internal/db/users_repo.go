@@ -117,3 +117,35 @@ func isEmailUniqueViolation(err error) bool {
 
 	return pgErr.Code == "23505" && strings.Contains(strings.ToLower(pgErr.ConstraintName), "email")
 }
+func (r *UserRepository) GetUserIDsByEmails(ctx context.Context, emails []string) ([]string, error) {
+    if len(emails) == 0 {
+        return []string{}, nil
+    }
+
+    queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
+    defer cancel()
+
+    rows, err := r.pool.Query(queryCtx, `
+        SELECT id
+        FROM users
+        WHERE email = ANY($1)
+    `, emails)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    ids := make([]string, 0)
+    for rows.Next() {
+        var id string
+        if err := rows.Scan(&id); err != nil {
+            return nil, err
+        }
+        ids = append(ids, id)
+    }
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+
+    return ids, nil
+}

@@ -41,7 +41,7 @@ func RegisterRoutes(
 	protectedAuth := router.Group("/auth", authMiddleware)
 	protectedAuth.GET("/me", authHandlers.Me)
 
-	canvasHandlers := NewCanvasHandlers(canvasRepo)
+	canvasHandlers := NewCanvasHandlers(canvasRepo, userRepo)
 	protectedCanvases := router.Group("/canvases", authMiddleware)
 	protectedCanvases.POST("", canvasHandlers.CreateCanvas)
 	protectedCanvases.GET("", canvasHandlers.ListCanvases)
