@@ -18,19 +18,25 @@ const authUserIDContextKey = "userId"
 
 type CanvasHandlers struct {
 	repo *db.CanvasRepository
+	userRepo  *db.UserRepository
 }
 
 type createCanvasRequest struct {
 	Title string `json:"title"`
 	AccessType string `json:"accessType"`
+	SharedWith []string `json:"sharedWith"`
 }
 
 type updateCanvasRequest struct {
 	Data json.RawMessage `json:"data"`
 }
 
-func NewCanvasHandlers(repo *db.CanvasRepository) *CanvasHandlers {
-	return &CanvasHandlers{repo: repo}
+func NewCanvasHandlers(canvasRepo *db.CanvasRepository, userRepo *db.UserRepository) *CanvasHandlers {
+	 return &CanvasHandlers{
+        repo:     canvasRepo,
+        userRepo: userRepo,
+    }
+
 }
 
 func (h *CanvasHandlers) CreateCanvas(c *gin.Context) {
@@ -45,8 +51,17 @@ func (h *CanvasHandlers) CreateCanvas(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, "invalid request body")
 		return
 	}
+	var sharedUserIDs []string
+    if len(req.SharedWith) > 0 {
+        ids, err := h.userRepo.GetUserIDsByEmails(c.Request.Context(), req.SharedWith)
+        if err != nil {
+            writeError(c, http.StatusInternalServerError, "failed to resolve shared users")
+            return
+        }
+        sharedUserIDs = ids
+    }
 
-	canvas, err := h.repo.CreateCanvas(c.Request.Context(), userID, req.Title, req.AccessType)
+	canvas, err := h.repo.CreateCanvas(c.Request.Context(), userID, req.Title, req.AccessType, sharedUserIDs)
 	if err != nil {
 		writeError(c, http.StatusInternalServerError, "failed to create canvas")
 		return
@@ -59,6 +74,7 @@ func (h *CanvasHandlers) CreateCanvas(c *gin.Context) {
 		"ownerId":   canvas.OwnerID,
 		"createdAt": canvas.CreatedAt,
 		"updatedAt": canvas.UpdatedAt,
+		"sharedWith": req.SharedWith,
 	})
 }
 
