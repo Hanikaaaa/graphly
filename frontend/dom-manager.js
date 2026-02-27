@@ -6,6 +6,10 @@ export function createNodeDOM(node, handlers) {
   el.className = "node-input";
   el.id = node.id;
 
+  const shapeLayer = document.createElement("div");
+  shapeLayer.className = "node-shape-layer";
+  el.appendChild(shapeLayer);
+
   // Image
   if (node.image) {
     const imageWrapper = document.createElement("div");
@@ -141,21 +145,22 @@ export function syncNodeDOM(node, {
   el.style.transformOrigin = "top left";
 
   // BOX STYLES
-  el.style.backgroundColor = node.color;
+  const shapeLayer = el.querySelector(".node-shape-layer");
+  shapeLayer.style.backgroundColor = node.color;
   el.style.opacity = node.opacity;
-  el.style.border = `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
-
+  // el.style.border = `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
+  shapeLayer.style.border =
+  `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
   const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
-
-  shape.applyLayout(node, el);
+  shapeLayer.style.clipPath = "";
+  shape.applyLayout?.(node, el);
+  shape.applyConnectorLayout?.(node, el, zoomLevel);
   
-  // Apply border radius only if shape supports it
-  if (shape.meta.supportsBorderRadius) {
-    el.style.borderRadius = `${node.borderRadius}px`;
-  } else {
-    el.style.borderRadius = "";
-  }
-  shape.applyConnectorLayout(node, el, zoomLevel);
+if (shape.meta.supportsBorderRadius) {
+  shapeLayer.style.borderRadius = `${node.borderRadius}px`;
+} else {
+  shapeLayer.style.borderRadius = "0px";
+}
   // TEXT
   const text = el.querySelector(".node-text");
   const input = el.querySelector(".node-text-input");

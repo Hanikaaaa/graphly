@@ -4,10 +4,10 @@
 
 .node-input {
   position: absolute;
-  background: white;
-  border: 1px solid #e0e0e0;
+  background: transparent;
+  border: none;
   border-radius: var(--radius-md);
-  box-shadow: 0 6px 16px rgba(0,0,0,.08);
+  /* box-shadow: 0 6px 16px rgba(0,0,0,.08); */
   transition: box-shadow .2s ease;
 
   display: flex;
@@ -18,9 +18,7 @@
   padding: 0;
 }
 
-.node-input:hover {
-  box-shadow: 0 10px 24px rgba(0,0,0,.12);
-}
+
 
 .node-input.selected {
   box-shadow: 0 0 0 2px #7d7cbd,
@@ -92,7 +90,8 @@
 }
 
 .node-text,
-.node-text-input {
+.node-text-input,
+.node-image-wrapper {
   position: relative;
   z-index: 1;
 }
@@ -142,4 +141,15 @@
 .node-input,
 .red-dot {
   will-change: transform;
+}
+
+.node-shape-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.node-connector,
+.node-resize-handle {
+  z-index: 2;
 }

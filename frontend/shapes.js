@@ -2,16 +2,21 @@ export const ShapeRegistry = {};
 
 function createBaseShape(config) {
   return {
-  meta: {
-    keepAspectRatio: false,
-    supportsBorderRadius: false,
-    connectors: ["top", "right", "bottom", "left"],
-    ...config.meta
-  },
+    meta: {
+      keepAspectRatio: false,
+      supportsBorderRadius: false,
+      connectors: ["top", "right", "bottom", "left"],
+      ...config.meta
+    },
 
     applyLayout(node, el) {
-      el.classList.remove(...el.classList);
-      el.classList.add("node-input", `shape-${node.shape}`);
+      Array.from(el.classList)
+        .filter(c => c.startsWith("shape-"))
+        .forEach(c => el.classList.remove(c));
+
+      el.classList.add(`shape-${node.shape}`);
+
+      config.applyLayout?.(node, el);
     },
 
     applyResize(node, ctx) {
@@ -23,42 +28,47 @@ function createBaseShape(config) {
     },
 
     applyConnectorLayout(node, el, zoomLevel) {
-  const connectors = el.querySelectorAll(".node-connector");
+      const connectors = el.querySelectorAll(".node-connector");
 
-  connectors.forEach(conn => {
-    conn.style.transform = `scale(${1 / zoomLevel})`;
+      connectors.forEach(conn => {
+        conn.style.transform = `scale(${1 / zoomLevel})`;
 
-    if (conn.classList.contains("top")) {
-      conn.style.top = "-5px";
-      conn.style.left = "50%";
-      conn.style.transform += " translateX(-50%)";
+        if (conn.classList.contains("top")) {
+          conn.style.top = "-5px";
+          conn.style.left = "50%";
+          conn.style.transform += " translateX(-50%)";
+        }
+
+        if (conn.classList.contains("bottom")) {
+          conn.style.bottom = "-5px";
+          conn.style.left = "50%";
+          conn.style.transform += " translateX(-50%)";
+        }
+
+        if (conn.classList.contains("left")) {
+          conn.style.left = "-5px";
+          conn.style.top = "50%";
+          conn.style.transform += " translateY(-50%)";
+        }
+
+        if (conn.classList.contains("right")) {
+          conn.style.right = "-5px";
+          conn.style.top = "50%";
+          conn.style.transform += " translateY(-50%)";
+        }
+      });
     }
-
-    if (conn.classList.contains("bottom")) {
-      conn.style.bottom = "-5px";
-      conn.style.left = "50%";
-      conn.style.transform += " translateX(-50%)";
-    }
-
-    if (conn.classList.contains("left")) {
-      conn.style.left = "-5px";
-      conn.style.top = "50%";
-      conn.style.transform += " translateY(-50%)";
-    }
-
-    if (conn.classList.contains("right")) {
-      conn.style.right = "-5px";
-      conn.style.top = "50%";
-      conn.style.transform += " translateY(-50%)";
-    }
-  });
-}
   };
 }
 
+/* ================= RECTANGLE ================= */
+
 ShapeRegistry.rectangle = createBaseShape({
-  meta: {
-    supportsBorderRadius: true
+  meta: { supportsBorderRadius: true },
+
+  applyLayout(node, el) {
+    const shapeLayer = el.querySelector(".node-shape-layer");
+    shapeLayer.style.clipPath = "";
   },
 
   applyResize(node, ctx) {
@@ -95,8 +105,11 @@ ShapeRegistry.rectangle = createBaseShape({
 });
 
 ShapeRegistry.circle = createBaseShape({
-  meta: {
-    keepAspectRatio: true
+  meta: { keepAspectRatio: true },
+
+  applyLayout(node, el) {
+    const shapeLayer = el.querySelector(".node-shape-layer");
+    shapeLayer.style.clipPath = "circle(50% at 50% 50%)";
   },
 
   enforceConstraints(node) {
@@ -114,37 +127,23 @@ ShapeRegistry.circle = createBaseShape({
 
     node.width = newSize;
     node.height = newSize;
+  }
+});
+
+ShapeRegistry.diamond = createBaseShape({
+  applyLayout(node, el) {
+    const shapeLayer = el.querySelector(".node-shape-layer");
+
+    shapeLayer.style.clipPath =
+      "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)";
   },
 
-  applyConnectorLayout(node, el, zoomLevel) {
-    const connectors = el.querySelectorAll(".node-connector");
+  enforceConstraints(node) {
+    node.width = Math.max(node.width, 80);
+    node.height = Math.max(node.height, 60);
+  },
 
-    connectors.forEach(conn => {
-      conn.style.transform = `scale(${1 / zoomLevel})`;
-
-      if (conn.classList.contains("top")) {
-        conn.style.top = "-5px";
-        conn.style.left = "50%";
-        conn.style.transform += " translateX(-50%)";
-      }
-
-      if (conn.classList.contains("bottom")) {
-        conn.style.bottom = "-5px";
-        conn.style.left = "50%";
-        conn.style.transform += " translateX(-50%)";
-      }
-
-      if (conn.classList.contains("left")) {
-        conn.style.left = "-5px";
-        conn.style.top = "50%";
-        conn.style.transform += " translateY(-50%) rotate(90deg)";
-      }
-
-      if (conn.classList.contains("right")) {
-        conn.style.right = "-5px";
-        conn.style.top = "50%";
-        conn.style.transform += " translateY(-50%) rotate(90deg)";
-      }
-    });
+  applyResize(node, ctx) {
+    ShapeRegistry.rectangle.applyResize(node, ctx);
   }
 });
