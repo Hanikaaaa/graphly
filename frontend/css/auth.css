@@ -7,6 +7,15 @@
   z-index: 400;
   background: rgba(10, 16, 28, 0.4);
   backdrop-filter: blur(3px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.auth-overlay::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 .auth-overlay.hidden { display: none; }
 
