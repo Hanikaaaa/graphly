@@ -20,7 +20,7 @@ export function createNodeDOM(node, handlers) {
     img.src = node.image;
 
     imageWrapper.appendChild(img);
-    el.appendChild(imageWrapper);
+    shapeLayer.appendChild(imageWrapper);
 
     el.classList.add("has-image");
   }
@@ -38,7 +38,7 @@ export function createNodeDOM(node, handlers) {
   // Text Input
   const textInput = document.createElement("textarea");
   textInput.className = "node-text-input";
-  textInput.value = node.text;
+  textInput.value = node.text || "";
 
   textInput.onblur = () => {
     handlers.onSave(node.id, textInput.value);
@@ -54,7 +54,7 @@ export function createNodeDOM(node, handlers) {
   // Connectors
   const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
 
-  shape.meta.connectors.forEach(side => {
+  shape.meta.connectors.forEach((side) => {
     const connector = document.createElement("div");
     connector.className = `node-connector ${side}`;
 
@@ -67,55 +67,54 @@ export function createNodeDOM(node, handlers) {
   });
 
   // Resize Handles
-  const resizePositions = [
-    "top-left",
-    "top-right",
-    "bottom-right",
-    "bottom-left"
-  ];
 
-  resizePositions.forEach(pos => {
-    const handle = document.createElement("div");
-    handle.className = `node-resize-handle ${pos}`;
-    handle.dataset.direction = pos;
+  ["top-left", "top-right", "bottom-right", "bottom-left"].forEach(
+    (pos) => {
+      const handle = document.createElement("div");
+      handle.className = `node-resize-handle ${pos}`;
+      handle.dataset.direction = pos;
 
-    handle.onmousedown = (e) => {
-      e.stopPropagation();
-      handlers.onResizeStart(e, node.id, pos);
-    };
+      handle.onmousedown = (e) => {
+        e.stopPropagation();
+        handlers.onResizeStart(e, node.id, pos);
+      };
 
-    el.appendChild(handle);
-  });
+      el.appendChild(handle);
+    }
+  );
 
-  // Drag
+  // Drag + Select
+
   el.onmousedown = (e) => {
-  if (
-    e.target.closest(".node-connector") ||
-    e.target.closest(".node-resize-handle")
-  ) return;
+    if (
+      e.target.closest(".node-connector") ||
+      e.target.closest(".node-resize-handle")
+    )
+      return;
 
-  // ALWAYS select first
-  handlers.onSelect?.(node.id);
-
-  // Then allow drag (unless editing)
-  handlers.onDragStart(e, node.id);
-};
+    handlers.onSelect?.(node.id);
+    handlers.onDragStart(e, node.id);
+  };
 
   el.appendChild(textDisplay);
   el.appendChild(textInput);
+
   document.body.appendChild(el);
 }
 
-export function syncNodeDOM(node, {
-  isSelected,
-  isEditing,
-  zoomLevel
-}) {
+export function syncNodeDOM(
+  node,
+  { isSelected, isEditing, zoomLevel }
+) {
   const el = document.getElementById(node.id);
   if (!el) return;
 
-  // IMAGE SYNC
-  let imgWrapper = el.querySelector(".node-image-wrapper");
+  const shapeLayer = el.querySelector(".node-shape-layer");
+
+  // Image Sync
+
+  let imgWrapper =
+    shapeLayer.querySelector(".node-image-wrapper");
 
   if (node.image) {
     if (!imgWrapper) {
@@ -124,54 +123,65 @@ export function syncNodeDOM(node, {
 
       const img = document.createElement("img");
       img.className = "node-image";
-      imgWrapper.appendChild(img);
 
-      el.prepend(imgWrapper);
+      imgWrapper.appendChild(img);
+      shapeLayer.appendChild(imgWrapper);
     }
 
-    imgWrapper.querySelector("img").src = node.image;
+    const img = imgWrapper.querySelector("img");
+    img.src = node.image;
+
     el.classList.add("has-image");
   } else {
     imgWrapper?.remove();
     el.classList.remove("has-image");
   }
 
-  // POSITION + SIZE
+  // Position + Scale
+
   el.style.left = `${node.x * zoomLevel + State.offsetX}px`;
   el.style.top = `${node.y * zoomLevel + State.offsetY}px`;
+
   el.style.width = `${node.width}px`;
   el.style.height = `${node.height}px`;
+
   el.style.transform = `scale(${zoomLevel})`;
   el.style.transformOrigin = "top left";
 
-  // BOX STYLES
-  const shapeLayer = el.querySelector(".node-shape-layer");
+  // Visual Styles
+
   shapeLayer.style.backgroundColor = node.color;
-  el.style.opacity = node.opacity;
-  // el.style.border = `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
+
   shapeLayer.style.border =
-  `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
-  const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
+    `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
+
+  el.style.opacity = node.opacity;
+
+  // Shape Layout
+
+  const shape =
+    ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
+
+  // Reset clip before applying new shape
   shapeLayer.style.clipPath = "";
+
   shape.applyLayout?.(node, el);
   shape.applyConnectorLayout?.(node, el, zoomLevel);
-  
-if (shape.meta.supportsBorderRadius) {
-  shapeLayer.style.borderRadius = `${node.borderRadius}px`;
-} else {
-  shapeLayer.style.borderRadius = "0px";
-}
-  // TEXT
+
+  // Border Radius
+
+  if (shape.meta.supportsBorderRadius) {
+    shapeLayer.style.borderRadius =
+      `${node.borderRadius}px`;
+  } else {
+    shapeLayer.style.borderRadius = "0px";
+  }
+
+  // Text
+
   const text = el.querySelector(".node-text");
   const input = el.querySelector(".node-text-input");
-  if (isEditing) {
-    text.style.display = "none";
-    input.style.display = "flex";
-    input.focus();
-  } else {
-    text.style.display = "flex";
-    input.style.display = "none";
-  }
+
   text.textContent = node.text || "Type here…";
   input.value = node.text || "";
 
@@ -190,8 +200,20 @@ if (shape.meta.supportsBorderRadius) {
   text.style.fontWeight = node.fontWeight;
   input.style.fontWeight = node.fontWeight;
 
-  // PREVENT UI SCALING
-  el.querySelectorAll(".node-resize-handle").forEach(h => {
+  if (isEditing) {
+    text.style.display = "none";
+    input.style.display = "flex";
+    if (document.activeElement !== input) {
+      input.focus();
+    }
+  } else {
+    text.style.display = "flex";
+    input.style.display = "none";
+  }
+
+  // PREVENT UI SCALE DISTORTION 
+
+  el.querySelectorAll(".node-resize-handle").forEach((h) => {
     h.style.transform = `scale(${1 / zoomLevel})`;
   });
 
@@ -205,5 +227,7 @@ export function removeNodeDOM(id) {
 }
 
 export function clearAllNodes() {
-  document.querySelectorAll(".node-input").forEach(el => el.remove());
+  document
+    .querySelectorAll(".node-input")
+    .forEach((el) => el.remove());
 }
