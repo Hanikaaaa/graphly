@@ -5,7 +5,7 @@ import { initInputHandler, attachNodeHandlers } from "./input-handler.js";
 import { updatePanel } from "./ui-panel.js";
 import { getCurrentUser, hasToken, logout } from "./auth.js";
 import { renderAuthScreen, renderLoading } from "./auth-ui.js";
-import { createCanvas, getCanvasByID, listCanvases, saveCanvasData } from "./canvas-api.js";
+import { createCanvas, deleteCanvas, getCanvasByID, listCanvases, saveCanvasData } from "./canvas-api.js";
 import { renderCanvasDashboard } from "./dashboard-ui.js";
 import { flushStateSync, initCollaboration, queueStateSync, setSyncHandler } from "./collaboration.js";
 
@@ -215,6 +215,19 @@ function renderDashboard() {
 
         dashboardState.error = error?.message || "Failed to open canvas.";
         renderDashboard();
+      }
+    },
+    onDelete: async (canvasID) => {
+      try {
+        await deleteCanvas(canvasID);
+        await refreshDashboard();
+      } catch (error) {
+        if (error?.status === 401) {
+          await handleLogout();
+          return;
+        }
+
+        throw error;
       }
     },
     onLogout: () => {
