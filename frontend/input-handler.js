@@ -106,33 +106,44 @@ function findConnectionAt(x, y) {
   return null;
 }
 
+function applyGenericResize(node, ctx) {
+  const {
+    dx, dy,
+    startW, startH,
+    startNodeX, startNodeY,
+    resizeDir
+  } = ctx;
 
-function pointToLineDistance(px, py, x1, y1, x2, y2) {
-  const A = px - x1;
-  const B = py - y1;
-  const C = x2 - x1;
-  const D = y2 - y1;
+  const minW = 60;
+  const minH = 40;
 
-  const dot = A * C + B * D;
-  const len_sq = C * C + D * D;
-  let param = len_sq !== 0 ? dot / len_sq : -1;
+  let newWidth = startW;
+  let newHeight = startH;
+  let newX = startNodeX;
+  let newY = startNodeY;
 
-  let xx, yy;
-
-  if (param < 0) {
-    xx = x1;
-    yy = y1;
-  } else if (param > 1) {
-    xx = x2;
-    yy = y2;
-  } else {
-    xx = x1 + param * C;
-    yy = y1 + param * D;
+  if (resizeDir.includes("right")) {
+    newWidth = Math.max(minW, startW + dx);
   }
 
-  const dx = px - xx;
-  const dy = py - yy;
-  return Math.sqrt(dx * dx + dy * dy);
+  if (resizeDir.includes("left")) {
+    newWidth = Math.max(minW, startW - dx);
+    newX = startNodeX + (startW - newWidth);
+  }
+
+  if (resizeDir.includes("bottom")) {
+    newHeight = Math.max(minH, startH + dy);
+  }
+
+  if (resizeDir.includes("top")) {
+    newHeight = Math.max(minH, startH - dy);
+    newY = startNodeY + (startH - newHeight);
+  }
+
+  node.width = newWidth;
+  node.height = newHeight;
+  node.x = newX;
+  node.y = newY;
 }
 
 export function attachNodeHandlers(node) {
@@ -267,7 +278,7 @@ canvas.addEventListener("mousemove", e => {
 
     const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
 
-    shape.applyResize(node, {
+    applyGenericResize(node, {
       dx,
       dy,
       startW,
@@ -276,8 +287,8 @@ canvas.addEventListener("mousemove", e => {
       startNodeY,
       resizeDir
     });
-
-  shape.enforceConstraints(node);
+    
+    shape.enforceConstraints?.(node);
 
   redraw();
   return;

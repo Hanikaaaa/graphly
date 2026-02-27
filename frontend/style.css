@@ -590,8 +590,16 @@ canvas {
 .node-input:hover { box-shadow: 0 10px 24px rgba(0,0,0,.12); }
 
 .node-input.selected {
-  outline: 2px dashed #7d7cbd;
+  outline: none;
   outline-offset: 4px;
+}
+
+.node-input.selected::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border: 2px dashed #7d7cbd;
+  pointer-events: none;
 }
 
 .node-resize-handle {
