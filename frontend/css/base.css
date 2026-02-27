@@ -1,0 +1,35 @@
+/*GLOBAL RESET + VARIABLES*/
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg:        #f2f3f7;
+  --surface:   #ffffff;
+  --border:    #e2e6ed;
+  --border-hi: #b8c5d9;
+  --text:      #111827;
+  --muted:     #6b7a90;
+  --accent:    #2563eb;
+  --accent-hi: #1d4ed8;
+  --danger:    #dc2626;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 4px 12px rgba(0,0,0,.05);
+  --shadow-md: 0 4px 20px rgba(0,0,0,.09), 0 1px 3px rgba(0,0,0,.06);
+}
+
+body {
+  margin: 0;
+  font-family: "DM Sans", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+[hidden] { display: none !important; }
+.app-hidden { display: none; }

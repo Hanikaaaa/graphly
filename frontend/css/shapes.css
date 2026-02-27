@@ -1,0 +1,11 @@
+/* ===============================
+   SHAPES
+================================ */
+
+.shape-rectangle {
+  border-radius: var(--radius-md);
+}
+
+.shape-circle {
+  border-radius: 50%;
+}

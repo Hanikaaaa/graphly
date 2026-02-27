@@ -1,0 +1,56 @@
+/* Custom Panel */
+
+.custom-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 260px;
+  height: 100vh;
+  background: #ffffff;
+  border-left: 1px solid #e5e5e5;
+  padding: 16px;
+  box-shadow: -4px 0 16px rgba(0,0,0,0.06);
+  z-index: 200;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-panel.hidden {
+  display: none;
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.panel-section label {
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-section input[type="color"] {
+  border: none;
+  background: none;
+  width: 36px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.panel-section input[type="range"] {
+  width: 120px;
+}
+
+.panel-section.danger button {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}

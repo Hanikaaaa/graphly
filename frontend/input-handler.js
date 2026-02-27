@@ -148,6 +148,12 @@ function applyGenericResize(node, ctx) {
 
 export function attachNodeHandlers(node) {
   DOM.createNodeDOM(node, {
+
+    onSelect(id) {
+      State.setSelectedNodeId(id);
+      redraw();
+    },
+
     onEdit(id) {
       State.setEditingNodeId(id);
       redraw();

@@ -85,15 +85,17 @@ export function createNodeDOM(node, handlers) {
 
   // Drag
   el.onmousedown = (e) => {
-    if (
-      e.target.classList.contains("node-text") ||
-      e.target.classList.contains("node-text-input") ||
-      e.target.classList.contains("node-connector") ||
-      e.target.classList.contains("node-resize-handle")
-    ) return;
+  if (
+    e.target.closest(".node-connector") ||
+    e.target.closest(".node-resize-handle")
+  ) return;
 
-    handlers.onDragStart(e, node.id);
-  };
+  // ALWAYS select first
+  handlers.onSelect?.(node.id);
+
+  // Then allow drag (unless editing)
+  handlers.onDragStart(e, node.id);
+};
 
   el.appendChild(textDisplay);
   el.appendChild(textInput);
@@ -157,15 +159,22 @@ export function syncNodeDOM(node, {
   // TEXT
   const text = el.querySelector(".node-text");
   const input = el.querySelector(".node-text-input");
-
+  if (isEditing) {
+    text.style.display = "none";
+    input.style.display = "flex";
+    input.focus();
+  } else {
+    text.style.display = "flex";
+    input.style.display = "none";
+  }
   text.textContent = node.text || "Type here…";
   input.value = node.text || "";
 
   text.style.color = node.fontColor;
   input.style.color = node.fontColor;
 
-  text.style.fontSize = `${node.fontSize * zoomLevel}px`;
-  input.style.fontSize = `${node.fontSize * zoomLevel}px`;
+  text.style.fontSize = `${node.fontSize}px`;
+  input.style.fontSize = `${node.fontSize}px`;
 
   text.style.fontFamily = node.fontFamily;
   input.style.fontFamily = node.fontFamily;
