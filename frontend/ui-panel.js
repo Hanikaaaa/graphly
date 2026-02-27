@@ -33,6 +33,7 @@ function mutateSelection(fn) {
 export function updatePanel() {
   const selectedNodes = getSelectedNodes();
   const node = getSingleSelectedNode();
+  const connectionId = State.getPrimarySelectedConnectionId();
 
   // Always sync background controls
   inputs.bgType.value = State.background.type;
@@ -46,7 +47,8 @@ export function updatePanel() {
   inputs.bgDotRadius.value = State.background.dotRadius;
   inputs.bgDotOpacity.value = State.background.dotOpacity;
 
-  if (!selectedNodes.length) {
+  // Nothing selected
+  if (!selectedNodes.length && !connectionId) {
     panel.classList.add("hidden");
     document.body.classList.remove("panel-open");
     return;
@@ -55,7 +57,26 @@ export function updatePanel() {
   panel.classList.remove("hidden");
   document.body.classList.add("panel-open");
 
-  // If exactly one node selected → show exact values
+  // ======================
+  // CONNECTION MODE
+  // ======================
+  if (connectionId) {
+    const conn = State.connections.find(c => c.id === connectionId);
+    if (!conn) return;
+
+    buttons.removeImage.classList.add("hidden");
+
+    inputs.connectorColor.value = conn.color;
+    inputs.connectorWidth.value = conn.width;
+    inputs.connectorStyle.value = conn.style;
+
+    return;
+  }
+
+  // ======================
+  // NODE MODE
+  // ======================
+
   if (node) {
     inputs.bgColor.value = node.color;
     inputs.borderColor.value = node.borderColor;
@@ -74,7 +95,6 @@ export function updatePanel() {
 
     buttons.removeImage.classList.toggle("hidden", !node.image);
   } else {
-    // Multi-select → disable image removal
     buttons.removeImage.classList.add("hidden");
   }
 }
@@ -117,11 +137,47 @@ inputs.nodeShape.onchange = () =>
     shape?.enforceConstraints?.(n);
   });
 
-inputs.connectorColor.oninput = () =>
-  mutateSelection(n => (n.connectorColor = inputs.connectorColor.value));
+inputs.connectorColor.oninput = () => {
+  const connId = State.getPrimarySelectedConnectionId();
 
-inputs.connectorWidth.oninput = () =>
+  if (connId) {
+    State.snapshotState();
+    const conn = State.connections.find(c => c.id === connId);
+    if (conn) conn.color = inputs.connectorColor.value;
+    triggerRedraw();
+    queueStateSync("node_update");
+    return;
+  }
+
+  mutateSelection(n => (n.connectorColor = inputs.connectorColor.value));
+};
+
+inputs.connectorWidth.oninput = () => {
+  const connId = State.getPrimarySelectedConnectionId();
+
+  if (connId) {
+    State.snapshotState();
+    const conn = State.connections.find(c => c.id === connId);
+    if (conn) conn.width = Number(inputs.connectorWidth.value);
+    triggerRedraw();
+    queueStateSync("node_update");
+    return;
+  }
+
   mutateSelection(n => (n.connectorWidth = Number(inputs.connectorWidth.value)));
+};
+
+inputs.connectorStyle.onchange = () => {
+  const connId = State.getPrimarySelectedConnectionId();
+  if (!connId) return;
+
+  State.snapshotState();
+  const conn = State.connections.find(c => c.id === connId);
+  if (conn) conn.style = inputs.connectorStyle.value;
+
+  triggerRedraw();
+  queueStateSync("node_update");
+};
 
 inputs.nodeImageInput.onchange = () => {
   const node = getSingleSelectedNode();
