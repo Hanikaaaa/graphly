@@ -586,6 +586,10 @@ canvas {
   transition: box-shadow .2s ease, transform .2s ease;
   pointer-events: auto;
   padding: 0;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .node-input:hover { box-shadow: 0 10px 24px rgba(0,0,0,.12); }
 

@@ -2,11 +2,12 @@ export const ShapeRegistry = {};
 
 function createBaseShape(config) {
   return {
-    meta: {
-      keepAspectRatio: false,
-      supportsBorderRadius: false,
-      ...config.meta
-    },
+  meta: {
+    keepAspectRatio: false,
+    supportsBorderRadius: false,
+    connectors: ["top", "right", "bottom", "left"],
+    ...config.meta
+  },
 
     applyLayout(node, el) {
       el.classList.remove(...el.classList);
@@ -22,8 +23,36 @@ function createBaseShape(config) {
     },
 
     applyConnectorLayout(node, el, zoomLevel) {
-      config.applyConnectorLayout?.(node, el, zoomLevel);
+  const connectors = el.querySelectorAll(".node-connector");
+
+  connectors.forEach(conn => {
+    conn.style.transform = `scale(${1 / zoomLevel})`;
+
+    if (conn.classList.contains("top")) {
+      conn.style.top = "-5px";
+      conn.style.left = "50%";
+      conn.style.transform += " translateX(-50%)";
     }
+
+    if (conn.classList.contains("bottom")) {
+      conn.style.bottom = "-5px";
+      conn.style.left = "50%";
+      conn.style.transform += " translateX(-50%)";
+    }
+
+    if (conn.classList.contains("left")) {
+      conn.style.left = "-5px";
+      conn.style.top = "50%";
+      conn.style.transform += " translateY(-50%)";
+    }
+
+    if (conn.classList.contains("right")) {
+      conn.style.right = "-5px";
+      conn.style.top = "50%";
+      conn.style.transform += " translateY(-50%)";
+    }
+  });
+}
   };
 }
 

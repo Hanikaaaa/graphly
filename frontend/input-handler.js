@@ -278,7 +278,7 @@ canvas.addEventListener("mousemove", e => {
 
     const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
 
-    applyGenericResize(node, {
+    const ctx = {
       dx,
       dy,
       startW,
@@ -286,8 +286,14 @@ canvas.addEventListener("mousemove", e => {
       startNodeX,
       startNodeY,
       resizeDir
-    });
-    
+    };
+
+    if (shape.applyResize) {
+      shape.applyResize(node, ctx);
+    } else {
+      applyGenericResize(node, ctx);
+    }
+
     shape.enforceConstraints?.(node);
 
   redraw();

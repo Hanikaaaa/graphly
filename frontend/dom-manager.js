@@ -48,7 +48,9 @@ export function createNodeDOM(node, handlers) {
   };
 
   // Connectors
-  ["top", "right", "bottom", "left"].forEach(side => {
+  const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
+
+  shape.meta.connectors.forEach(side => {
     const connector = document.createElement("div");
     connector.className = `node-connector ${side}`;
 
@@ -151,8 +153,6 @@ export function syncNodeDOM(node, {
   } else {
     el.style.borderRadius = "";
   }
-
-  shape.enforceConstraints(node);
   shape.applyConnectorLayout(node, el, zoomLevel);
   // TEXT
   const text = el.querySelector(".node-text");
