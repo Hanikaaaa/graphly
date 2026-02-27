@@ -121,7 +121,7 @@ inputs.nodeShape.onchange = () => {
   mutateNode(n => {
     n.shape = inputs.nodeShape.value;
 
-    const shape = ShapeRegistry[n.shape] || ShapeRegistry.rectangle;
+    const shape = ShapeRegistry[n.shape];
     shape.enforceConstraints(n);
   });
 };

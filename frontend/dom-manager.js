@@ -142,9 +142,10 @@ export function syncNodeDOM(node, {
   el.style.border = `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
 
   const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
-  shape.applyLayout(node, el);
-  shape.applyConnectorLayout?.(node, el, zoomLevel);
 
+  shape.applyLayout(node, el);
+  shape.enforceConstraints(node);
+  shape.applyConnectorLayout(node, el, zoomLevel);
   // TEXT
   const text = el.querySelector(".node-text");
   const input = el.querySelector(".node-text-input");

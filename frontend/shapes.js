@@ -1,65 +1,73 @@
-// shapes.js
+export const ShapeRegistry = {};
 
-export const ShapeRegistry = {
-  rectangle: {
-    applyLayout(node, el) {
-      el.style.borderRadius = `${node.borderRadius}px`;
-      el.style.padding = "10px";
-      el.style.display = "block";
+function createBaseShape(config) {
+  return {
+    meta: {
+      keepAspectRatio: false,
+      supportsBorderRadius: false,
+      ...config.meta
     },
 
-    enforceConstraints(node) {
-      // rectangles have no constraints
+    applyLayout(node, el) {
+      el.classList.remove(...el.classList);
+      el.classList.add("node-input", `shape-${node.shape}`);
     },
 
     applyResize(node, ctx) {
-      const {
-        dx,
-        dy,
-        startW,
-        startH,
-        startNodeX,
-        startNodeY,
-        resizeDir
-      } = ctx;
+      config.applyResize?.(node, ctx);
+    },
 
-      const minW = 80;
-      const minH = 40;
-
-      if (resizeDir.includes("right")) {
-        node.width = Math.max(minW, startW + dx);
-      }
-
-      if (resizeDir.includes("left")) {
-        const newW = Math.max(minW, startW - dx);
-        node.x = startNodeX + (startW - newW);
-        node.width = newW;
-      }
-
-      if (resizeDir.includes("bottom")) {
-        node.height = Math.max(minH, startH + dy);
-      }
-
-      if (resizeDir.includes("top")) {
-        const newH = Math.max(minH, startH - dy);
-        node.y = startNodeY + (startH - newH);
-        node.height = newH;
-      }
+    enforceConstraints(node) {
+      config.enforceConstraints?.(node);
     },
 
     applyConnectorLayout(node, el, zoomLevel) {
-      // do nothing
-      // rectangle uses CSS positioning
+      config.applyConnectorLayout?.(node, el, zoomLevel);
     }
+  };
+}
+
+ShapeRegistry.rectangle = createBaseShape({
+  meta: {
+    supportsBorderRadius: true
   },
 
-circle: {
-  applyLayout(node, el) {
-    el.style.borderRadius = "50%";
-    el.style.padding = "0";
-    el.style.display = "flex";
-    el.style.alignItems = "center";
-    el.style.justifyContent = "center";
+  applyResize(node, ctx) {
+    const {
+      dx, dy,
+      startW, startH,
+      startNodeX, startNodeY,
+      resizeDir
+    } = ctx;
+
+    const minW = 80;
+    const minH = 40;
+
+    if (resizeDir.includes("right")) {
+      node.width = Math.max(minW, startW + dx);
+    }
+
+    if (resizeDir.includes("left")) {
+      const newW = Math.max(minW, startW - dx);
+      node.x = startNodeX + (startW - newW);
+      node.width = newW;
+    }
+
+    if (resizeDir.includes("bottom")) {
+      node.height = Math.max(minH, startH + dy);
+    }
+
+    if (resizeDir.includes("top")) {
+      const newH = Math.max(minH, startH - dy);
+      node.y = startNodeY + (startH - newH);
+      node.height = newH;
+    }
+  }
+});
+
+ShapeRegistry.circle = createBaseShape({
+  meta: {
+    keepAspectRatio: true
   },
 
   enforceConstraints(node) {
@@ -110,6 +118,4 @@ circle: {
       }
     });
   }
-}
-
-};
+});
