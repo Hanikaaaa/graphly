@@ -10,20 +10,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"graphly/backend/internal/db"
 	"graphly/backend/internal/auth"
+	"graphly/backend/internal/db"
 )
 
 const authUserIDContextKey = "userId"
 
 type CanvasHandlers struct {
-	repo *db.CanvasRepository
-	userRepo  *db.UserRepository
+	repo     *db.CanvasRepository
+	userRepo *db.UserRepository
 }
 
 type createCanvasRequest struct {
-	Title string `json:"title"`
-	AccessType string `json:"accessType"`
+	Title      string   `json:"title"`
+	AccessType string   `json:"accessType"`
 	SharedWith []string `json:"sharedWith"`
 }
 
@@ -32,10 +32,10 @@ type updateCanvasRequest struct {
 }
 
 func NewCanvasHandlers(canvasRepo *db.CanvasRepository, userRepo *db.UserRepository) *CanvasHandlers {
-	 return &CanvasHandlers{
-        repo:     canvasRepo,
-        userRepo: userRepo,
-    }
+	return &CanvasHandlers{
+		repo:     canvasRepo,
+		userRepo: userRepo,
+	}
 
 }
 
@@ -52,14 +52,14 @@ func (h *CanvasHandlers) CreateCanvas(c *gin.Context) {
 		return
 	}
 	var sharedUserIDs []string
-    if len(req.SharedWith) > 0 {
-        ids, err := h.userRepo.GetUserIDsByEmails(c.Request.Context(), req.SharedWith)
-        if err != nil {
-            writeError(c, http.StatusInternalServerError, "failed to resolve shared users")
-            return
-        }
-        sharedUserIDs = ids
-    }
+	if len(req.SharedWith) > 0 {
+		ids, err := h.userRepo.GetUserIDsByEmails(c.Request.Context(), req.SharedWith)
+		if err != nil {
+			writeError(c, http.StatusInternalServerError, "failed to resolve shared users")
+			return
+		}
+		sharedUserIDs = ids
+	}
 
 	canvas, err := h.repo.CreateCanvas(c.Request.Context(), userID, req.Title, req.AccessType, sharedUserIDs)
 	if err != nil {
@@ -68,12 +68,12 @@ func (h *CanvasHandlers) CreateCanvas(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"id":        canvas.ID,
-		"title":     canvas.Title,
+		"id":         canvas.ID,
+		"title":      canvas.Title,
 		"accessType": canvas.AccessType,
-		"ownerId":   canvas.OwnerID,
-		"createdAt": canvas.CreatedAt,
-		"updatedAt": canvas.UpdatedAt,
+		"ownerId":    canvas.OwnerID,
+		"createdAt":  canvas.CreatedAt,
+		"updatedAt":  canvas.UpdatedAt,
 		"sharedWith": req.SharedWith,
 	})
 }
@@ -170,6 +170,36 @@ func (h *CanvasHandlers) UpdateCanvas(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":    "saved",
 		"updatedAt": updatedAt,
+	})
+}
+
+func (h *CanvasHandlers) DeleteCanvas(c *gin.Context) {
+	userID, ok := auth.UserIDFromContext(c)
+	if !ok {
+		writeError(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	canvasID := strings.TrimSpace(c.Param("id"))
+	if _, err := uuid.Parse(canvasID); err != nil {
+		writeError(c, http.StatusBadRequest, "invalid canvas id")
+		return
+	}
+
+	if err := h.repo.DeleteCanvas(c.Request.Context(), canvasID, userID); err != nil {
+		switch {
+		case errors.Is(err, db.ErrCanvasNotFound):
+			writeError(c, http.StatusNotFound, "canvas not found")
+		case errors.Is(err, db.ErrCanvasForbidden):
+			writeError(c, http.StatusForbidden, "forbidden")
+		default:
+			writeError(c, http.StatusInternalServerError, "failed to delete canvas")
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "deleted",
 	})
 }
 

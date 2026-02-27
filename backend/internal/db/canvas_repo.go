@@ -36,10 +36,10 @@ func (r *CanvasRepository) CreateCanvas(ctx context.Context, ownerID, title stri
 	defer cancel()
 
 	canvas := &models.Canvas{
-		ID:      uuid.NewString(),
-		OwnerID: ownerID,
-		Title:   normalizeCanvasTitle(title),
-		Data:    json.RawMessage("{}"),
+		ID:         uuid.NewString(),
+		OwnerID:    ownerID,
+		Title:      normalizeCanvasTitle(title),
+		Data:       json.RawMessage("{}"),
 		AccessType: accessType,
 		SharedWith: sharedWith,
 	}
@@ -158,56 +158,82 @@ func (r *CanvasRepository) GetCanvasByID(ctx context.Context, canvasID string, u
 		canvas.Data = json.RawMessage("{}")
 	}
 
-	if userID != canvas.OwnerID{
-		if canvas.AccessType == "private"{
+	if userID != canvas.OwnerID {
+		if canvas.AccessType == "private" {
 			shared, shareErr := r.isCanvasSharedWith(ctx, canvasID, userID)
 			if shareErr != nil {
-                return nil, shareErr
-            }
-            if !shared {
-                return nil, ErrCanvasForbidden
-            }
+				return nil, shareErr
+			}
+			if !shared {
+				return nil, ErrCanvasForbidden
+			}
 		}
 	}
 	sharedUsers, err := r.getSharedUsers(ctx, canvasID)
 	if err == nil {
-        canvas.SharedWith = sharedUsers
-    }
-
+		canvas.SharedWith = sharedUsers
+	}
 
 	return canvas, nil
 }
 
 func (r *CanvasRepository) UpdateCanvasData(ctx context.Context, canvasID string, userID string, jsonData json.RawMessage) (time.Time, error) {
 
-    canEdit, err := r.canUserEditCanvas(ctx, canvasID, userID)
-    if err != nil {
-        return time.Time{}, err
-    }
-    if !canEdit {
-        return time.Time{}, ErrCanvasForbidden
-    }
+	canEdit, err := r.canUserEditCanvas(ctx, canvasID, userID)
+	if err != nil {
+		return time.Time{}, err
+	}
+	if !canEdit {
+		return time.Time{}, ErrCanvasForbidden
+	}
 
-    queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
-    defer cancel()
+	queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
+	defer cancel()
 
-    query := `
+	query := `
         UPDATE canvases
         SET data = $2::jsonb, updated_at = NOW()
         WHERE id = $1
         RETURNING updated_at
     `
 
-    var updatedAt time.Time
-    err = r.pool.QueryRow(queryCtx, query, canvasID, jsonData).Scan(&updatedAt)
-    if err != nil {
-        if errors.Is(err, pgx.ErrNoRows) {
-            return time.Time{}, ErrCanvasNotFound
-        }
-        return time.Time{}, err
-    }
+	var updatedAt time.Time
+	err = r.pool.QueryRow(queryCtx, query, canvasID, jsonData).Scan(&updatedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return time.Time{}, ErrCanvasNotFound
+		}
+		return time.Time{}, err
+	}
 
-    return updatedAt, nil
+	return updatedAt, nil
+}
+
+func (r *CanvasRepository) DeleteCanvas(ctx context.Context, canvasID, userID string) error {
+	queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
+	defer cancel()
+
+	result, err := r.pool.Exec(queryCtx, `
+		DELETE FROM canvases
+		WHERE id = $1 AND owner_id = $2
+	`, canvasID, userID)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() > 0 {
+		return nil
+	}
+
+	exists, err := r.canvasExists(ctx, canvasID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return ErrCanvasNotFound
+	}
+
+	return ErrCanvasForbidden
 }
 
 func (r *CanvasRepository) canvasExists(ctx context.Context, canvasID string) (bool, error) {
@@ -227,55 +253,55 @@ func (r *CanvasRepository) canvasExists(ctx context.Context, canvasID string) (b
 	return true, nil
 }
 func (r *CanvasRepository) isCanvasSharedWith(ctx context.Context, canvasID, userID string) (bool, error) {
-    queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
-    defer cancel()
+	queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
+	defer cancel()
 
-    var exists bool
-    err := r.pool.QueryRow(queryCtx, `
+	var exists bool
+	err := r.pool.QueryRow(queryCtx, `
         SELECT EXISTS (
             SELECT 1 FROM canvas_shares
             WHERE canvas_id = $1 AND user_id = $2::uuid
         )
     `, canvasID, userID).Scan(&exists)
-    if err != nil {
-        return false, err
-    }
-    return exists, nil
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
 func (r *CanvasRepository) getSharedUsers(ctx context.Context, canvasID string) ([]string, error) {
-    queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
-    defer cancel()
+	queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
+	defer cancel()
 
-    rows, err := r.pool.Query(queryCtx, `
+	rows, err := r.pool.Query(queryCtx, `
         SELECT user_id FROM canvas_shares
         WHERE canvas_id = $1
     `, canvasID)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    users := make([]string, 0)
-    for rows.Next() {
-        var u pgtype.UUID
-        if err := rows.Scan(&u); err != nil {
-            return nil, err
-        }
-        users = append(users, u.String())
-    }
+	users := make([]string, 0)
+	for rows.Next() {
+		var u pgtype.UUID
+		if err := rows.Scan(&u); err != nil {
+			return nil, err
+		}
+		users = append(users, u.String())
+	}
 
-    if err := rows.Err(); err != nil {
-        return nil, err
-    }
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
-    return users, nil
+	return users, nil
 }
 func (r *CanvasRepository) canUserEditCanvas(ctx context.Context, canvasID, userID string) (bool, error) {
-    queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
-    defer cancel()
+	queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
+	defer cancel()
 
-    var canEdit bool
-    err := r.pool.QueryRow(queryCtx, `
+	var canEdit bool
+	err := r.pool.QueryRow(queryCtx, `
         SELECT EXISTS (
             SELECT 1
             FROM canvases c
@@ -286,11 +312,11 @@ func (r *CanvasRepository) canUserEditCanvas(ctx context.Context, canvasID, user
             WHERE cs.canvas_id = $1 AND cs.user_id = $2::uuid
         )
     `, canvasID, userID).Scan(&canEdit)
-    if err != nil {
-        return false, err
-    }
+	if err != nil {
+		return false, err
+	}
 	log.Println("CHECK EDIT:", canvasID, userID, canEdit)
-    return canEdit, nil
+	return canEdit, nil
 }
 func normalizeCanvasTitle(title string) string {
 	trimmed := strings.TrimSpace(title)

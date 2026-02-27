@@ -36,3 +36,10 @@ export async function saveCanvasData(canvasID, data) {
     body: { data },
   });
 }
+
+export async function deleteCanvas(canvasID) {
+  return apiRequest(`/canvases/${encodeURIComponent(canvasID)}`, {
+    method: "DELETE",
+    auth: true,
+  });
+}

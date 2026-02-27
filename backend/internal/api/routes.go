@@ -47,4 +47,5 @@ func RegisterRoutes(
 	protectedCanvases.GET("", canvasHandlers.ListCanvases)
 	protectedCanvases.GET("/:id", canvasHandlers.GetCanvas)
 	protectedCanvases.PUT("/:id", canvasHandlers.UpdateCanvas)
+	protectedCanvases.DELETE("/:id", canvasHandlers.DeleteCanvas)
 }

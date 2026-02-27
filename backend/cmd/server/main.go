@@ -102,6 +102,8 @@ func main() {
 	router.Static("/assets", filepath.Join(frontendDir, "assets"))
 
 	router.Static("/js", filepath.Join(frontendDir, "js"))
+	router.Static("/css", filepath.Join(frontendDir, "css"))
+
 	router.GET("/:file", serveFrontendAsset(frontendDir))
 
 	port := os.Getenv("PORT")
