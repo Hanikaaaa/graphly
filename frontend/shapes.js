@@ -208,3 +208,54 @@ ShapeRegistry.triangle = createBaseShape({
     });
   }
 });
+
+ShapeRegistry.parallelogram = createBaseShape({
+  applyLayout(node, el) {
+    const shapeLayer = el.querySelector(".node-shape-layer");
+    shapeLayer.style.clipPath =
+      "polygon(20% 0%, 100% 0%, 80% 100%, 0% 100%)";
+  },
+
+  enforceConstraints(node) {
+    node.width = Math.max(node.width, 100);
+    node.height = Math.max(node.height, 60);
+  },
+
+  applyResize(node, ctx) {
+    ShapeRegistry.rectangle.applyResize(node, ctx);
+  }
+});
+
+ShapeRegistry.hexagon = createBaseShape({
+  applyLayout(node, el) {
+    const shapeLayer = el.querySelector(".node-shape-layer");
+    shapeLayer.style.clipPath =
+      "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)";
+  },
+
+  enforceConstraints(node) {
+    node.width = Math.max(node.width, 100);
+    node.height = Math.max(node.height, 80);
+  },
+
+  applyResize(node, ctx) {
+    ShapeRegistry.rectangle.applyResize(node, ctx);
+  }
+});
+
+ShapeRegistry.trapezoid = createBaseShape({
+  applyLayout(node, el) {
+    const shapeLayer = el.querySelector(".node-shape-layer");
+    shapeLayer.style.clipPath =
+      "polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)";
+  },
+
+  enforceConstraints(node) {
+    node.width = Math.max(node.width, 100);
+    node.height = Math.max(node.height, 60);
+  },
+
+  applyResize(node, ctx) {
+    ShapeRegistry.rectangle.applyResize(node, ctx);
+  }
+});
