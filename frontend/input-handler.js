@@ -13,8 +13,8 @@ let pointerDownY = 0;
 
 let potentialDragNodeId = null;
 let isDraggingNode = false;
-let dragOffsetX = 0;
-let dragOffsetY = 0;
+
+let dragStartPositions = new Map();
 
 let isDrawingConnection = false;
 let connectionSource = null;
@@ -53,7 +53,7 @@ function redraw() {
 
   State.nodes.forEach(node => {
     DOM.syncNodeDOM(node, {
-      isSelected: node.id === State.selectedNodeId,
+      isSelected: State.selectedNodeIds.has(node.id),
       isEditing: node.id === State.editingNodeId,
       zoomLevel: State.zoomLevel,
     });
@@ -64,93 +64,15 @@ function redraw() {
 
 registerRedraw(redraw);
 
-function findConnectionAt(x, y) {
-  const threshold = 20 / State.zoomLevel;
-  console.log("[findConnectionAt] click at", x, y);
-
-  for (const c of State.connections) {
-    const from = State.getNodeById(c.from);
-    const to = State.getNodeById(c.to);
-    if (!from || !to) continue;
-
-    const x1 = from.x + from.width / 2;
-    const y1 = from.y + from.height / 2;
-    const x2 = to.x + to.width / 2;
-    const y2 = to.y + to.height / 2;
-    const cy = (y1 + y2) / 2; // SAME control point as renderer
-
-    // sample the curve
-    const steps = 20;
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-
-      const bx =
-        (1 - t) * (1 - t) * x1 +
-        2 * (1 - t) * t * x1 +
-        t * t * x2;
-
-      const by =
-        (1 - t) * (1 - t) * y1 +
-        2 * (1 - t) * t * cy +
-        t * t * y2;
-
-      const d = Math.hypot(x - bx, y - by);
-      if (d <= threshold) {
-        console.log("[HIT connection]", c.id);
-        return c;
-      }
-    }
-  }
-
-  console.log("[NO connection hit]");
-  return null;
-}
-
-function applyGenericResize(node, ctx) {
-  const {
-    dx, dy,
-    startW, startH,
-    startNodeX, startNodeY,
-    resizeDir
-  } = ctx;
-
-  const minW = 60;
-  const minH = 40;
-
-  let newWidth = startW;
-  let newHeight = startH;
-  let newX = startNodeX;
-  let newY = startNodeY;
-
-  if (resizeDir.includes("right")) {
-    newWidth = Math.max(minW, startW + dx);
-  }
-
-  if (resizeDir.includes("left")) {
-    newWidth = Math.max(minW, startW - dx);
-    newX = startNodeX + (startW - newWidth);
-  }
-
-  if (resizeDir.includes("bottom")) {
-    newHeight = Math.max(minH, startH + dy);
-  }
-
-  if (resizeDir.includes("top")) {
-    newHeight = Math.max(minH, startH - dy);
-    newY = startNodeY + (startH - newHeight);
-  }
-
-  node.width = newWidth;
-  node.height = newHeight;
-  node.x = newX;
-  node.y = newY;
-}
-
 export function attachNodeHandlers(node) {
   DOM.createNodeDOM(node, {
 
-    onSelect(id) {
-      State.setSelectedNodeId(id);
+    onSelect(id, event) {
+      if (event?.shiftKey) {
+        State.toggleNodeSelection(id);
+      } else {
+        State.selectSingleNode(id);
+      }
       redraw();
     },
 
@@ -211,19 +133,15 @@ export function attachNodeHandlers(node) {
   });
 }
 
-
 canvas.addEventListener("mousemove", e => {
+
   if (isPanning) {
     const dx = e.clientX - panStartX;
     const dy = e.clientY - panStartY;
 
-    State.setOffset(
-      startOffsetX + dx,
-      startOffsetY + dy
-    );
-
-     redraw();
-     return;
+    State.setOffset(startOffsetX + dx, startOffsetY + dy);
+    redraw();
+    return;
   }
 
   if (isPointerDown && potentialDragNodeId && !isDraggingNode) {
@@ -231,48 +149,41 @@ canvas.addEventListener("mousemove", e => {
     const dy = e.clientY - pointerDownY;
 
     if (Math.hypot(dx, dy) > DRAG_THRESHOLD) {
-      const node = State.getNodeById(potentialDragNodeId);
-      if (!node) return;
-
       State.snapshotState();
       isDraggingNode = true;
-      dragOffsetX = ((pointerDownX - State.offsetX) / State.zoomLevel) - node.x;
-      dragOffsetY = ((pointerDownY - State.offsetY) / State.zoomLevel) - node.y;
+
+      dragStartPositions.clear();
+
+      const selectedIds = State.selectedNodeIds.size
+        ? State.selectedNodeIds
+        : new Set([potentialDragNodeId]);
+
+      selectedIds.forEach(id => {
+        const node = State.getNodeById(id);
+        if (!node) return;
+
+        dragStartPositions.set(id, {
+          x: node.x,
+          y: node.y
+        });
+      });
     }
   }
 
-  if (isDraggingNode && potentialDragNodeId) {
-  const node = State.getNodeById(potentialDragNodeId);
-  if (!node) return;
+  if (isDraggingNode) {
+    const dx = (e.clientX - pointerDownX) / State.zoomLevel;
+    const dy = (e.clientY - pointerDownY) / State.zoomLevel;
 
-  let newX =
-    ((e.clientX - State.offsetX) / State.zoomLevel) - dragOffsetX;
+    dragStartPositions.forEach((startPos, id) => {
+      const node = State.getNodeById(id);
+      if (!node) return;
 
-  let newY =
-    ((e.clientY - State.offsetY) / State.zoomLevel) - dragOffsetY;
+      node.x = startPos.x + dx;
+      node.y = startPos.y + dy;
+    });
 
-  if (State.background.snapToGrid) {
-    const spacing = State.background.gridSpacing;
-
-    newX = Math.round(newX / spacing) * spacing;
-    newY = Math.round(newY / spacing) * spacing;
-  }
-
-  node.x = newX;
-  node.y = newY;
-
-  redraw();
-  return;
-}
-
-  if (isDrawingConnection && connectionSource) {
     redraw();
-    Render.drawConnectionPreview(
-      connectionSource.x + connectionSource.width / 2,
-      connectionSource.y + connectionSource.height / 2,
-      (e.clientX - State.offsetX) / State.zoomLevel,
-      (e.clientY - State.offsetY) / State.zoomLevel
-    );
+    return;
   }
 
   if (isResizing && resizeNodeId) {
@@ -294,19 +205,13 @@ canvas.addEventListener("mousemove", e => {
       resizeDir
     };
 
-    if (shape.applyResize) {
-      shape.applyResize(node, ctx);
-    } else {
-      applyGenericResize(node, ctx);
-    }
-
+    shape.applyResize?.(node, ctx);
     shape.enforceConstraints?.(node);
 
-  redraw();
-  return;
+    redraw();
+    return;
   }
 });
-
 
 window.addEventListener("mouseup", () => {
 
@@ -322,13 +227,10 @@ window.addEventListener("mouseup", () => {
   if (isDraggingNode) {
     isDraggingNode = false;
     potentialDragNodeId = null;
+    dragStartPositions.clear();
     redraw();
     queueStateSync("node_update");
     return;
-  }
-
-  if (isPointerDown && potentialDragNodeId && !isDraggingNode && !State.selectedConnectionId) {
-  State.setSelectedNodeId(potentialDragNodeId);
   }
 
   isPointerDown = false;
@@ -338,17 +240,8 @@ window.addEventListener("mouseup", () => {
 });
 
 canvas.addEventListener("mousedown", (e) => {
-  
-  if (e.button === 1) {
-    isPanning = true;
-    panStartX = e.clientX;
-    panStartY = e.clientY;
-    startOffsetX = State.offsetX;
-    startOffsetY = State.offsetY;
-    return;
-  }
 
-  if (isSpacePressed) {
+  if (e.button === 1 || isSpacePressed) {
     isPanning = true;
     panStartX = e.clientX;
     panStartY = e.clientY;
@@ -358,29 +251,22 @@ canvas.addEventListener("mousedown", (e) => {
   }
 
   if (e.target !== canvas) return;
-  if (State.selectedConnectionId) return;
 
   State.clearSelection();
-  triggerRedraw();
+  redraw();
 });
 
-canvas.addEventListener("mouseup", e => {
-  if (!isDrawingConnection || !connectionSource) return;
+canvas.addEventListener("dblclick", e => {
+  if (e.target !== canvas) return;
 
   const x = (e.clientX - State.offsetX) / State.zoomLevel;
   const y = (e.clientY - State.offsetY) / State.zoomLevel;
-  const sourceNode = connectionSource;
 
   State.snapshotState();
-
-  const node = State.createNodeObject(x, y);
+  const node = State.createNodeObject(x - 70, y - 40);
   State.addNode(node);
-  State.addConnection(sourceNode.id, node.id);
   attachNodeHandlers(node);
-
-
-  isDrawingConnection = false;
-  connectionSource = null;
+  State.selectSingleNode(node.id);
   redraw();
   queueStateSync("node_create");
 });
@@ -400,74 +286,31 @@ canvas.addEventListener(
   { passive: false }
 );
 
-canvas.addEventListener("click", e => {
-  if (e.target !== canvas) return;
-
-  const x = (e.clientX - State.offsetX) / State.zoomLevel;
-  const y = (e.clientY - State.offsetY) / State.zoomLevel;
-
-  if (State.nodes.length === 0) {
-    State.snapshotState();
-    const node = State.createNodeObject(x - 70, y - 40);
-    State.addNode(node);
-    attachNodeHandlers(node);
-    State.setSelectedNodeId(node.id);
-    redraw();
-    queueStateSync("node_create");
-    return;
-  }
-
-  const hit = findConnectionAt(x, y);
-
-  console.log("[canvas click]", { x, y, hit });
-
-  if (hit) {
-    console.log("[before] selectedConnectionId =", State.selectedConnectionId);
-    State.setSelectedConnectionId(hit.id);
-    console.log("[after] selectedConnectionId =", State.selectedConnectionId);
-  } else {
-    State.clearSelection();
-    console.log("[cleared selection]");
-  }
-
-  redraw();
-});
-
-canvas.addEventListener("dblclick", e => {
-  if (e.target !== canvas) return;
-
-  const x = (e.clientX - State.offsetX) / State.zoomLevel;
-  const y = (e.clientY - State.offsetY) / State.zoomLevel;
-
-  State.snapshotState();
-  const node = State.createNodeObject(x - 70, y - 40);
-  State.addNode(node);
-  attachNodeHandlers(node);
-  State.setSelectedNodeId(node.id);
-  redraw();
-  queueStateSync("node_create");
-});
-
-
 window.addEventListener("keydown", e => {
-  if (e.key === "Delete" && State.selectedNodeId) {
-    State.deleteNodeLogic(State.selectedNodeId, e.shiftKey);
+  if (e.key === "Delete" && State.selectedNodeIds.size > 0) {
+    State.snapshotState();
+
+    Array.from(State.selectedNodeIds).forEach(id => {
+      State.deleteNodeLogic(id, e.shiftKey);
+    });
+
+    State.clearSelection();
     redraw();
     queueStateSync("node_delete");
   }
+
   if (e.code === "Space") {
     isSpacePressed = true;
     canvas.style.cursor = "grab";
   }
 });
 
-window.addEventListener("keyup", (e) => {
+window.addEventListener("keyup", e => {
   if (e.code === "Space") {
     isSpacePressed = false;
     canvas.style.cursor = "default";
   }
 });
-
 
 buttons.zoomIn.onclick = () => {
   State.setZoomLevel(Math.min(State.zoomLevel + 0.1, 3));
@@ -493,6 +336,4 @@ buttons.redo.onclick = () => {
   }
 };
 
-export function initInputHandler() {
-  // listeners attached at load
-}
+export function initInputHandler() {}

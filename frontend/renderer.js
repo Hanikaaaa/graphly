@@ -190,7 +190,7 @@ connections.forEach(conn => {
   const to = nodeMap.get(conn.to);
   if (!from || !to) return;
 
-  const isSelected = conn.id === State.selectedConnectionId;
+  const isSelected = State.selectedConnectionIds.has(conn.id);
   const fromX = from.x + from.width / 2;
   const fromY = from.y + from.height / 2;
   const toX = to.x + to.width / 2;

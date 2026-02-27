@@ -8,22 +8,33 @@ import { ShapeRegistry } from "./shapes.js";
 panel.addEventListener("mousedown", e => e.stopPropagation());
 panel.addEventListener("click", e => e.stopPropagation());
 
-function getSelectedNode() {
-  return State.getNodeById(State.selectedNodeId);
+function getSelectedNodes() {
+  return Array.from(State.selectedNodeIds)
+    .map(id => State.getNodeById(id))
+    .filter(Boolean);
 }
 
-function mutateNode(fn) {
-  const node = getSelectedNode();
-  if (!node) return;
+function getSingleSelectedNode() {
+  const nodes = getSelectedNodes();
+  return nodes.length === 1 ? nodes[0] : null;
+}
+
+function mutateSelection(fn) {
+  const nodes = getSelectedNodes();
+  if (!nodes.length) return;
+
   State.snapshotState();
-  fn(node);
+  nodes.forEach(fn);
+
   triggerRedraw();
   queueStateSync("node_update");
 }
 
 export function updatePanel() {
-  const node = State.getNodeById(State.selectedNodeId);
-  const conn = State.connections.find(c => c.id === State.selectedConnectionId);
+  const selectedNodes = getSelectedNodes();
+  const node = getSingleSelectedNode();
+
+  // Always sync background controls
   inputs.bgType.value = State.background.type;
   inputs.bgCanvasColor.value = State.background.color;
   inputs.bgGridColor.value = State.background.gridColor;
@@ -31,27 +42,27 @@ export function updatePanel() {
   inputs.bgGridSpacing.value = State.background.gridSpacing;
   inputs.bgGridWidth.value = State.background.gridLineWidth;
   inputs.bgGridOpacity.value = State.background.gridOpacity;
-
   inputs.bgDotSpacing.value = State.background.dotSpacing;
   inputs.bgDotRadius.value = State.background.dotRadius;
   inputs.bgDotOpacity.value = State.background.dotOpacity;
-  if (!node && !conn) {
-  panel.classList.add("hidden");
-  document.body.classList.remove("panel-open");
-  return;
+
+  if (!selectedNodes.length) {
+    panel.classList.add("hidden");
+    document.body.classList.remove("panel-open");
+    return;
   }
 
   panel.classList.remove("hidden");
   document.body.classList.add("panel-open");
 
-
+  // If exactly one node selected → show exact values
   if (node) {
-    // Node properties (your current code)
     inputs.bgColor.value = node.color;
     inputs.borderColor.value = node.borderColor;
     inputs.opacity.value = node.opacity;
     inputs.borderRadius.value = node.borderRadius;
     inputs.nodeShape.value = node.shape;
+
     inputs.textColor.value = node.fontColor;
     inputs.fontSize.value = node.fontSize;
     inputs.textAlign.value = node.textAlign;
@@ -62,86 +73,58 @@ export function updatePanel() {
     inputs.connectorWidth.value = node.connectorWidth;
 
     buttons.removeImage.classList.toggle("hidden", !node.image);
-  } else if (conn) {
-    // Connection properties
-    inputs.connectorColor.value = conn.color;
-    inputs.connectorWidth.value = conn.width;
-    inputs.connectorStyle.value = conn.style || "solid";
+  } else {
+    // Multi-select → disable image removal
+    buttons.removeImage.classList.add("hidden");
   }
 }
 
-inputs.bgColor.oninput = () => mutateNode(n => n.color = inputs.bgColor.value);
-inputs.borderColor.oninput = () => mutateNode(n => n.borderColor = inputs.borderColor.value);
-inputs.opacity.oninput = () => mutateNode(n => n.opacity = Number(inputs.opacity.value));
-inputs.borderRadius.oninput = () => mutateNode(n => n.borderRadius = Number(inputs.borderRadius.value));
+/* ===========================
+   NODE PROPERTY CONTROLS
+=========================== */
 
-inputs.textColor.oninput = () => mutateNode(n => n.fontColor = inputs.textColor.value);
-inputs.fontSize.oninput = () => mutateNode(n => n.fontSize = Number(inputs.fontSize.value));
-inputs.textAlign.onchange = () => mutateNode(n => n.textAlign = inputs.textAlign.value);
-inputs.fontWeight.onchange = () => mutateNode(n => n.fontWeight = inputs.fontWeight.value);
-inputs.fontFamily.onchange = () => mutateNode(n => n.fontFamily = inputs.fontFamily.value);
+inputs.bgColor.oninput = () =>
+  mutateSelection(n => (n.color = inputs.bgColor.value));
 
-// inputs.connectorColor.oninput = () => mutateNode(n => n.connectorColor = inputs.connectorColor.value);
-// inputs.connectorWidth.oninput = () => mutateNode(n => n.connectorWidth = Number(inputs.connectorWidth.value));
-inputs.connectorColor.oninput = () => {
-  const node = State.getNodeById(State.selectedNodeId);
-  const conn = State.connections.find(c => c.id === State.selectedConnectionId);
+inputs.borderColor.oninput = () =>
+  mutateSelection(n => (n.borderColor = inputs.borderColor.value));
 
-  if (node) {
-    mutateNode(n => {
-      n.connectorColor = inputs.connectorColor.value;
-      // State.connections.forEach(c => { if (c.from === n.id) c.color = n.connectorColor; });
-    });
-  } else if (conn) {
-    State.snapshotState();
-    conn.color = inputs.connectorColor.value;
-    triggerRedraw();
-    queueStateSync("node_update");
-  }
-};
+inputs.opacity.oninput = () =>
+  mutateSelection(n => (n.opacity = Number(inputs.opacity.value)));
 
-inputs.connectorWidth.oninput = () => {
-  const node = State.getNodeById(State.selectedNodeId);
-  const conn = State.connections.find(c => c.id === State.selectedConnectionId);
+inputs.borderRadius.oninput = () =>
+  mutateSelection(n => (n.borderRadius = Number(inputs.borderRadius.value)));
 
-  if (node) {
-    mutateNode(n => {
-      n.connectorWidth = Number(inputs.connectorWidth.value);
-      State.connections.forEach(c => { if (c.from === n.id) c.width = n.connectorWidth; });
-    });
-  } else if (conn) {
-    State.snapshotState();
-    conn.width = Number(inputs.connectorWidth.value);
-    triggerRedraw();
-    queueStateSync("node_update");
-  }
-};
+inputs.textColor.oninput = () =>
+  mutateSelection(n => (n.fontColor = inputs.textColor.value));
 
-inputs.nodeShape.onchange = () => {
-  mutateNode(n => {
+inputs.fontSize.oninput = () =>
+  mutateSelection(n => (n.fontSize = Number(inputs.fontSize.value)));
+
+inputs.textAlign.onchange = () =>
+  mutateSelection(n => (n.textAlign = inputs.textAlign.value));
+
+inputs.fontWeight.onchange = () =>
+  mutateSelection(n => (n.fontWeight = inputs.fontWeight.value));
+
+inputs.fontFamily.onchange = () =>
+  mutateSelection(n => (n.fontFamily = inputs.fontFamily.value));
+
+inputs.nodeShape.onchange = () =>
+  mutateSelection(n => {
     n.shape = inputs.nodeShape.value;
-
     const shape = ShapeRegistry[n.shape];
-    shape.enforceConstraints(n);
+    shape?.enforceConstraints?.(n);
   });
-};
 
-inputs.connectorStyle.onchange = () => {
-  const conn = State.connections.find(
-    c => c.id === State.selectedConnectionId
-  );
+inputs.connectorColor.oninput = () =>
+  mutateSelection(n => (n.connectorColor = inputs.connectorColor.value));
 
-  if (!conn) return;
-
-  State.snapshotState();
-  conn.style = inputs.connectorStyle.value;
-
-  triggerRedraw();
-  queueStateSync("node_update");
-};
+inputs.connectorWidth.oninput = () =>
+  mutateSelection(n => (n.connectorWidth = Number(inputs.connectorWidth.value)));
 
 inputs.nodeImageInput.onchange = () => {
-  const node = getSelectedNode();
+  const node = getSingleSelectedNode();
   if (!node) return;
 
   const file = inputs.nodeImageInput.files[0];
@@ -159,6 +142,13 @@ inputs.nodeImageInput.onchange = () => {
   reader.readAsDataURL(file);
 };
 
+buttons.removeImage.onclick = () => {
+  mutateSelection(n => (n.image = null));
+};
+
+/* ===========================
+   BACKGROUND CONTROLS
+=========================== */
 
 inputs.bgType.onchange = () => {
   State.snapshotState();
@@ -220,22 +210,34 @@ inputs.bgDotOpacity.oninput = () => {
   triggerRedraw();
 };
 
-buttons.removeImage.onclick = () => {
-  mutateNode(n => {
-    n.image = null;
-  });
-};
+/* ===========================
+   DELETE ACTIONS
+=========================== */
 
 buttons.deleteNode.onclick = () => {
-  if (!State.selectedNodeId) return;
-  State.deleteNodeLogic(State.selectedNodeId, false);
+  if (!State.selectedNodeIds.size) return;
+
+  State.snapshotState();
+
+  Array.from(State.selectedNodeIds).forEach(id => {
+    State.deleteNodeLogic(id, false);
+  });
+
+  State.clearSelection();
   rebuild();
   queueStateSync("node_delete");
 };
 
 buttons.deleteSubtree.onclick = () => {
-  if (!State.selectedNodeId) return;
-  State.deleteNodeLogic(State.selectedNodeId, true);
+  if (!State.selectedNodeIds.size) return;
+
+  State.snapshotState();
+
+  Array.from(State.selectedNodeIds).forEach(id => {
+    State.deleteNodeLogic(id, true);
+  });
+
+  State.clearSelection();
   rebuild();
   queueStateSync("node_delete");
 };

@@ -49,7 +49,7 @@ function redraw() {
 
   State.nodes.forEach((node) => {
     DOM.syncNodeDOM(node, {
-      isSelected: node.id === State.selectedNodeId,
+      isSelected: State.selectedNodeIds.has(node.id),
       isEditing: node.id === State.editingNodeId,
       zoomLevel: State.zoomLevel,
     });

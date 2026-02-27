@@ -92,7 +92,7 @@ export function createNodeDOM(node, handlers) {
     )
       return;
 
-    handlers.onSelect?.(node.id);
+    handlers.onSelect?.(node.id, e);
     handlers.onDragStart(e, node.id);
   };
 

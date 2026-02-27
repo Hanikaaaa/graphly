@@ -1,7 +1,7 @@
 export let nodes = [];
 export let connections = []; 
-export let selectedNodeId = null;
-export let selectedConnectionId = null;
+export let selectedNodeIds = new Set();
+export let selectedConnectionIds = new Set();
 export let editingNodeId = null;
 export let zoomLevel = 1;
 export let offsetX = 0;
@@ -43,8 +43,8 @@ function cloneState() {
   return structuredClone({
     nodes,
     connections,
-    selectedNodeId,
-    selectedConnectionId,
+    selectedNodeIds: Array.from(selectedNodeIds),
+    selectedConnectionIds: Array.from(selectedConnectionIds),
     editingNodeId,
     zoomLevel,
     offsetX,
@@ -61,12 +61,17 @@ function restoreState(snapshot) {
   offsetY = snapshot.offsetY;
   background = snapshot.background || background;
 
-  selectedNodeId = nodes.some(n => n.id === snapshot.selectedNodeId)
-    ? snapshot.selectedNodeId
-    : null;
-  selectedConnectionId = nodes.some(n => n.id === snapshot.selectedConnectionId)
-    ? snapshot.selectedConnectionId
-    : null;
+  selectedNodeIds = new Set(
+    snapshot.selectedNodeIds?.filter(id =>
+      nodes.some(n => n.id === id)
+    ) || []
+  );
+
+  selectedConnectionIds = new Set(
+    snapshot.selectedConnectionIds?.filter(id =>
+      connections.some(c => c.id === id)
+    ) || []
+  );
 
   editingNodeId = nodes.some(n => n.id === snapshot.editingNodeId)
     ? snapshot.editingNodeId
@@ -146,33 +151,9 @@ export function getNodeById(id) {
   return nodes.find(n => n.id === id) || null;
 }
 
-export function getSelectedNode() {
-  return selectedNodeId
-    ? nodes.find(n => n.id === selectedNodeId) || null
-    : null;
-}
-
 export function addNode(node) {
   nodes.push(node);
 }
-
-export function setSelectedNodeId(id) {
-  selectedNodeId = getNodeById(id) ? id : null;
-  selectedConnectionId = null;
-  editingNodeId = null;
-}
-
-export function setSelectedConnectionId(id) {
-  console.log("[setSelectedConnectionId] called with", id);
-
-  selectedConnectionId = connections.some(c => c.id === id) ? id : null;
-  selectedNodeId = null;
-  editingNodeId = null;
-
-  console.log("[setSelectedConnectionId] final =", selectedConnectionId);
-}
-
-
 
 export function setEditingNodeId(id) {
   editingNodeId = getNodeById(id) ? id : null;
@@ -182,6 +163,58 @@ export function setZoomLevel(val) {
   zoomLevel = val;
 }
 
+export function selectSingleNode(id) {
+  selectedNodeIds.clear();
+  selectedConnectionIds.clear();
+
+  if (getNodeById(id)) {
+    selectedNodeIds.add(id);
+  }
+
+  editingNodeId = null;
+}
+
+export function toggleNodeSelection(id) {
+  if (!getNodeById(id)) return;
+
+  if (selectedNodeIds.has(id)) {
+    selectedNodeIds.delete(id);
+  } else {
+    selectedNodeIds.add(id);
+  }
+
+  selectedConnectionIds.clear();
+  editingNodeId = null;
+}
+
+export function selectSingleConnection(id) {
+  selectedConnectionIds.clear();
+  selectedNodeIds.clear();
+
+  if (connections.some(c => c.id === id)) {
+    selectedConnectionIds.add(id);
+  }
+
+  editingNodeId = null;
+}
+
+export function clearSelection() {
+  selectedNodeIds.clear();
+  selectedConnectionIds.clear();
+  editingNodeId = null;
+}
+
+export function getPrimarySelectedNodeId() {
+  return selectedNodeIds.size === 1
+    ? Array.from(selectedNodeIds)[0]
+    : null;
+}
+
+export function getPrimarySelectedConnectionId() {
+  return selectedConnectionIds.size === 1
+    ? Array.from(selectedConnectionIds)[0]
+    : null;
+}
 
 export function addConnection(fromId, toId) {
   if (fromId === toId) return;
@@ -237,25 +270,23 @@ export function deleteNodeLogic(rootId, cascade = false) {
   );
 
   // clear selection / editing if needed
-  if (toDelete.has(selectedNodeId)) selectedNodeId = null;
+  
   if (toDelete.has(editingNodeId)) editingNodeId = null;
-
+  selectedNodeIds.forEach(id => {
+    if (toDelete.has(id)) selectedNodeIds.delete(id);
+  });
   return toDelete;
-}
-
-export function clearSelection() {
-  selectedNodeId = null;
-  selectedConnectionId = null;
-  editingNodeId = null;
 }
 
 export function resetCanvasState() {
   nodes = [];
   connections = [];
-  selectedNodeId = null;
-  selectedConnectionId = null;
+  selectedNodeIds.clear();
+  selectedConnectionIds.clear();
   editingNodeId = null;
   zoomLevel = 1;
+  offsetX = 0;
+  offsetY = 0;
   undoStack = [];
   redoStack = [];
 }
@@ -283,8 +314,8 @@ export function importCollabState(snapshot) {
   offsetX = typeof snapshot.offsetX === "number" ? snapshot.offsetX : 0;
   offsetY = typeof snapshot.offsetY === "number" ? snapshot.offsetY : 0;
 
-  selectedNodeId = null;
-  selectedConnectionId = null;
+  selectedNodeIds.clear();
+  selectedConnectionIds.clear();
   editingNodeId = null;
 
   return true;
