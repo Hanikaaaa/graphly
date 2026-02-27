@@ -157,6 +157,7 @@
 /* Group Features  */
 
 .group-overlay {
+  display: none !important;
   position: absolute;
   border: 1px dashed #4f46e5;
   pointer-events: none;

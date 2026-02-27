@@ -558,6 +558,54 @@ window.addEventListener("mouseup", () => {
 
 canvas.addEventListener("mousedown", (e) => {
 
+  // === CONNECTION HIT TEST ===
+const worldX =
+  (e.clientX - State.offsetX) / State.zoomLevel;
+const worldY =
+  (e.clientY - State.offsetY) / State.zoomLevel;
+
+const HIT_DISTANCE = 8 / State.zoomLevel;
+
+let clickedConnection = null;
+
+State.connections.forEach(conn => {
+  const from = State.getNodeById(conn.from);
+  const to = State.getNodeById(conn.to);
+  if (!from || !to) return;
+
+  const fromX = from.x + from.width / 2;
+  const fromY = from.y + from.height / 2;
+  const toX = to.x + to.width / 2;
+  const toY = to.y + to.height / 2;
+
+  const controlY = (fromY + toY) / 2;
+
+  // Approximate bezier sampling
+  for (let t = 0; t <= 1; t += 0.05) {
+    const x =
+      (1 - t) * (1 - t) * fromX +
+      2 * (1 - t) * t * fromX +
+      t * t * toX;
+
+    const y =
+      (1 - t) * (1 - t) * fromY +
+      2 * (1 - t) * t * controlY +
+      t * t * toY;
+
+    const dist = Math.hypot(worldX - x, worldY - y);
+    if (dist < HIT_DISTANCE) {
+      clickedConnection = conn;
+      break;
+    }
+  }
+});
+
+if (clickedConnection) {
+  State.selectSingleConnection(clickedConnection.id);
+  redraw();
+  return;
+}
+
   // PAN
   if (e.button === 1 || isSpacePressed) {
     interaction.mode = "pan";
@@ -586,6 +634,8 @@ canvas.addEventListener("mousedown", (e) => {
       tr: { x: bounds.maxX, y: bounds.minY },
       tl: { x: bounds.minX, y: bounds.minY }
     };
+
+    
 
     // 🔴 CHECK RESIZE HANDLES FIRST
     for (const key in handles) {
