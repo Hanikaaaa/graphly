@@ -5,7 +5,7 @@ import { canvas, buttons } from "./elements.js";
 import { updatePanel } from "./ui-panel.js";
 import { rebuild } from "./main.js";
 import { queueStateSync } from "./collaboration.js";
-
+import { ShapeRegistry } from "./shapes.js";
 
 let isPointerDown = false;
 let pointerDownX = 0;
@@ -106,37 +106,54 @@ function findConnectionAt(x, y) {
   return null;
 }
 
+function applyGenericResize(node, ctx) {
+  const {
+    dx, dy,
+    startW, startH,
+    startNodeX, startNodeY,
+    resizeDir
+  } = ctx;
 
-function pointToLineDistance(px, py, x1, y1, x2, y2) {
-  const A = px - x1;
-  const B = py - y1;
-  const C = x2 - x1;
-  const D = y2 - y1;
+  const minW = 60;
+  const minH = 40;
 
-  const dot = A * C + B * D;
-  const len_sq = C * C + D * D;
-  let param = len_sq !== 0 ? dot / len_sq : -1;
+  let newWidth = startW;
+  let newHeight = startH;
+  let newX = startNodeX;
+  let newY = startNodeY;
 
-  let xx, yy;
-
-  if (param < 0) {
-    xx = x1;
-    yy = y1;
-  } else if (param > 1) {
-    xx = x2;
-    yy = y2;
-  } else {
-    xx = x1 + param * C;
-    yy = y1 + param * D;
+  if (resizeDir.includes("right")) {
+    newWidth = Math.max(minW, startW + dx);
   }
 
-  const dx = px - xx;
-  const dy = py - yy;
-  return Math.sqrt(dx * dx + dy * dy);
+  if (resizeDir.includes("left")) {
+    newWidth = Math.max(minW, startW - dx);
+    newX = startNodeX + (startW - newWidth);
+  }
+
+  if (resizeDir.includes("bottom")) {
+    newHeight = Math.max(minH, startH + dy);
+  }
+
+  if (resizeDir.includes("top")) {
+    newHeight = Math.max(minH, startH - dy);
+    newY = startNodeY + (startH - newHeight);
+  }
+
+  node.width = newWidth;
+  node.height = newHeight;
+  node.x = newX;
+  node.y = newY;
 }
 
 export function attachNodeHandlers(node) {
   DOM.createNodeDOM(node, {
+
+    onSelect(id) {
+      State.setSelectedNodeId(id);
+      redraw();
+    },
+
     onEdit(id) {
       State.setEditingNodeId(id);
       redraw();
@@ -259,38 +276,35 @@ canvas.addEventListener("mousemove", e => {
   }
 
   if (isResizing && resizeNodeId) {
-  const node = State.getNodeById(resizeNodeId);
-  if (!node) return;
+    const node = State.getNodeById(resizeNodeId);
+    if (!node) return;
 
-  const dx = (e.clientX - startX) / State.zoomLevel;
-  const dy = (e.clientY - startY) / State.zoomLevel;
+    const dx = (e.clientX - startX) / State.zoomLevel;
+    const dy = (e.clientY - startY) / State.zoomLevel;
 
-  const minW = 80;
-  const minH = 40;
+    const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
 
-  if (resizeDir.includes("right")) {
-    node.width = Math.max(minW, startW + dx);
-  }
+    const ctx = {
+      dx,
+      dy,
+      startW,
+      startH,
+      startNodeX,
+      startNodeY,
+      resizeDir
+    };
 
-  if (resizeDir.includes("left")) {
-    const newW = Math.max(minW, startW - dx);
-    node.x = startNodeX + (startW - newW);
-    node.width = newW;
-  }
+    if (shape.applyResize) {
+      shape.applyResize(node, ctx);
+    } else {
+      applyGenericResize(node, ctx);
+    }
 
-  if (resizeDir.includes("bottom")) {
-    node.height = Math.max(minH, startH + dy);
-  }
-
-  if (resizeDir.includes("top")) {
-    const newH = Math.max(minH, startH - dy);
-    node.y = startNodeY + (startH - newH);
-    node.height = newH;
-  }
+    shape.enforceConstraints?.(node);
 
   redraw();
   return;
-}
+  }
 });
 
 

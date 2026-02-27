@@ -3,6 +3,7 @@ import { inputs, buttons, panel } from "./elements.js";
 import { triggerRedraw } from "./input-handler.js";
 import { rebuild } from "./main.js";
 import { queueStateSync } from "./collaboration.js";
+import { ShapeRegistry } from "./shapes.js";
 
 panel.addEventListener("mousedown", e => e.stopPropagation());
 panel.addEventListener("click", e => e.stopPropagation());
@@ -50,7 +51,7 @@ export function updatePanel() {
     inputs.borderColor.value = node.borderColor;
     inputs.opacity.value = node.opacity;
     inputs.borderRadius.value = node.borderRadius;
-
+    inputs.nodeShape.value = node.shape;
     inputs.textColor.value = node.fontColor;
     inputs.fontSize.value = node.fontSize;
     inputs.textAlign.value = node.textAlign;
@@ -114,6 +115,15 @@ inputs.connectorWidth.oninput = () => {
     triggerRedraw();
     queueStateSync("node_update");
   }
+};
+
+inputs.nodeShape.onchange = () => {
+  mutateNode(n => {
+    n.shape = inputs.nodeShape.value;
+
+    const shape = ShapeRegistry[n.shape];
+    shape.enforceConstraints(n);
+  });
 };
 
 inputs.connectorStyle.onchange = () => {

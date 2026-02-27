@@ -1,0 +1,155 @@
+/* ===============================
+   NODE CORE
+================================ */
+
+.node-input {
+  position: absolute;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  /* box-shadow: 0 6px 16px rgba(0,0,0,.08); */
+  transition: box-shadow .2s ease;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: visible;
+  padding: 0;
+}
+
+
+
+.node-input.selected {
+  box-shadow: 0 0 0 2px #7d7cbd,
+              0 10px 24px rgba(0,0,0,.12);
+}
+
+.node-input.selected::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border: 2px dashed #7d7cbd;
+  pointer-events: none;
+}
+
+/* ===============================
+   TEXT
+================================ */
+
+.node-text,
+.node-text-input {
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.node-text-input {
+  display: none;
+  line-height: 1.4;
+}
+
+.node-input.editing .node-text {
+  display: none;
+}
+
+.node-input.editing .node-text-input {
+  display: flex;
+}
+
+/* ===============================
+   IMAGE
+================================ */
+
+.node-image-wrapper {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.node-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.node-text,
+.node-text-input {
+  position: relative;
+  z-index: 2;
+}
+
+/* ===============================
+   RESIZE HANDLES
+================================ */
+
+.node-resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #7d7cbd;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity .2s ease;
+  z-index: 3;
+}
+
+.node-input:hover .node-resize-handle {
+  opacity: 1;
+}
+
+.node-resize-handle.top-left     { top: -5px; left: -5px; cursor: nwse-resize; }
+.node-resize-handle.top-right    { top: -5px; right: -5px; cursor: nesw-resize; }
+.node-resize-handle.bottom-right { bottom: -5px; right: -5px; cursor: nwse-resize; }
+.node-resize-handle.bottom-left  { bottom: -5px; left: -5px; cursor: nesw-resize; }
+
+/* ===============================
+   CONNECTORS
+================================ */
+
+.node-connector {
+  position: absolute;
+  width: 10px;
+  height: 2px;
+  background: #7d7cbd;
+  opacity: 0;
+  transition: opacity .2s ease;
+  cursor: crosshair;
+}
+
+.node-input:hover .node-connector {
+  opacity: 1;
+}
+
+.node-input,
+.red-dot {
+  will-change: transform;
+}
+
+.node-shape-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.node-connector,
+.node-resize-handle {
+  z-index: 2;
+}

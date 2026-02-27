@@ -1,9 +1,14 @@
 import * as State from "./state.js";
+import { ShapeRegistry } from "./shapes.js";
 
 export function createNodeDOM(node, handlers) {
   const el = document.createElement("div");
   el.className = "node-input";
   el.id = node.id;
+
+  const shapeLayer = document.createElement("div");
+  shapeLayer.className = "node-shape-layer";
+  el.appendChild(shapeLayer);
 
   // Image
   if (node.image) {
@@ -15,7 +20,7 @@ export function createNodeDOM(node, handlers) {
     img.src = node.image;
 
     imageWrapper.appendChild(img);
-    el.appendChild(imageWrapper);
+    shapeLayer.appendChild(imageWrapper);
 
     el.classList.add("has-image");
   }
@@ -33,7 +38,7 @@ export function createNodeDOM(node, handlers) {
   // Text Input
   const textInput = document.createElement("textarea");
   textInput.className = "node-text-input";
-  textInput.value = node.text;
+  textInput.value = node.text || "";
 
   textInput.onblur = () => {
     handlers.onSave(node.id, textInput.value);
@@ -47,7 +52,9 @@ export function createNodeDOM(node, handlers) {
   };
 
   // Connectors
-  ["top", "right", "bottom", "left"].forEach(side => {
+  const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
+
+  shape.meta.connectors.forEach((side) => {
     const connector = document.createElement("div");
     connector.className = `node-connector ${side}`;
 
@@ -60,90 +67,118 @@ export function createNodeDOM(node, handlers) {
   });
 
   // Resize Handles
-  const resizePositions = [
-    "top-left",
-    "top-right",
-    "bottom-right",
-    "bottom-left"
-  ];
 
-  resizePositions.forEach(pos => {
-    const handle = document.createElement("div");
-    handle.className = `node-resize-handle ${pos}`;
-    handle.dataset.direction = pos;
+  ["top-left", "top-right", "bottom-right", "bottom-left"].forEach(
+    (pos) => {
+      const handle = document.createElement("div");
+      handle.className = `node-resize-handle ${pos}`;
+      handle.dataset.direction = pos;
 
-    handle.onmousedown = (e) => {
-      e.stopPropagation();
-      handlers.onResizeStart(e, node.id, pos);
-    };
+      handle.onmousedown = (e) => {
+        e.stopPropagation();
+        handlers.onResizeStart(e, node.id, pos);
+      };
 
-    el.appendChild(handle);
-  });
+      el.appendChild(handle);
+    }
+  );
 
-  // Drag
+  // Drag + Select
+
   el.onmousedown = (e) => {
     if (
-      e.target.classList.contains("node-text") ||
-      e.target.classList.contains("node-text-input") ||
-      e.target.classList.contains("node-connector") ||
-      e.target.classList.contains("node-resize-handle")
-    ) return;
+      e.target.closest(".node-connector") ||
+      e.target.closest(".node-resize-handle")
+    )
+      return;
 
+    handlers.onSelect?.(node.id);
     handlers.onDragStart(e, node.id);
   };
 
   el.appendChild(textDisplay);
   el.appendChild(textInput);
+
   document.body.appendChild(el);
 }
 
-
-export function syncNodeDOM(node, {
-  isSelected,
-  isEditing,
-  zoomLevel
-}) {
+export function syncNodeDOM(
+  node,
+  { isSelected, isEditing, zoomLevel }
+) {
   const el = document.getElementById(node.id);
   if (!el) return;
 
-  // IMAGE SYNC
-let imgWrapper = el.querySelector(".node-image-wrapper");
+  const shapeLayer = el.querySelector(".node-shape-layer");
 
-if (node.image) {
-  if (!imgWrapper) {
-    imgWrapper = document.createElement("div");
-    imgWrapper.className = "node-image-wrapper";
+  // Image Sync
 
-    const img = document.createElement("img");
-    img.className = "node-image";
-    imgWrapper.appendChild(img);
+  let imgWrapper =
+    shapeLayer.querySelector(".node-image-wrapper");
 
-    el.prepend(imgWrapper);
+  if (node.image) {
+    if (!imgWrapper) {
+      imgWrapper = document.createElement("div");
+      imgWrapper.className = "node-image-wrapper";
+
+      const img = document.createElement("img");
+      img.className = "node-image";
+
+      imgWrapper.appendChild(img);
+      shapeLayer.appendChild(imgWrapper);
+    }
+
+    const img = imgWrapper.querySelector("img");
+    img.src = node.image;
+
+    el.classList.add("has-image");
+  } else {
+    imgWrapper?.remove();
+    el.classList.remove("has-image");
   }
 
-  imgWrapper.querySelector("img").src = node.image;
-  el.classList.add("has-image");
-} else {
-  imgWrapper?.remove();
-  el.classList.remove("has-image");
-}
+  // Position + Scale
 
-  //Position and Size
   el.style.left = `${node.x * zoomLevel + State.offsetX}px`;
   el.style.top = `${node.y * zoomLevel + State.offsetY}px`;
+
   el.style.width = `${node.width}px`;
   el.style.height = `${node.height}px`;
+
   el.style.transform = `scale(${zoomLevel})`;
   el.style.transformOrigin = "top left";
 
-  // Box Styles
-  el.style.backgroundColor = node.color;
+  // Visual Styles
+
+  shapeLayer.style.backgroundColor = node.color;
+
+  shapeLayer.style.border =
+    `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
+
   el.style.opacity = node.opacity;
-  el.style.borderRadius = `${node.borderRadius}px`;
-  el.style.border = `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
 
+  // Shape Layout
 
-  // Text Styles
+  const shape =
+    ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
+
+  // Reset clip before applying new shape
+  shapeLayer.style.clipPath = "";
+
+  shape.applyLayout?.(node, el);
+  shape.applyConnectorLayout?.(node, el, zoomLevel);
+
+  // Border Radius
+
+  if (shape.meta.supportsBorderRadius) {
+    shapeLayer.style.borderRadius =
+      `${node.borderRadius}px`;
+  } else {
+    shapeLayer.style.borderRadius = "0px";
+  }
+
+  // Text
+
   const text = el.querySelector(".node-text");
   const input = el.querySelector(".node-text-input");
 
@@ -153,8 +188,8 @@ if (node.image) {
   text.style.color = node.fontColor;
   input.style.color = node.fontColor;
 
-  text.style.fontSize = `${node.fontSize * zoomLevel}px`;
-  input.style.fontSize = `${node.fontSize * zoomLevel}px`;
+  text.style.fontSize = `${node.fontSize}px`;
+  input.style.fontSize = `${node.fontSize}px`;
 
   text.style.fontFamily = node.fontFamily;
   input.style.fontFamily = node.fontFamily;
@@ -165,16 +200,24 @@ if (node.image) {
   text.style.fontWeight = node.fontWeight;
   input.style.fontWeight = node.fontWeight;
 
-  // preventing UI Scaling
-  el.querySelectorAll(".node-resize-handle").forEach(h => {
+  if (isEditing) {
+    text.style.display = "none";
+    input.style.display = "flex";
+    if (document.activeElement !== input) {
+      input.focus();
+    }
+  } else {
+    text.style.display = "flex";
+    input.style.display = "none";
+  }
+
+  // PREVENT UI SCALE DISTORTION 
+
+  el.querySelectorAll(".node-resize-handle").forEach((h) => {
     h.style.transform = `scale(${1 / zoomLevel})`;
   });
 
-  el.querySelectorAll(".node-connector").forEach(c => {
-    c.style.transform = `scale(${1 / zoomLevel})`;
-  });
-
-  // State Classes
+  // STATE CLASSES
   el.classList.toggle("selected", isSelected);
   el.classList.toggle("editing", isEditing);
 }
@@ -184,5 +227,7 @@ export function removeNodeDOM(id) {
 }
 
 export function clearAllNodes() {
-  document.querySelectorAll(".node-input").forEach(el => el.remove());
+  document
+    .querySelectorAll(".node-input")
+    .forEach((el) => el.remove());
 }

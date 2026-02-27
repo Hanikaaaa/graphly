@@ -108,7 +108,7 @@ export function createNodeObject(x, y) {
     x,
     y,
     width: 140,
-    height: 80,
+    height: 140,
 
     // content
     text: "",
@@ -129,6 +129,9 @@ export function createNodeObject(x, y) {
     borderStyle: "solid",
     borderRadius: 16,
     opacity: 1,
+
+    // shape
+    shape: "rectangle",
 
     // connections (ID-based)
     connectorColor: "#444",
