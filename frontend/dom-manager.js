@@ -1,6 +1,65 @@
 import * as State from "./state.js";
 import { ShapeRegistry } from "./shapes.js";
 
+// Group Overlay
+
+let groupOverlay = null;
+
+function createGroupOverlay() {
+  if (groupOverlay) return groupOverlay;
+
+  groupOverlay = document.createElement("div");
+  groupOverlay.className = "group-overlay";
+
+  ["tl", "tr", "bl", "br"].forEach(dir => {
+    const handle = document.createElement("div");
+    handle.className = "group-handle";
+    handle.dataset.dir = dir;
+    groupOverlay.appendChild(handle);
+  });
+
+  document.body.appendChild(groupOverlay);
+  return groupOverlay;
+}
+
+export function updateGroupOverlay(zoomLevel) {
+  const selectedNodes = State.nodes.filter(n =>
+    State.selectedNodeIds.has(n.id)
+  );
+
+  if (selectedNodes.length <= 1) {
+    if (groupOverlay) groupOverlay.style.display = "none";
+    return;
+  }
+
+  const minX = Math.min(...selectedNodes.map(n => n.x));
+  const minY = Math.min(...selectedNodes.map(n => n.y));
+  const maxX = Math.max(...selectedNodes.map(n => n.x + n.width));
+  const maxY = Math.max(...selectedNodes.map(n => n.y + n.height));
+
+  const overlay = createGroupOverlay();
+
+  overlay.style.display = "block";
+
+  overlay.style.left =
+    minX * zoomLevel + State.offsetX + "px";
+
+  overlay.style.top =
+    minY * zoomLevel + State.offsetY + "px";
+
+  overlay.style.width =
+    (maxX - minX) * zoomLevel + "px";
+
+  overlay.style.height =
+    (maxY - minY) * zoomLevel + "px";
+
+  overlay.style.transform = "none";
+}
+
+export function getGroupOverlay() {
+  return groupOverlay;
+}
+
 export function createNodeDOM(node, handlers) {
   const el = document.createElement("div");
   el.className = "node-input";

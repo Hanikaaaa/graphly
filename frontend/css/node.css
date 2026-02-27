@@ -153,3 +153,25 @@
 .node-resize-handle {
   z-index: 2;
 }
+
+/* Group Features  */
+
+.group-overlay {
+  position: absolute;
+  border: 1px dashed #4f46e5;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.group-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #4f46e5;
+  pointer-events: auto;
+}
+
+.group-handle[data-dir="tl"] { left: -5px; top: -5px; cursor: nwse-resize; }
+.group-handle[data-dir="tr"] { right: -5px; top: -5px; cursor: nesw-resize; }
+.group-handle[data-dir="bl"] { left: -5px; bottom: -5px; cursor: nesw-resize; }
+.group-handle[data-dir="br"] { right: -5px; bottom: -5px; cursor: nwse-resize; }

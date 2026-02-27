@@ -6,7 +6,8 @@ import { updatePanel } from "./ui-panel.js";
 import { rebuild } from "./main.js";
 import { queueStateSync } from "./collaboration.js";
 import { ShapeRegistry } from "./shapes.js";
-
+import { updateGroupOverlay } from "./dom-manager.js";
+import { getGroupOverlay } from "./dom-manager.js";
 
 let isSpacePressed = false;
 
@@ -14,7 +15,7 @@ const DRAG_THRESHOLD = 4;
 let externalRedraw = null;
 
 let interaction = {
-  mode: "idle",   // idle | dragPending | drag | resize | pan | marquee
+  mode: "idle",   // idle | dragPending | drag | resize | groupDrag | groupResize | pan | marquee | connect
 
   startX: 0,
   startY: 0,
@@ -42,6 +43,10 @@ let interaction = {
   marqueeStartY: 0,
   marqueeCurrentX: 0,
   marqueeCurrentY: 0,
+
+  groupResizeHandle: null,
+  groupBounds: null,
+  groupInitialNodes: new Map(),
 };
 
 export function registerRedraw(fn) {
@@ -89,10 +94,49 @@ function redraw() {
     });
   });
 
+  updateGroupOverlay(State.zoomLevel);
+
   updatePanel();
 }
 
 registerRedraw(redraw);
+
+document.addEventListener("mousedown", (e) => {
+
+  const overlay = getGroupOverlay();
+  if (!overlay) return;
+
+  const handle = e.target.closest(".group-handle");
+  if (!handle) return;
+
+  e.stopPropagation();
+
+  const dir = handle.dataset.dir;
+
+  const bounds = getSelectionBounds();
+  if (!bounds) return;
+
+  interaction.mode = "groupResize";
+  interaction.groupResizeHandle = dir;
+  interaction.groupBounds = bounds;
+
+  interaction.startX = e.clientX;
+  interaction.startY = e.clientY;
+
+  interaction.groupInitialNodes.clear();
+
+  State.selectedNodeIds.forEach(id => {
+    const n = State.getNodeById(id);
+    interaction.groupInitialNodes.set(id, {
+      x: n.x,
+      y: n.y,
+      width: n.width,
+      height: n.height
+    });
+  });
+
+  State.snapshotState();
+});
 
 export function attachNodeHandlers(node) {
   DOM.createNodeDOM(node, {
@@ -197,6 +241,50 @@ canvas.addEventListener("mousemove", e => {
     redraw();
     return;
   }
+
+  if (interaction.mode === "groupResize") {
+
+  const dx =
+    (e.clientX - interaction.startX) / State.zoomLevel;
+
+  const dy =
+    (e.clientY - interaction.startY) / State.zoomLevel;
+
+  const original = interaction.groupBounds;
+
+  let newWidth = original.maxX - original.minX;
+  let newHeight = original.maxY - original.minY;
+
+  // Only implement bottom-right cleanly first
+  if (interaction.groupResizeHandle === "br") {
+    newWidth += dx;
+    newHeight += dy;
+  }
+
+  if (newWidth < 20) newWidth = 20;
+  if (newHeight < 20) newHeight = 20;
+
+  const scaleX = newWidth / (original.maxX - original.minX);
+  const scaleY = newHeight / (original.maxY - original.minY);
+
+  interaction.groupInitialNodes.forEach((init, id) => {
+
+    const node = State.getNodeById(id);
+    if (!node) return;
+
+    node.x =
+      original.minX + (init.x - original.minX) * scaleX;
+
+    node.y =
+      original.minY + (init.y - original.minY) * scaleY;
+
+    node.width = init.width * scaleX;
+    node.height = init.height * scaleY;
+  });
+
+  redraw();
+  return;
+}
 
   if (interaction.mode === "groupDrag") {
 
@@ -391,9 +479,73 @@ window.addEventListener("mouseup", () => {
     queueStateSync("node_update");
   }
 
-  if (interaction.mode === "resize") {
-    queueStateSync("node_update");
+  if (interaction.mode === "groupResize") {
+
+  const dx =
+    (e.clientX - interaction.startX) / State.zoomLevel;
+
+  const dy =
+    (e.clientY - interaction.startY) / State.zoomLevel;
+
+  const original = interaction.groupBounds;
+
+  let newMinX = original.minX;
+  let newMinY = original.minY;
+  let newMaxX = original.maxX;
+  let newMaxY = original.maxY;
+
+  switch (interaction.groupResizeHandle) {
+
+    case "br":
+      newMaxX += dx;
+      newMaxY += dy;
+      break;
+
+    case "tr":
+      newMaxX += dx;
+      newMinY += dy;
+      break;
+
+    case "bl":
+      newMinX += dx;
+      newMaxY += dy;
+      break;
+
+    case "tl":
+      newMinX += dx;
+      newMinY += dy;
+      break;
   }
+
+  const originalWidth = original.maxX - original.minX;
+  const originalHeight = original.maxY - original.minY;
+
+  const newWidth = newMaxX - newMinX;
+  const newHeight = newMaxY - newMinY;
+
+  if (newWidth < 20 || newHeight < 20) return;
+
+  const scaleX = newWidth / originalWidth;
+  const scaleY = newHeight / originalHeight;
+
+  interaction.groupInitialNodes.forEach((init, id) => {
+
+    const node = State.getNodeById(id);
+    if (!node) return;
+
+    node.x =
+      newMinX + (init.x - original.minX) * scaleX;
+
+    node.y =
+      newMinY + (init.y - original.minY) * scaleY;
+
+    node.width = init.width * scaleX;
+    node.height = init.height * scaleY;
+  });
+
+  redraw();
+  return;
+}
 
   // CRITICAL RESET
   interaction.mode = "idle";
@@ -426,6 +578,52 @@ canvas.addEventListener("mousedown", (e) => {
     const worldY =
       (e.clientY - State.offsetY) / State.zoomLevel;
 
+    const handleSize = 10 / State.zoomLevel;
+
+    const handles = {
+      br: { x: bounds.maxX, y: bounds.maxY },
+      bl: { x: bounds.minX, y: bounds.maxY },
+      tr: { x: bounds.maxX, y: bounds.minY },
+      tl: { x: bounds.minX, y: bounds.minY }
+    };
+
+    // 🔴 CHECK RESIZE HANDLES FIRST
+    for (const key in handles) {
+      const h = handles[key];
+
+      const hit =
+        worldX >= h.x - handleSize &&
+        worldX <= h.x + handleSize &&
+        worldY >= h.y - handleSize &&
+        worldY <= h.y + handleSize;
+
+      if (hit) {
+
+        interaction.mode = "groupResize";
+        interaction.groupResizeHandle = key;
+        interaction.groupBounds = bounds;
+
+        interaction.startX = e.clientX;
+        interaction.startY = e.clientY;
+
+        interaction.groupInitialNodes.clear();
+
+        State.selectedNodeIds.forEach(id => {
+          const n = State.getNodeById(id);
+          interaction.groupInitialNodes.set(id, {
+            x: n.x,
+            y: n.y,
+            width: n.width,
+            height: n.height
+          });
+        });
+
+        State.snapshotState();
+        return;
+      }
+    }
+
+    // 🔵 THEN CHECK GROUP DRAG
     const inside =
       worldX >= bounds.minX &&
       worldX <= bounds.maxX &&
@@ -442,8 +640,6 @@ canvas.addEventListener("mousedown", (e) => {
 
       State.selectedNodeIds.forEach(id => {
         const node = State.getNodeById(id);
-        if (!node) return;
-
         interaction.dragStartPositions.set(id, {
           x: node.x,
           y: node.y
@@ -454,7 +650,7 @@ canvas.addEventListener("mousedown", (e) => {
     }
   }
 
-  // MARQUEE START (only if click not inside group)
+  // MARQUEE
   interaction.mode = "marquee";
   interaction.marqueeStartX = e.clientX;
   interaction.marqueeStartY = e.clientY;
