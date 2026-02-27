@@ -125,6 +125,11 @@ export function attachNodeHandlers(node) {
     onDragStart(e, id) {
       if (State.editingNodeId) return;
 
+      // If multiple nodes selected → let group logic handle it
+      if (State.selectedNodeIds.size > 1) {
+      return;
+      }
+
       interaction.mode = "dragPending";
       interaction.startX = e.clientX;
       interaction.startY = e.clientY;
@@ -163,6 +168,21 @@ export function attachNodeHandlers(node) {
   });
 }
 
+function getSelectionBounds() {
+  if (State.selectedNodeIds.size <= 1) return null;
+
+  const selectedNodes = State.nodes.filter(n =>
+    State.selectedNodeIds.has(n.id)
+  );
+
+  const minX = Math.min(...selectedNodes.map(n => n.x));
+  const minY = Math.min(...selectedNodes.map(n => n.y));
+  const maxX = Math.max(...selectedNodes.map(n => n.x + n.width));
+  const maxY = Math.max(...selectedNodes.map(n => n.y + n.height));
+
+  return { minX, minY, maxX, maxY };
+}
+
 canvas.addEventListener("mousemove", e => {
 
   // PAN
@@ -177,6 +197,23 @@ canvas.addEventListener("mousemove", e => {
     redraw();
     return;
   }
+
+  if (interaction.mode === "groupDrag") {
+
+  const dx = (e.clientX - interaction.startX) / State.zoomLevel;
+  const dy = (e.clientY - interaction.startY) / State.zoomLevel;
+
+  interaction.dragStartPositions.forEach((startPos, id) => {
+    const node = State.getNodeById(id);
+    if (!node) return;
+
+    node.x = startPos.x + dx;
+    node.y = startPos.y + dy;
+  });
+
+  redraw();
+  return;
+}
 
   // DRAG START THRESHOLD
   if (interaction.mode === "dragPending") {
@@ -350,7 +387,7 @@ window.addEventListener("mouseup", () => {
   queueStateSync("node_update");
 }
 
-  if (interaction.mode === "drag") {
+  if (interaction.mode === "groupDrag") {
     queueStateSync("node_update");
   }
 
@@ -379,10 +416,45 @@ canvas.addEventListener("mousedown", (e) => {
     return;
   }
 
-  // ONLY background
-  // if (interaction.mode !== "idle") return;
-  if (e.target !== canvas) return;
+  const bounds = getSelectionBounds();
 
+  if (bounds) {
+
+    const worldX =
+      (e.clientX - State.offsetX) / State.zoomLevel;
+
+    const worldY =
+      (e.clientY - State.offsetY) / State.zoomLevel;
+
+    const inside =
+      worldX >= bounds.minX &&
+      worldX <= bounds.maxX &&
+      worldY >= bounds.minY &&
+      worldY <= bounds.maxY;
+
+    if (inside) {
+
+      interaction.mode = "groupDrag";
+      interaction.startX = e.clientX;
+      interaction.startY = e.clientY;
+
+      interaction.dragStartPositions.clear();
+
+      State.selectedNodeIds.forEach(id => {
+        const node = State.getNodeById(id);
+        if (!node) return;
+
+        interaction.dragStartPositions.set(id, {
+          x: node.x,
+          y: node.y
+        });
+      });
+
+      return;
+    }
+  }
+
+  // MARQUEE START (only if click not inside group)
   interaction.mode = "marquee";
   interaction.marqueeStartX = e.clientX;
   interaction.marqueeStartY = e.clientY;

@@ -175,6 +175,28 @@ export function drawConnectionPreview(fromX, fromY, toX, toY) {
   );
 }
 
+function getGroupBounds(nodes) {
+  const selectedNodes = nodes.filter(n =>
+    State.selectedNodeIds.has(n.id)
+  );
+
+  if (selectedNodes.length <= 1) return null;
+
+  const minX = Math.min(...selectedNodes.map(n => n.x));
+  const minY = Math.min(...selectedNodes.map(n => n.y));
+  const maxX = Math.max(...selectedNodes.map(n => n.x + n.width));
+  const maxY = Math.max(...selectedNodes.map(n => n.y + n.height));
+
+  return {
+    minX,
+    minY,
+    maxX,
+    maxY,
+    width: maxX - minX,
+    height: maxY - minY
+  };
+}
+
 // Full scene Render
 
 export function renderScene(nodes, connections, zoomLevel, marquee = null, connectionPreview = null) {
@@ -240,6 +262,45 @@ if (connectionPreview) {
 
     drawConnectionPreview(fromX, fromY, toX, toY);
   }
+}
+
+const groupBounds = getGroupBounds(nodes);
+
+if (groupBounds) {
+
+  const { minX, minY, width, height, maxX, maxY } = groupBounds;
+
+  // Draw dashed bounding box
+  ctx.save();
+  ctx.setLineDash([6, 6]);
+  ctx.strokeStyle = "#4f46e5";
+  ctx.lineWidth = 1 / zoomLevel;
+  ctx.strokeRect(minX, minY, width, height);
+  ctx.restore();
+
+  // Draw resize handles
+  const handleSize = 10 / zoomLevel;
+
+  const handles = [
+    [minX, minY], // top-left
+    [maxX, minY], // top-right
+    [minX, maxY], // bottom-left
+    [maxX, maxY]  // bottom-right
+  ];
+
+  ctx.save();
+  ctx.fillStyle = "#4f46e5";
+
+  handles.forEach(([x, y]) => {
+    ctx.fillRect(
+      x - handleSize / 2,
+      y - handleSize / 2,
+      handleSize,
+      handleSize
+    );
+  });
+
+  ctx.restore();
 }
 
 if (marquee) {
