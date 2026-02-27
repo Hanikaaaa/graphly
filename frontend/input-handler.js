@@ -7,38 +7,42 @@ import { rebuild } from "./main.js";
 import { queueStateSync } from "./collaboration.js";
 import { ShapeRegistry } from "./shapes.js";
 
-let isPointerDown = false;
-let pointerDownX = 0;
-let pointerDownY = 0;
 
-let potentialDragNodeId = null;
-let isDraggingNode = false;
-
-let dragStartPositions = new Map();
-
-let isDrawingConnection = false;
-let connectionSource = null;
-
-let isResizing = false;
-let resizeNodeId = null;
-let resizeDir = null;
-
-let startX = 0;
-let startY = 0;
-let startW = 0;
-let startH = 0;
-let startNodeX = 0;
-let startNodeY = 0;
-
-let isPanning = false;
-let panStartX = 0;
-let panStartY = 0;
-let startOffsetX = 0;
-let startOffsetY = 0;
 let isSpacePressed = false;
 
 const DRAG_THRESHOLD = 4;
 let externalRedraw = null;
+
+let interaction = {
+  mode: "idle",   // idle | dragPending | drag | resize | pan | marquee
+
+  startX: 0,
+  startY: 0,
+
+  nodeId: null,
+  resizeDir: null,
+
+  startW: 0,
+  startH: 0,
+  startNodeX: 0,
+  startNodeY: 0,
+
+  connectionSourceId: null,
+  connectionCurrentX: 0,
+  connectionCurrentY: 0,
+
+  dragStartPositions: new Map(),
+
+  panStartX: 0,
+  panStartY: 0,
+  startOffsetX: 0,
+  startOffsetY: 0,
+
+  marqueeStartX: 0,
+  marqueeStartY: 0,
+  marqueeCurrentX: 0,
+  marqueeCurrentY: 0,
+};
 
 export function registerRedraw(fn) {
   externalRedraw = fn;
@@ -49,7 +53,33 @@ export function triggerRedraw() {
 }
 
 function redraw() {
-  Render.renderScene(State.nodes, State.connections, State.zoomLevel);
+
+  const marqueeData =
+    interaction.mode === "marquee"
+      ? {
+          startX: interaction.marqueeStartX,
+          startY: interaction.marqueeStartY,
+          currentX: interaction.marqueeCurrentX,
+          currentY: interaction.marqueeCurrentY,
+        }
+      : null;
+
+  const connectionPreview =
+    interaction.mode === "connect"
+      ? {
+          sourceId: interaction.connectionSourceId,
+          currentX: interaction.connectionCurrentX,
+          currentY: interaction.connectionCurrentY,
+        }
+      : null;
+
+  Render.renderScene(
+    State.nodes,
+    State.connections,
+    State.zoomLevel,
+    marqueeData,
+    connectionPreview
+  );
 
   State.nodes.forEach(node => {
     DOM.syncNodeDOM(node, {
@@ -95,19 +125,19 @@ export function attachNodeHandlers(node) {
     onDragStart(e, id) {
       if (State.editingNodeId) return;
 
-      isPointerDown = true;
-      pointerDownX = e.clientX;
-      pointerDownY = e.clientY;
-      potentialDragNodeId = id;
+      interaction.mode = "dragPending";
+      interaction.startX = e.clientX;
+      interaction.startY = e.clientY;
+      interaction.nodeId = id;
     },
 
     onConnectStart(e, id) {
       e.stopPropagation();
-      const node = State.getNodeById(id);
-      if (!node) return;
 
-      isDrawingConnection = true;
-      connectionSource = node;
+      interaction.mode = "connect";
+      interaction.connectionSourceId = id;
+      interaction.connectionCurrentX = e.clientX;
+      interaction.connectionCurrentY = e.clientY;
     },
 
     onResizeStart(e, id, direction) {
@@ -118,63 +148,69 @@ export function attachNodeHandlers(node) {
 
       State.snapshotState();
 
-      isResizing = true;
-      resizeNodeId = id;
-      resizeDir = direction;
+      interaction.mode = "resize";
+      interaction.nodeId = id;
+      interaction.resizeDir = direction;
 
-      startX = e.clientX;
-      startY = e.clientY;
+      interaction.startX = e.clientX;
+      interaction.startY = e.clientY;
 
-      startW = node.width;
-      startH = node.height;
-      startNodeX = node.x;
-      startNodeY = node.y;
+      interaction.startW = node.width;
+      interaction.startH = node.height;
+      interaction.startNodeX = node.x;
+      interaction.startNodeY = node.y;
     },
   });
 }
 
 canvas.addEventListener("mousemove", e => {
 
-  if (isPanning) {
-    const dx = e.clientX - panStartX;
-    const dy = e.clientY - panStartY;
+  // PAN
+  if (interaction.mode === "pan") {
+    const dx = e.clientX - interaction.panStartX;
+    const dy = e.clientY - interaction.panStartY;
 
-    State.setOffset(startOffsetX + dx, startOffsetY + dy);
+    State.setOffset(
+      interaction.startOffsetX + dx,
+      interaction.startOffsetY + dy
+    );
     redraw();
     return;
   }
 
-  if (isPointerDown && potentialDragNodeId && !isDraggingNode) {
-    const dx = e.clientX - pointerDownX;
-    const dy = e.clientY - pointerDownY;
+  // DRAG START THRESHOLD
+  if (interaction.mode === "dragPending") {
+    const dx = e.clientX - interaction.startX;
+    const dy = e.clientY - interaction.startY;
 
     if (Math.hypot(dx, dy) > DRAG_THRESHOLD) {
+      interaction.mode = "drag";
       State.snapshotState();
-      isDraggingNode = true;
 
-      dragStartPositions.clear();
+      interaction.dragStartPositions.clear();
 
-      const selectedIds = State.selectedNodeIds.size
+      const selected = State.selectedNodeIds.size
         ? State.selectedNodeIds
-        : new Set([potentialDragNodeId]);
+        : new Set([interaction.nodeId]);
 
-      selectedIds.forEach(id => {
-        const node = State.getNodeById(id);
-        if (!node) return;
+      selected.forEach(id => {
+        const n = State.getNodeById(id);
+        if (!n) return;
 
-        dragStartPositions.set(id, {
-          x: node.x,
-          y: node.y
+        interaction.dragStartPositions.set(id, {
+          x: n.x,
+          y: n.y
         });
       });
     }
   }
 
-  if (isDraggingNode) {
-    const dx = (e.clientX - pointerDownX) / State.zoomLevel;
-    const dy = (e.clientY - pointerDownY) / State.zoomLevel;
+  // DRAGGING
+  if (interaction.mode === "drag") {
+    const dx = (e.clientX - interaction.startX) / State.zoomLevel;
+    const dy = (e.clientY - interaction.startY) / State.zoomLevel;
 
-    dragStartPositions.forEach((startPos, id) => {
+    interaction.dragStartPositions.forEach((startPos, id) => {
       const node = State.getNodeById(id);
       if (!node) return;
 
@@ -186,23 +222,24 @@ canvas.addEventListener("mousemove", e => {
     return;
   }
 
-  if (isResizing && resizeNodeId) {
-    const node = State.getNodeById(resizeNodeId);
+  // RESIZE
+  if (interaction.mode === "resize") {
+    const node = State.getNodeById(interaction.nodeId);
     if (!node) return;
 
-    const dx = (e.clientX - startX) / State.zoomLevel;
-    const dy = (e.clientY - startY) / State.zoomLevel;
+    const dx = (e.clientX - interaction.startX) / State.zoomLevel;
+    const dy = (e.clientY - interaction.startY) / State.zoomLevel;
 
     const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
 
     const ctx = {
       dx,
       dy,
-      startW,
-      startH,
-      startNodeX,
-      startNodeY,
-      resizeDir
+      startW: interaction.startW,
+      startH: interaction.startH,
+      startNodeX: interaction.startNodeX,
+      startNodeY: interaction.startNodeY,
+      resizeDir: interaction.resizeDir
     };
 
     shape.applyResize?.(node, ctx);
@@ -211,62 +248,176 @@ canvas.addEventListener("mousemove", e => {
     redraw();
     return;
   }
+
+  // CONNECT MODE
+  if (interaction.mode === "connect") {
+
+    interaction.connectionCurrentX = e.clientX;
+    interaction.connectionCurrentY = e.clientY;
+
+    redraw();
+    return;
+  }
+
+  // MARQUEE
+  if (interaction.mode === "marquee") {
+
+    interaction.marqueeCurrentX = e.clientX;
+    interaction.marqueeCurrentY = e.clientY;
+
+    const startX =
+      (interaction.marqueeStartX - State.offsetX) / State.zoomLevel;
+    const startY =
+      (interaction.marqueeStartY - State.offsetY) / State.zoomLevel;
+
+    const currentX =
+      (interaction.marqueeCurrentX - State.offsetX) / State.zoomLevel;
+    const currentY =
+      (interaction.marqueeCurrentY - State.offsetY) / State.zoomLevel;
+
+    const minX = Math.min(startX, currentX);
+    const maxX = Math.max(startX, currentX);
+    const minY = Math.min(startY, currentY);
+    const maxY = Math.max(startY, currentY);
+
+    State.clearSelection();
+
+    State.nodes.forEach(node => {
+      const intersects =
+        node.x < maxX &&
+        node.x + node.width > minX &&
+        node.y < maxY &&
+        node.y + node.height > minY;
+
+      if (intersects) {
+        State.selectedNodeIds.add(node.id);
+      }
+    });
+
+    redraw();
+    return;
+  }
 });
 
 window.addEventListener("mouseup", () => {
 
-  if (isResizing) {
-    isResizing = false;
-    resizeNodeId = null;
-    resizeDir = null;
-    redraw();
-    queueStateSync("node_update");
-    return;
+  if (interaction.mode === "connect") {
+
+  const sourceId = interaction.connectionSourceId;
+
+  const worldX =
+    (interaction.connectionCurrentX - State.offsetX) / State.zoomLevel;
+
+  const worldY =
+    (interaction.connectionCurrentY - State.offsetY) / State.zoomLevel;
+
+  let targetNode = null;
+
+  State.nodes.forEach(node => {
+    const inside =
+      worldX >= node.x &&
+      worldX <= node.x + node.width &&
+      worldY >= node.y &&
+      worldY <= node.y + node.height;
+
+    if (inside) {
+      targetNode = node;
+    }
+  });
+
+  State.snapshotState();
+
+  if (targetNode && targetNode.id !== sourceId) {
+
+    // Connect to existing node
+    State.addConnection(sourceId, targetNode.id);
+
+  } else {
+
+    // 🔥 Create new node at drop location
+    const newNode = State.createNodeObject(
+      worldX - 70,
+      worldY - 40
+    );
+
+    State.addNode(newNode);
+    attachNodeHandlers(newNode);
+
+    // Connect source → new node
+    State.addConnection(sourceId, newNode.id);
   }
 
-  if (isDraggingNode) {
-    isDraggingNode = false;
-    potentialDragNodeId = null;
-    dragStartPositions.clear();
-    redraw();
+  queueStateSync("node_update");
+}
+
+  if (interaction.mode === "drag") {
     queueStateSync("node_update");
-    return;
   }
 
-  isPointerDown = false;
-  potentialDragNodeId = null;
-  isPanning = false;
+  if (interaction.mode === "resize") {
+    queueStateSync("node_update");
+  }
+
+  // CRITICAL RESET
+  interaction.mode = "idle";
+  interaction.nodeId = null;
+  interaction.connectionSourceId = null;
+  interaction.dragStartPositions.clear();
+
   redraw();
 });
 
 canvas.addEventListener("mousedown", (e) => {
 
+  // PAN
   if (e.button === 1 || isSpacePressed) {
-    isPanning = true;
-    panStartX = e.clientX;
-    panStartY = e.clientY;
-    startOffsetX = State.offsetX;
-    startOffsetY = State.offsetY;
+    interaction.mode = "pan";
+    interaction.panStartX = e.clientX;
+    interaction.panStartY = e.clientY;
+    interaction.startOffsetX = State.offsetX;
+    interaction.startOffsetY = State.offsetY;
     return;
   }
 
+  // ONLY background
+  // if (interaction.mode !== "idle") return;
   if (e.target !== canvas) return;
+
+  interaction.mode = "marquee";
+  interaction.marqueeStartX = e.clientX;
+  interaction.marqueeStartY = e.clientY;
+  interaction.marqueeCurrentX = e.clientX;
+  interaction.marqueeCurrentY = e.clientY;
 
   State.clearSelection();
   redraw();
 });
 
 canvas.addEventListener("dblclick", e => {
-  if (e.target !== canvas) return;
+  console.log("DOUBLE CLICK FIRED");
+});
 
-  const x = (e.clientX - State.offsetX) / State.zoomLevel;
-  const y = (e.clientY - State.offsetY) / State.zoomLevel;
+window.addEventListener("dblclick", e => {
+
+  // Ignore if double-clicking inside a node
+  if (e.target.closest(".node-input")) return;
+
+  const rect = canvas.getBoundingClientRect();
+
+  const x =
+    (e.clientX - rect.left - State.offsetX) / State.zoomLevel;
+
+  const y =
+    (e.clientY - rect.top - State.offsetY) / State.zoomLevel;
 
   State.snapshotState();
+
   const node = State.createNodeObject(x - 70, y - 40);
+
   State.addNode(node);
   attachNodeHandlers(node);
   State.selectSingleNode(node.id);
+
   redraw();
   queueStateSync("node_create");
 });

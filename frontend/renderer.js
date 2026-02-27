@@ -151,6 +151,15 @@ export function drawConnection(fromNode, toNode) {
   );
 }
 
+export function drawMarquee(minX, minY, width, height, zoomLevel) {
+  ctx.save();
+  ctx.setLineDash([6, 6]);
+  ctx.strokeStyle = "#4f46e5";
+  ctx.lineWidth = 1 / zoomLevel;
+  ctx.strokeRect(minX, minY, width, height);
+  ctx.restore();
+}
+
 // Preview Connection
 
 export function drawConnectionPreview(fromX, fromY, toX, toY) {
@@ -168,7 +177,7 @@ export function drawConnectionPreview(fromX, fromY, toX, toY) {
 
 // Full scene Render
 
-export function renderScene(nodes, connections, zoomLevel) {
+export function renderScene(nodes, connections, zoomLevel, marquee = null, connectionPreview = null) {
   clearCanvas(zoomLevel);
   switch (State.background.type) {
   case "grid":
@@ -209,5 +218,49 @@ connections.forEach(conn => {
   );
 });
 
+if (connectionPreview) {
+
+  const sourceNode = nodes.find(
+    n => n.id === connectionPreview.sourceId
+  );
+
+  if (sourceNode) {
+
+    const fromX =
+      sourceNode.x + sourceNode.width / 2;
+
+    const fromY =
+      sourceNode.y + sourceNode.height / 2;
+
+    const toX =
+      (connectionPreview.currentX - State.offsetX) / zoomLevel;
+
+    const toY =
+      (connectionPreview.currentY - State.offsetY) / zoomLevel;
+
+    drawConnectionPreview(fromX, fromY, toX, toY);
+  }
+}
+
+if (marquee) {
+  const { startX, startY, currentX, currentY } = marquee;
+
+  const worldStartX =
+    (startX - State.offsetX) / zoomLevel;
+  const worldStartY =
+    (startY - State.offsetY) / zoomLevel;
+
+  const worldCurrentX =
+    (currentX - State.offsetX) / zoomLevel;
+  const worldCurrentY =
+    (currentY - State.offsetY) / zoomLevel;
+
+  const minX = Math.min(worldStartX, worldCurrentX);
+  const minY = Math.min(worldStartY, worldCurrentY);
+  const width = Math.abs(worldCurrentX - worldStartX);
+  const height = Math.abs(worldCurrentY - worldStartY);
+
+  drawMarquee(minX, minY, width, height, zoomLevel);
+}
 
 }

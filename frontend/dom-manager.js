@@ -110,6 +110,9 @@ export function syncNodeDOM(
   if (!el) return;
 
   const shapeLayer = el.querySelector(".node-shape-layer");
+  el.querySelectorAll(".node-connector").forEach(c => {
+  c.style.transform = `scale(${1 / zoomLevel})`;
+});
 
   // Image Sync
 
