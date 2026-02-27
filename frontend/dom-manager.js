@@ -144,6 +144,14 @@ export function syncNodeDOM(node, {
   const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
 
   shape.applyLayout(node, el);
+  
+  // Apply border radius only if shape supports it
+  if (shape.meta.supportsBorderRadius) {
+    el.style.borderRadius = `${node.borderRadius}px`;
+  } else {
+    el.style.borderRadius = "";
+  }
+
   shape.enforceConstraints(node);
   shape.applyConnectorLayout(node, el, zoomLevel);
   // TEXT
