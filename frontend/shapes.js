@@ -147,3 +147,64 @@ ShapeRegistry.diamond = createBaseShape({
     ShapeRegistry.rectangle.applyResize(node, ctx);
   }
 });
+
+ShapeRegistry.triangle = createBaseShape({
+  meta: {
+    supportsBorderRadius: false
+  },
+
+  applyLayout(node, el) {
+    const shapeLayer = el.querySelector(".node-shape-layer");
+
+    shapeLayer.style.clipPath =
+      "polygon(50% 0%, 100% 100%, 0% 100%)";
+
+    shapeLayer.style.borderRadius = "0px";
+  },
+
+  enforceConstraints(node) {
+    node.width = Math.max(node.width, 80);
+    node.height = Math.max(node.height, 60);
+  },
+
+  applyResize(node, ctx) {
+    // behave like rectangle
+    ShapeRegistry.rectangle.applyResize(node, ctx);
+  },
+
+  applyConnectorLayout(node, el, zoomLevel) {
+    const connectors = el.querySelectorAll(".node-connector");
+
+    connectors.forEach(conn => {
+      conn.style.transform = `scale(${1 / zoomLevel})`;
+
+      if (conn.classList.contains("top")) {
+        // Apex
+        conn.style.top = "-6px";
+        conn.style.left = "50%";
+        conn.style.transform += " translateX(-50%)";
+      }
+
+      if (conn.classList.contains("bottom")) {
+        // Middle of base
+        conn.style.bottom = "-6px";
+        conn.style.left = "50%";
+        conn.style.transform += " translateX(-50%)";
+      }
+
+      if (conn.classList.contains("left")) {
+        // Mid of left edge (approximate)
+        conn.style.left = "-6px";
+        conn.style.top = "50%";
+        conn.style.transform += " translateY(-50%)";
+      }
+
+      if (conn.classList.contains("right")) {
+        // Mid of right edge (approximate)
+        conn.style.right = "-6px";
+        conn.style.top = "50%";
+        conn.style.transform += " translateY(-50%)";
+      }
+    });
+  }
+});
