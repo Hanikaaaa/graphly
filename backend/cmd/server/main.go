@@ -103,6 +103,8 @@ func main() {
 
 	router.Static("/js", filepath.Join(frontendDir, "js"))
 	router.Static("/css", filepath.Join(frontendDir, "css"))
+	router.Static("/interaction", filepath.Join(frontendDir, "interaction"))
+	router.Static("/geometry", filepath.Join(frontendDir, "geometry"))
 
 	router.GET("/:file", serveFrontendAsset(frontendDir))
 
