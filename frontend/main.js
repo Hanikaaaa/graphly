@@ -181,6 +181,7 @@ async function openCanvas(canvasID) {
 
   createInitialNodeIfEmpty();
   showApp();
+  setCanvasTitle(canvas.title);
   Render.resizeCanvas();
   triggerRedraw();
   rebuild();
@@ -189,6 +190,19 @@ async function openCanvas(canvasID) {
     "",
     `?canvas=${encodeURIComponent(canvas.id)}`,
   );
+}
+
+function setCanvasTitle(title) {
+  const el = document.getElementById("canvas-name");
+
+  if (!el) {
+    console.warn("canvas-name element not found");
+    return;
+  }
+
+  const safeTitle = title?.trim() || "Untitled Canvas";
+  el.textContent = safeTitle;
+  el.title = safeTitle;
 }
 
 function renderDashboard() {
