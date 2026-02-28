@@ -11,19 +11,19 @@ export const DEFAULT_BACKGROUND = Object.freeze({
   type: "grid",
 
   // base
-  color: "#fafafa",
+  color: "#ecfdf5", // emerald-50
 
-  // grid
-  gridColor: "#e6e6e6",
+  // subtle grid
+  gridColor: "rgba(16, 185, 129, 0.15)", // emerald tint
   gridSpacing: 40,
   gridLineWidth: 1,
-  gridOpacity: 1,
+  gridOpacity: 0.70,
 
-  // dots
-  dotColor: "#d0d0d0",
+  // very soft dots
+  dotColor: "rgba(16, 185, 129, 0.22)",
   dotSpacing: 40,
-  dotRadius: 1.5,
-  dotOpacity: 1,
+  dotRadius: 1.2,
+  dotOpacity: 0.70,
 
   parallaxStrength: 0, // 0 = fixed, >0 = slow movement
 });
@@ -133,12 +133,12 @@ export function createNodeObject(x, y) {
     textAlign: "left",
     fontWeight: "normal",
     fontSize: 14,
-    fontColor: "#000",
-    fontFamily: "Arial",
+    fontColor: "#0f172a",
+    fontFamily: "Courier New",
 
     // box styles
     color: "#ffffff",
-    borderColor: "#bc7c7c",
+    borderColor: "rgba(59, 130, 246, 0.35)",
     borderStyle: "solid",
     borderRadius: 16,
     opacity: 1,
@@ -147,8 +147,8 @@ export function createNodeObject(x, y) {
     shape: "rectangle",
 
     // connections (ID-based)
-    connectorColor: "#444",
-    connectorWidth: 3,
+    connectorColor: "rgba(59, 130, 246, 0.45)",
+    connectorWidth: 2.5,
     connections: [],
   };
 }
