@@ -244,39 +244,57 @@ canvas.addEventListener("mousemove", e => {
 
   if (interaction.mode === "groupResize") {
 
-  const dx =
-    (e.clientX - interaction.startX) / State.zoomLevel;
-
-  const dy =
-    (e.clientY - interaction.startY) / State.zoomLevel;
+  const dx = (e.clientX - interaction.startX) / State.zoomLevel;
+  const dy = (e.clientY - interaction.startY) / State.zoomLevel;
 
   const original = interaction.groupBounds;
 
-  let newWidth = original.maxX - original.minX;
-  let newHeight = original.maxY - original.minY;
+  let newMinX = original.minX;
+  let newMinY = original.minY;
+  let newMaxX = original.maxX;
+  let newMaxY = original.maxY;
 
-  // Only implement bottom-right cleanly first
-  if (interaction.groupResizeHandle === "br") {
-    newWidth += dx;
-    newHeight += dy;
+  switch (interaction.groupResizeHandle) {
+
+    case "br":
+      newMaxX += dx;
+      newMaxY += dy;
+      break;
+
+    case "tr":
+      newMaxX += dx;
+      newMinY += dy;
+      break;
+
+    case "bl":
+      newMinX += dx;
+      newMaxY += dy;
+      break;
+
+    case "tl":
+      newMinX += dx;
+      newMinY += dy;
+      break;
   }
 
-  if (newWidth < 20) newWidth = 20;
-  if (newHeight < 20) newHeight = 20;
+  const originalWidth = original.maxX - original.minX;
+  const originalHeight = original.maxY - original.minY;
 
-  const scaleX = newWidth / (original.maxX - original.minX);
-  const scaleY = newHeight / (original.maxY - original.minY);
+  const newWidth = newMaxX - newMinX;
+  const newHeight = newMaxY - newMinY;
+
+  if (newWidth < 20 || newHeight < 20) return;
+
+  const scaleX = newWidth / originalWidth;
+  const scaleY = newHeight / originalHeight;
 
   interaction.groupInitialNodes.forEach((init, id) => {
 
     const node = State.getNodeById(id);
     if (!node) return;
 
-    node.x =
-      original.minX + (init.x - original.minX) * scaleX;
-
-    node.y =
-      original.minY + (init.y - original.minY) * scaleY;
+    node.x = newMinX + (init.x - original.minX) * scaleX;
+    node.y = newMinY + (init.y - original.minY) * scaleY;
 
     node.width = init.width * scaleX;
     node.height = init.height * scaleY;
@@ -424,7 +442,7 @@ canvas.addEventListener("mousemove", e => {
   }
 });
 
-window.addEventListener("mouseup", () => {
+window.addEventListener("mouseup", (e) => {
 
   if (interaction.mode === "connect") {
 
@@ -459,7 +477,6 @@ window.addEventListener("mouseup", () => {
 
   } else {
 
-    // 🔥 Create new node at drop location
     const newNode = State.createNodeObject(
       worldX - 70,
       worldY - 40
@@ -544,12 +561,14 @@ window.addEventListener("mouseup", () => {
   });
 
   redraw();
-  return;
 }
 
   // CRITICAL RESET
   interaction.mode = "idle";
   interaction.nodeId = null;
+  interaction.resizeDir = null;
+  interaction.groupResizeHandle = null;
+  interaction.groupBounds = null;
   interaction.connectionSourceId = null;
   interaction.dragStartPositions.clear();
 
