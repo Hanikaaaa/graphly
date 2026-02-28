@@ -247,6 +247,7 @@ export function renderCanvasDashboard(root, options) {
 
   const state = {
     search: "",
+    searchDraft: "",
     filter: "all",
     sort: "updated_desc",
     view: "grid",
@@ -321,7 +322,7 @@ export function renderCanvasDashboard(root, options) {
         <div class="mx-auto w-full max-w-7xl px-4 pb-10 pt-5 sm:px-6 lg:px-8">
           ${DashboardHeader({
             userEmail,
-            search: state.search,
+            search: state.searchDraft,
             filter: state.filter,
             sort: state.sort,
             view: state.view,
@@ -413,7 +414,13 @@ export function renderCanvasDashboard(root, options) {
     root.querySelector("#dashboard-logout-btn")?.addEventListener("click", onLogout);
 
     root.querySelector("#canvas-search")?.addEventListener("input", (event) => {
-      state.search = event.target.value || "";
+      state.searchDraft = event.target.value || "";
+    });
+
+    root.querySelector("#canvas-search")?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      state.search = state.searchDraft.trim();
       render();
     });
 
