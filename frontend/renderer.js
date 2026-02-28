@@ -1,5 +1,6 @@
 import { canvas, ctx } from "./elements.js";
 import * as State from "./state.js";
+import { getSelectionBounds } from "./geometry/bounds.js";
 
 // Canvas Setup
 export function resizeCanvas() {
@@ -175,28 +176,6 @@ export function drawConnectionPreview(fromX, fromY, toX, toY) {
   );
 }
 
-function getGroupBounds(nodes) {
-  const selectedNodes = nodes.filter(n =>
-    State.selectedNodeIds.has(n.id)
-  );
-
-  if (selectedNodes.length <= 1) return null;
-
-  const minX = Math.min(...selectedNodes.map(n => n.x));
-  const minY = Math.min(...selectedNodes.map(n => n.y));
-  const maxX = Math.max(...selectedNodes.map(n => n.x + n.width));
-  const maxY = Math.max(...selectedNodes.map(n => n.y + n.height));
-
-  return {
-    minX,
-    minY,
-    maxX,
-    maxY,
-    width: maxX - minX,
-    height: maxY - minY
-  };
-}
-
 // Full scene Render
 
 export function renderScene(nodes, connections, zoomLevel, marquee = null, connectionPreview = null) {
@@ -213,8 +192,7 @@ export function renderScene(nodes, connections, zoomLevel, marquee = null, conne
     break;
 }
 
-  const nodeMap = new Map();
-nodes.forEach(n => nodeMap.set(n.id, n));
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
 
 connections.forEach(conn => {
   const from = nodeMap.get(conn.from);
@@ -264,7 +242,7 @@ if (connectionPreview) {
   }
 }
 
-const groupBounds = getGroupBounds(nodes);
+const groupBounds = getSelectionBounds(nodes, State.selectedNodeIds);
 
 if (groupBounds) {
 
