@@ -40,10 +40,21 @@
         },
       },
     };
-  </script>
+    </script>
   <style>
+    /* hide scrollbar but keep scrolling */
+    html {
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE/Edge */
+    }
+
+    html::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
+    }
     body {
       font-family: "Sora", sans-serif;
+      max-width: 100%;
+  /* overflow-x: hidden; */
       background:
         radial-gradient(circle at 12% 18%, rgba(52, 245, 197, 0.12), transparent 34%),
         radial-gradient(circle at 84% 11%, rgba(79, 140, 255, 0.16), transparent 40%),
@@ -60,7 +71,7 @@
     }
   </style>
 </head>
-<body class="bg-graphly-bg text-graphly-text antialiased">
+<body class="bg-graphly-bg text-graphly-text antialiased overflow-y-auto">
   <header data-navbar class="sticky top-0 z-50 border-b border-graphly-border/90 bg-graphly-bg/90 backdrop-blur">
     <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
       <!-- <a href="#home" data-scroll-target="home" class="text-2xl font-extrabold tracking-tight text-graphly-heading transition-colors duration-200 hover:text-graphly-accent-mint-hover">Graphly</a> -->
@@ -113,7 +124,7 @@
         </div>
       </div>
 
-      <div class="relative mx-auto w-full max-w-xl rounded-lg border border-graphly-border bg-graphly-surface p-2 shadow-panel transition-all duration-300 hover:translate-x-2 hover:translate-y-2 hover:border-graphly-accent-mint hover:bg-graphly-surface-hover hover:shadow-xl">
+      <div class="relative mx-auto w-full max-w-xl rounded-lg border border-graphly-border bg-graphly-surface p-2 shadow-panel transition-all duration-300 hover:scale-105 hover:border-graphly-accent-mint hover:bg-graphly-surface-hover hover:shadow-xl">
         <div class="grid grid-cols-4 items-end gap-3">
           <img src="/assets/hero_landing_page.png" alt="Graphly canvas preview" class="col-span-4 rounded-lg border border-graphly-border shadow-sm" />
         </div>
