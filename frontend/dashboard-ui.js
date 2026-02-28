@@ -60,7 +60,7 @@ function DashboardHeader({ userEmail, search, filter, sort, view }) {
     <header class="sticky top-4 z-30 rounded-2xl border border-white/10 bg-[#020617]/70 shadow-2xl backdrop-blur-xl">
       <div class="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between">
         <div class="flex items-center gap-3">
-          <div class="h-10 w-10 rounded-xl p-0"><img src="/assets/graphly02.png" alt="User avatar" class="h-full w-full object-cover rounded-xl"></div>
+          <div class="h-10 w-10 rounded-xl p-0"><img src="/assets/graphly02.png" alt="G" class="h-full w-full object-cover rounded-xl"></div>
           <div>
             <p class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent">Graphly</p>
             <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Canvases</p>
