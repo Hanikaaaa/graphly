@@ -72,36 +72,31 @@ ShapeRegistry.rectangle = createBaseShape({
   },
 
   applyResize(node, ctx) {
-    const {
-      dx, dy,
-      startW, startH,
-      startNodeX, startNodeY,
-      resizeDir
-    } = ctx;
+  const { dx, dy, resizeDir } = ctx;
 
-    const minW = 80;
-    const minH = 40;
+  const minW = 80;
+  const minH = 40;
 
-    if (resizeDir.includes("right")) {
-      node.width = Math.max(minW, startW + dx);
-    }
-
-    if (resizeDir.includes("left")) {
-      const newW = Math.max(minW, startW - dx);
-      node.x = startNodeX + (startW - newW);
-      node.width = newW;
-    }
-
-    if (resizeDir.includes("bottom")) {
-      node.height = Math.max(minH, startH + dy);
-    }
-
-    if (resizeDir.includes("top")) {
-      const newH = Math.max(minH, startH - dy);
-      node.y = startNodeY + (startH - newH);
-      node.height = newH;
-    }
+  if (resizeDir.includes("right")) {
+    node.width = Math.max(minW, node.width + dx);
   }
+
+  if (resizeDir.includes("left")) {
+    const newW = Math.max(minW, node.width - dx);
+    node.x += node.width - newW;
+    node.width = newW;
+  }
+
+  if (resizeDir.includes("bottom")) {
+    node.height = Math.max(minH, node.height + dy);
+  }
+
+  if (resizeDir.includes("top")) {
+    const newH = Math.max(minH, node.height - dy);
+    node.y += node.height - newH;
+    node.height = newH;
+  }
+}
 });
 
 ShapeRegistry.circle = createBaseShape({
@@ -119,15 +114,15 @@ ShapeRegistry.circle = createBaseShape({
   },
 
   applyResize(node, ctx) {
-    const { dx, dy, startW } = ctx;
-    const minSize = 80;
+  const { dx, dy } = ctx;
+  const minSize = 80;
 
-    const delta = Math.max(dx, dy);
-    const newSize = Math.max(minSize, startW + delta);
+  const delta = Math.max(dx, dy);
+  const newSize = Math.max(minSize, node.width + delta);
 
-    node.width = newSize;
-    node.height = newSize;
-  }
+  node.width = newSize;
+  node.height = newSize;
+}
 });
 
 ShapeRegistry.diamond = createBaseShape({

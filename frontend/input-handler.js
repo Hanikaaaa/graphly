@@ -20,6 +20,9 @@ let interaction = {
   startX: 0,
   startY: 0,
 
+  lastClientX: 0,
+  lastClientY: 0,
+
   nodeId: null,
   resizeDir: null,
 
@@ -201,13 +204,8 @@ export function attachNodeHandlers(node) {
       interaction.nodeId = id;
       interaction.resizeDir = direction;
 
-      interaction.startX = e.clientX;
-      interaction.startY = e.clientY;
-
-      interaction.startW = node.width;
-      interaction.startH = node.height;
-      interaction.startNodeX = node.x;
-      interaction.startNodeY = node.y;
+      interaction.lastClientX = e.clientX;
+      interaction.lastClientY = e.clientY;
     },
   });
 }
@@ -367,30 +365,29 @@ canvas.addEventListener("mousemove", e => {
 
   // RESIZE
   if (interaction.mode === "resize") {
-    const node = State.getNodeById(interaction.nodeId);
-    if (!node) return;
+  const node = State.getNodeById(interaction.nodeId);
+  if (!node) return;
 
-    const dx = (e.clientX - interaction.startX) / State.zoomLevel;
-    const dy = (e.clientY - interaction.startY) / State.zoomLevel;
+  const dx = (e.clientX - interaction.lastClientX) / State.zoomLevel;
+  const dy = (e.clientY - interaction.lastClientY) / State.zoomLevel;
 
-    const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
+  interaction.lastClientX = e.clientX;
+  interaction.lastClientY = e.clientY;
 
-    const ctx = {
-      dx,
-      dy,
-      startW: interaction.startW,
-      startH: interaction.startH,
-      startNodeX: interaction.startNodeX,
-      startNodeY: interaction.startNodeY,
-      resizeDir: interaction.resizeDir
-    };
+  const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
 
-    shape.applyResize?.(node, ctx);
-    shape.enforceConstraints?.(node);
+  const ctx = {
+    dx,
+    dy,
+    resizeDir: interaction.resizeDir
+  };
 
-    redraw();
-    return;
-  }
+  shape.applyResize?.(node, ctx);
+  shape.enforceConstraints?.(node);
+
+  redraw();
+  return;
+}
 
   // CONNECT MODE
   if (interaction.mode === "connect") {
