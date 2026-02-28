@@ -318,7 +318,7 @@ export function renderCanvasDashboard(root, options) {
     const deleteTargetCanvas = canvases.find((canvas) => canvas.id === state.deleteTargetID);
 
     root.innerHTML = `
-      <main class="min-h-screen bg-gradient-to-br from-[#0B0F1A] via-[#0F172A] to-[#020617] text-slate-100">
+      <main class="h-screen overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden bg-gradient-to-br from-[#0B0F1A] via-[#0F172A] to-[#020617] text-slate-100">
         <div class="mx-auto w-full max-w-7xl px-4 pb-10 pt-5 sm:px-6 lg:px-8">
           ${DashboardHeader({
             userEmail,
