@@ -7,7 +7,7 @@ export let zoomLevel = 1;
 export let offsetX = 0;
 export let offsetY = 0;
 
-export let background = {
+export const DEFAULT_BACKGROUND = Object.freeze({
   type: "grid",
 
   // base
@@ -26,7 +26,13 @@ export let background = {
   dotOpacity: 1,
 
   parallaxStrength: 0, // 0 = fixed, >0 = slow movement
-};
+});
+
+function cloneDefaultBackground() {
+  return structuredClone(DEFAULT_BACKGROUND);
+}
+
+export let background = cloneDefaultBackground();
 
 let undoStack = [];
 let redoStack = [];
@@ -59,7 +65,10 @@ function restoreState(snapshot) {
   zoomLevel = snapshot.zoomLevel;
   offsetX = snapshot.offsetX;
   offsetY = snapshot.offsetY;
-  background = snapshot.background || background;
+  background = {
+    ...cloneDefaultBackground(),
+    ...(snapshot.background || {}),
+  };
 
   selectedNodeIds = new Set(
     snapshot.selectedNodeIds?.filter(id =>
@@ -287,6 +296,7 @@ export function resetCanvasState() {
   zoomLevel = 1;
   offsetX = 0;
   offsetY = 0;
+  background = cloneDefaultBackground();
   undoStack = [];
   redoStack = [];
 }
@@ -309,7 +319,10 @@ export function importCollabState(snapshot) {
 
   nodes = structuredClone(snapshot.nodes);
   connections = structuredClone(snapshot.connections);
-  background = snapshot.background || background;
+  background = {
+    ...cloneDefaultBackground(),
+    ...(snapshot.background || {}),
+  };
   zoomLevel = typeof snapshot.zoomLevel === "number" ? snapshot.zoomLevel : zoomLevel;
   offsetX = typeof snapshot.offsetX === "number" ? snapshot.offsetX : 0;
   offsetY = typeof snapshot.offsetY === "number" ? snapshot.offsetY : 0;

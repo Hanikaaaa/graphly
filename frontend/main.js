@@ -96,7 +96,6 @@ function initializeRuntime() {
   });
 
   initInputHandler();
-  initCollaboration();
 }
 
 function showApp() {
@@ -142,8 +141,15 @@ function normalizeCanvasState(data) {
   const nodes = Array.isArray(data.nodes) ? data.nodes : [];
   const connections = Array.isArray(data.connections) ? data.connections : [];
   const zoomLevel = typeof data.zoomLevel === "number" ? data.zoomLevel : 1;
+  const offsetX = typeof data.offsetX === "number" ? data.offsetX : 0;
+  const offsetY = typeof data.offsetY === "number" ? data.offsetY : 0;
+  const normalized = { nodes, connections, zoomLevel, offsetX, offsetY };
 
-  return { nodes, connections, zoomLevel };
+  if (data.background && typeof data.background === "object") {
+    normalized.background = data.background;
+  }
+
+  return normalized;
 }
 
 async function openCanvas(canvasID) {
@@ -264,6 +270,14 @@ async function refreshDashboard() {
 }
 
 async function showDashboard() {
+  const params = new URLSearchParams(window.location.search);
+  params.delete("canvas");
+  const query = params.toString();
+  const nextURL = query
+    ? `${window.location.pathname}?${query}${window.location.hash}`
+    : `${window.location.pathname}${window.location.hash}`;
+  window.history.replaceState({}, "", nextURL);
+
   try {
     currentUser = await getCurrentUser();
   } catch (_error) {
