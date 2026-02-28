@@ -1,8 +1,14 @@
-export function hitTestConnection(worldX, worldY, connections, getNodeById, zoomLevel) {
+export function hitTestConnection(
+  worldX,
+  worldY,
+  connections,
+  getNodeById,
+  zoomLevel,
+) {
   const HIT_DISTANCE = 8 / zoomLevel;
   let clickedConnection = null;
 
-  connections.forEach(conn => {
+  connections.forEach((conn) => {
     const from = getNodeById(conn.from);
     const to = getNodeById(conn.to);
     if (!from || !to) return;
@@ -16,14 +22,10 @@ export function hitTestConnection(worldX, worldY, connections, getNodeById, zoom
 
     for (let t = 0; t <= 1; t += 0.05) {
       const x =
-        (1 - t) * (1 - t) * fromX +
-        2 * (1 - t) * t * fromX +
-        t * t * toX;
+        (1 - t) * (1 - t) * fromX + 2 * (1 - t) * t * fromX + t * t * toX;
 
       const y =
-        (1 - t) * (1 - t) * fromY +
-        2 * (1 - t) * t * controlY +
-        t * t * toY;
+        (1 - t) * (1 - t) * fromY + 2 * (1 - t) * t * controlY + t * t * toY;
 
       const dist = Math.hypot(worldX - x, worldY - y);
       if (dist < HIT_DISTANCE) {

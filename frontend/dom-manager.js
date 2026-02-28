@@ -1,5 +1,6 @@
 import * as State from "./state.js";
 import { ShapeRegistry } from "./shapes.js";
+import { getSelectionBounds } from "./geometry/bounds.js";
 
 // Group Overlay
 
@@ -11,7 +12,7 @@ function createGroupOverlay() {
   groupOverlay = document.createElement("div");
   groupOverlay.className = "group-overlay";
 
-  ["tl", "tr", "bl", "br"].forEach(dir => {
+  ["tl", "tr", "bl", "br"].forEach((dir) => {
     const handle = document.createElement("div");
     handle.className = "group-handle";
     handle.dataset.dir = dir;
@@ -22,38 +23,26 @@ function createGroupOverlay() {
   return groupOverlay;
 }
 
-export function updateGroupOverlay(zoomLevel) {
-  const selectedNodes = State.nodes.filter(n =>
-    State.selectedNodeIds.has(n.id)
-  );
+function getShape(node) {
+  return ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
+}
 
-  if (selectedNodes.length <= 1) {
+export function updateGroupOverlay(zoomLevel) {
+  const bounds = getSelectionBounds(State.nodes, State.selectedNodeIds);
+
+  if (!bounds) {
     if (groupOverlay) groupOverlay.style.display = "none";
     return;
   }
 
-  const minX = Math.min(...selectedNodes.map(n => n.x));
-  const minY = Math.min(...selectedNodes.map(n => n.y));
-  const maxX = Math.max(...selectedNodes.map(n => n.x + n.width));
-  const maxY = Math.max(...selectedNodes.map(n => n.y + n.height));
+  const { minX, minY, maxX, maxY } = bounds;
 
   const overlay = createGroupOverlay();
-
   overlay.style.display = "block";
-
-  overlay.style.left =
-    minX * zoomLevel + State.offsetX + "px";
-
-  overlay.style.top =
-    minY * zoomLevel + State.offsetY + "px";
-
-  overlay.style.width =
-    (maxX - minX) * zoomLevel + "px";
-
-  overlay.style.height =
-    (maxY - minY) * zoomLevel + "px";
-
-  overlay.style.transform = "none";
+  overlay.style.left = minX * zoomLevel + State.offsetX + "px";
+  overlay.style.top = minY * zoomLevel + State.offsetY + "px";
+  overlay.style.width = (maxX - minX) * zoomLevel + "px";
+  overlay.style.height = (maxY - minY) * zoomLevel + "px";
 }
 
 export function getGroupOverlay() {
@@ -110,8 +99,12 @@ export function createNodeDOM(node, handlers) {
     }
   };
 
+  el._shapeLayer = shapeLayer;
+  el._text = textDisplay;
+  el._input = textInput;
+
   // Connectors
-  const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
+  const shape = getShape(node);
 
   shape.meta.connectors.forEach((side) => {
     const connector = document.createElement("div");
@@ -126,21 +119,23 @@ export function createNodeDOM(node, handlers) {
   });
 
   // Resize Handles
+  const resizeHandles = [];
 
-  ["top-left", "top-right", "bottom-right", "bottom-left"].forEach(
-    (pos) => {
-      const handle = document.createElement("div");
-      handle.className = `node-resize-handle ${pos}`;
-      handle.dataset.direction = pos;
+  ["top-left", "top-right", "bottom-right", "bottom-left"].forEach((pos) => {
+    const handle = document.createElement("div");
+    handle.className = `node-resize-handle ${pos}`;
+    handle.dataset.direction = pos;
 
-      handle.onmousedown = (e) => {
-        e.stopPropagation();
-        handlers.onResizeStart(e, node.id, pos);
-      };
+    handle.onmousedown = (e) => {
+      e.stopPropagation();
+      handlers.onResizeStart(e, node.id, pos);
+    };
 
-      el.appendChild(handle);
-    }
-  );
+    resizeHandles.push(handle);
+    el.appendChild(handle);
+  });
+
+  el._resizeHandles = resizeHandles;
 
   // Drag + Select
 
@@ -161,22 +156,15 @@ export function createNodeDOM(node, handlers) {
   document.body.appendChild(el);
 }
 
-export function syncNodeDOM(
-  node,
-  { isSelected, isEditing, zoomLevel }
-) {
+export function syncNodeDOM(node, { isSelected, isEditing, zoomLevel }) {
   const el = document.getElementById(node.id);
   if (!el) return;
 
-  const shapeLayer = el.querySelector(".node-shape-layer");
-  el.querySelectorAll(".node-connector").forEach(c => {
-  c.style.transform = `scale(${1 / zoomLevel})`;
-});
+  const shapeLayer = el._shapeLayer;
 
   // Image Sync
 
-  let imgWrapper =
-    shapeLayer.querySelector(".node-image-wrapper");
+  let imgWrapper = shapeLayer.querySelector(".node-image-wrapper");
 
   if (node.image) {
     if (!imgWrapper) {
@@ -214,15 +202,13 @@ export function syncNodeDOM(
 
   shapeLayer.style.backgroundColor = node.color;
 
-  shapeLayer.style.border =
-    `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
+  shapeLayer.style.border = `${1 / zoomLevel}px ${node.borderStyle} ${node.borderColor}`;
 
   el.style.opacity = node.opacity;
 
   // Shape Layout
 
-  const shape =
-    ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
+  const shape = getShape(node);
 
   // Reset clip before applying new shape
   shapeLayer.style.clipPath = "";
@@ -233,16 +219,15 @@ export function syncNodeDOM(
   // Border Radius
 
   if (shape.meta.supportsBorderRadius) {
-    shapeLayer.style.borderRadius =
-      `${node.borderRadius}px`;
+    shapeLayer.style.borderRadius = `${node.borderRadius}px`;
   } else {
     shapeLayer.style.borderRadius = "0px";
   }
 
   // Text
 
-  const text = el.querySelector(".node-text");
-  const input = el.querySelector(".node-text-input");
+  const text = el._text;
+  const input = el._input;
 
   text.textContent = node.text || "Type here…";
   input.value = node.text || "";
@@ -273,7 +258,7 @@ export function syncNodeDOM(
     input.style.display = "none";
   }
 
-  // PREVENT UI SCALE DISTORTION 
+  // PREVENT UI SCALE DISTORTION
 
   el.querySelectorAll(".node-resize-handle").forEach((h) => {
     h.style.transform = `scale(${1 / zoomLevel})`;
@@ -289,7 +274,5 @@ export function removeNodeDOM(id) {
 }
 
 export function clearAllNodes() {
-  document
-    .querySelectorAll(".node-input")
-    .forEach((el) => el.remove());
+  document.querySelectorAll(".node-input").forEach((el) => el.remove());
 }

@@ -6,13 +6,13 @@ function createBaseShape(config) {
       keepAspectRatio: false,
       supportsBorderRadius: false,
       connectors: ["top", "right", "bottom", "left"],
-      ...config.meta
+      ...config.meta,
     },
 
     applyLayout(node, el) {
       Array.from(el.classList)
-        .filter(c => c.startsWith("shape-"))
-        .forEach(c => el.classList.remove(c));
+        .filter((c) => c.startsWith("shape-"))
+        .forEach((c) => el.classList.remove(c));
 
       el.classList.add(`shape-${node.shape}`);
 
@@ -30,7 +30,7 @@ function createBaseShape(config) {
     applyConnectorLayout(node, el, zoomLevel) {
       const connectors = el.querySelectorAll(".node-connector");
 
-      connectors.forEach(conn => {
+      connectors.forEach((conn) => {
         conn.style.transform = `scale(${1 / zoomLevel})`;
 
         if (conn.classList.contains("top")) {
@@ -57,7 +57,7 @@ function createBaseShape(config) {
           conn.style.transform += " translateY(-50%)";
         }
       });
-    }
+    },
   };
 }
 
@@ -72,31 +72,31 @@ ShapeRegistry.rectangle = createBaseShape({
   },
 
   applyResize(node, ctx) {
-  const { dx, dy, resizeDir } = ctx;
+    const { dx, dy, resizeDir } = ctx;
 
-  const minW = 80;
-  const minH = 40;
+    const minW = 80;
+    const minH = 40;
 
-  if (resizeDir.includes("right")) {
-    node.width = Math.max(minW, node.width + dx);
-  }
+    if (resizeDir.includes("right")) {
+      node.width = Math.max(minW, node.width + dx);
+    }
 
-  if (resizeDir.includes("left")) {
-    const newW = Math.max(minW, node.width - dx);
-    node.x += node.width - newW;
-    node.width = newW;
-  }
+    if (resizeDir.includes("left")) {
+      const newW = Math.max(minW, node.width - dx);
+      node.x += node.width - newW;
+      node.width = newW;
+    }
 
-  if (resizeDir.includes("bottom")) {
-    node.height = Math.max(minH, node.height + dy);
-  }
+    if (resizeDir.includes("bottom")) {
+      node.height = Math.max(minH, node.height + dy);
+    }
 
-  if (resizeDir.includes("top")) {
-    const newH = Math.max(minH, node.height - dy);
-    node.y += node.height - newH;
-    node.height = newH;
-  }
-}
+    if (resizeDir.includes("top")) {
+      const newH = Math.max(minH, node.height - dy);
+      node.y += node.height - newH;
+      node.height = newH;
+    }
+  },
 });
 
 ShapeRegistry.circle = createBaseShape({
@@ -114,23 +114,22 @@ ShapeRegistry.circle = createBaseShape({
   },
 
   applyResize(node, ctx) {
-  const { dx, dy } = ctx;
-  const minSize = 80;
+    const { dx, dy } = ctx;
+    const minSize = 80;
 
-  const delta = Math.max(dx, dy);
-  const newSize = Math.max(minSize, node.width + delta);
+    const delta = Math.max(dx, dy);
+    const newSize = Math.max(minSize, node.width + delta);
 
-  node.width = newSize;
-  node.height = newSize;
-}
+    node.width = newSize;
+    node.height = newSize;
+  },
 });
 
 ShapeRegistry.diamond = createBaseShape({
   applyLayout(node, el) {
     const shapeLayer = el.querySelector(".node-shape-layer");
 
-    shapeLayer.style.clipPath =
-      "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)";
+    shapeLayer.style.clipPath = "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)";
   },
 
   enforceConstraints(node) {
@@ -140,19 +139,18 @@ ShapeRegistry.diamond = createBaseShape({
 
   applyResize(node, ctx) {
     ShapeRegistry.rectangle.applyResize(node, ctx);
-  }
+  },
 });
 
 ShapeRegistry.triangle = createBaseShape({
   meta: {
-    supportsBorderRadius: false
+    supportsBorderRadius: false,
   },
 
   applyLayout(node, el) {
     const shapeLayer = el.querySelector(".node-shape-layer");
 
-    shapeLayer.style.clipPath =
-      "polygon(50% 0%, 100% 100%, 0% 100%)";
+    shapeLayer.style.clipPath = "polygon(50% 0%, 100% 100%, 0% 100%)";
 
     shapeLayer.style.borderRadius = "0px";
   },
@@ -170,7 +168,7 @@ ShapeRegistry.triangle = createBaseShape({
   applyConnectorLayout(node, el, zoomLevel) {
     const connectors = el.querySelectorAll(".node-connector");
 
-    connectors.forEach(conn => {
+    connectors.forEach((conn) => {
       conn.style.transform = `scale(${1 / zoomLevel})`;
 
       if (conn.classList.contains("top")) {
@@ -201,14 +199,13 @@ ShapeRegistry.triangle = createBaseShape({
         conn.style.transform += " translateY(-50%)";
       }
     });
-  }
+  },
 });
 
 ShapeRegistry.parallelogram = createBaseShape({
   applyLayout(node, el) {
     const shapeLayer = el.querySelector(".node-shape-layer");
-    shapeLayer.style.clipPath =
-      "polygon(20% 0%, 100% 0%, 80% 100%, 0% 100%)";
+    shapeLayer.style.clipPath = "polygon(20% 0%, 100% 0%, 80% 100%, 0% 100%)";
   },
 
   enforceConstraints(node) {
@@ -218,7 +215,7 @@ ShapeRegistry.parallelogram = createBaseShape({
 
   applyResize(node, ctx) {
     ShapeRegistry.rectangle.applyResize(node, ctx);
-  }
+  },
 });
 
 ShapeRegistry.hexagon = createBaseShape({
@@ -235,14 +232,13 @@ ShapeRegistry.hexagon = createBaseShape({
 
   applyResize(node, ctx) {
     ShapeRegistry.rectangle.applyResize(node, ctx);
-  }
+  },
 });
 
 ShapeRegistry.trapezoid = createBaseShape({
   applyLayout(node, el) {
     const shapeLayer = el.querySelector(".node-shape-layer");
-    shapeLayer.style.clipPath =
-      "polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)";
+    shapeLayer.style.clipPath = "polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)";
   },
 
   enforceConstraints(node) {
@@ -252,5 +248,5 @@ ShapeRegistry.trapezoid = createBaseShape({
 
   applyResize(node, ctx) {
     ShapeRegistry.rectangle.applyResize(node, ctx);
-  }
+  },
 });

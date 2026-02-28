@@ -20,7 +20,7 @@ export function handleConnectEnd(
 
   let targetNode = null;
 
-  State.nodes.forEach(node => {
+  State.nodes.forEach((node) => {
     const inside =
       worldX >= node.x &&
       worldX <= node.x + node.width &&
@@ -37,10 +37,7 @@ export function handleConnectEnd(
   if (targetNode && targetNode.id !== sourceId) {
     State.addConnection(sourceId, targetNode.id);
   } else {
-    const newNode = State.createNodeObject(
-      worldX - 70,
-      worldY - 40
-    );
+    const newNode = State.createNodeObject(worldX - 70, worldY - 40);
 
     State.addNode(newNode);
     attachNodeHandlers(newNode);

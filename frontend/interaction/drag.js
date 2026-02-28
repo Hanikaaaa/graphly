@@ -12,13 +12,13 @@ export function handleDragPending(interaction, e, State, DRAG_THRESHOLD) {
       ? State.selectedNodeIds
       : new Set([interaction.nodeId]);
 
-    selected.forEach(id => {
+    selected.forEach((id) => {
       const n = State.getNodeById(id);
       if (!n) return;
 
       interaction.dragStartPositions.set(id, {
         x: n.x,
-        y: n.y
+        y: n.y,
       });
     });
   }

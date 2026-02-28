@@ -15,8 +15,14 @@ import { handleDragPending, handleDragMove } from "./interaction/drag.js";
 import { handleMarqueeMove } from "./interaction/marquee.js";
 import { handleNodeResize } from "./interaction/resize.js";
 import { handleConnectMove, handleConnectEnd } from "./interaction/connect.js";
-import { handleGroupDragMove, startGroupDrag } from "./interaction/group-drag.js";
-import { applyGroupResize, startGroupResize } from "./interaction/group-resize.js";
+import {
+  handleGroupDragMove,
+  startGroupDrag,
+} from "./interaction/group-drag.js";
+import {
+  applyGroupResize,
+  startGroupResize,
+} from "./interaction/group-resize.js";
 
 let isSpacePressed = false;
 
@@ -24,7 +30,7 @@ const DRAG_THRESHOLD = 4;
 let externalRedraw = null;
 
 let interaction = {
-  mode: "idle",   // idle | dragPending | drag | resize | groupDrag | groupResize | pan | marquee | connect
+  mode: "idle", // idle | dragPending | drag | resize | groupDrag | groupResize | pan | marquee | connect
 
   startX: 0,
   startY: 0,
@@ -65,7 +71,6 @@ export function triggerRedraw() {
 }
 
 function redraw() {
-
   const marqueeData =
     interaction.mode === "marquee"
       ? {
@@ -90,10 +95,10 @@ function redraw() {
     State.connections,
     State.zoomLevel,
     marqueeData,
-    connectionPreview
+    connectionPreview,
   );
 
-  State.nodes.forEach(node => {
+  State.nodes.forEach((node) => {
     DOM.syncNodeDOM(node, {
       isSelected: State.selectedNodeIds.has(node.id),
       isEditing: node.id === State.editingNodeId,
@@ -109,7 +114,6 @@ function redraw() {
 registerRedraw(redraw);
 
 document.addEventListener("mousedown", (e) => {
-
   const overlay = getGroupOverlay();
   if (!overlay) return;
 
@@ -128,7 +132,6 @@ document.addEventListener("mousedown", (e) => {
 
 export function attachNodeHandlers(node) {
   DOM.createNodeDOM(node, {
-
     onSelect(id, event) {
       if (event?.shiftKey) {
         State.toggleNodeSelection(id);
@@ -159,7 +162,7 @@ export function attachNodeHandlers(node) {
 
       // If multiple nodes selected → let group logic handle it
       if (State.selectedNodeIds.size > 1) {
-      return;
+        return;
       }
 
       interaction.mode = "dragPending";
@@ -195,8 +198,7 @@ export function attachNodeHandlers(node) {
   });
 }
 
-canvas.addEventListener("mousemove", e => {
-
+canvas.addEventListener("mousemove", (e) => {
   // PAN
   if (interaction.mode === "pan") {
     handlePanMove(interaction, e, State, redraw);
@@ -207,12 +209,12 @@ canvas.addEventListener("mousemove", e => {
     const applied = applyGroupResize(interaction, e, State);
     if (applied) redraw();
     return;
-  } 
+  }
 
   if (interaction.mode === "groupDrag") {
-  handleGroupDragMove(interaction, e, State, redraw);
-  return;
-}
+    handleGroupDragMove(interaction, e, State, redraw);
+    return;
+  }
 
   // DRAG START THRESHOLD
   if (interaction.mode === "dragPending") {
@@ -227,39 +229,27 @@ canvas.addEventListener("mousemove", e => {
 
   // RESIZE
   if (interaction.mode === "resize") {
-  handleNodeResize(
-    interaction,
-    e,
-    State,
-    ShapeRegistry,
-    redraw
-  );
-  return;
-}
+    handleNodeResize(interaction, e, State, ShapeRegistry, redraw);
+    return;
+  }
 
   // CONNECT MODE
   if (interaction.mode === "connect") {
-  handleConnectMove(interaction, e, redraw);
-  return;
-}
+    handleConnectMove(interaction, e, redraw);
+    return;
+  }
 
   // MARQUEE
   if (interaction.mode === "marquee") {
     handleMarqueeMove(interaction, e, State, redraw);
     return;
-}
+  }
 });
 
 window.addEventListener("mouseup", (e) => {
-
   if (interaction.mode === "connect") {
-  handleConnectEnd(
-    interaction,
-    State,
-    attachNodeHandlers,
-    queueStateSync
-  );
-}
+    handleConnectEnd(interaction, State, attachNodeHandlers, queueStateSync);
+  }
 
   if (interaction.mode === "groupDrag") {
     queueStateSync("node_update");
@@ -268,7 +258,7 @@ window.addEventListener("mouseup", (e) => {
   if (interaction.mode === "groupResize") {
     applyGroupResize(interaction, e, State);
     queueStateSync("node_update");
-}
+  }
 
   // CRITICAL RESET
   interaction.mode = "idle";
@@ -283,25 +273,22 @@ window.addEventListener("mouseup", (e) => {
 });
 
 canvas.addEventListener("mousedown", (e) => {
-
-const worldX =
-  (e.clientX - State.offsetX) / State.zoomLevel;
-const worldY =
-  (e.clientY - State.offsetY) / State.zoomLevel;
+  const worldX = (e.clientX - State.offsetX) / State.zoomLevel;
+  const worldY = (e.clientY - State.offsetY) / State.zoomLevel;
 
   const clickedConnection = hitTestConnection(
-  worldX,
-  worldY,
-  State.connections,
-  State.getNodeById,
-  State.zoomLevel
-);
+    worldX,
+    worldY,
+    State.connections,
+    State.getNodeById,
+    State.zoomLevel,
+  );
 
-if (clickedConnection) {
-  State.selectSingleConnection(clickedConnection.id);
-  redraw();
-  return;
-}
+  if (clickedConnection) {
+    State.selectSingleConnection(clickedConnection.id);
+    redraw();
+    return;
+  }
 
   // PAN
   if (e.button === 1 || isSpacePressed) {
@@ -317,7 +304,7 @@ if (clickedConnection) {
       br: { x: bounds.maxX, y: bounds.maxY },
       bl: { x: bounds.minX, y: bounds.maxY },
       tr: { x: bounds.maxX, y: bounds.minY },
-      tl: { x: bounds.minX, y: bounds.minY }
+      tl: { x: bounds.minX, y: bounds.minY },
     };
 
     // CHECK RESIZE HANDLES FIRST
@@ -360,22 +347,19 @@ if (clickedConnection) {
   redraw();
 });
 
-canvas.addEventListener("dblclick", e => {
+canvas.addEventListener("dblclick", (e) => {
   console.log("DOUBLE CLICK FIRED");
 });
 
-window.addEventListener("dblclick", e => {
-
+window.addEventListener("dblclick", (e) => {
   // Ignore if double-clicking inside a node
   if (e.target.closest(".node-input")) return;
 
   const rect = canvas.getBoundingClientRect();
 
-  const x =
-    (e.clientX - rect.left - State.offsetX) / State.zoomLevel;
+  const x = (e.clientX - rect.left - State.offsetX) / State.zoomLevel;
 
-  const y =
-    (e.clientY - rect.top - State.offsetY) / State.zoomLevel;
+  const y = (e.clientY - rect.top - State.offsetY) / State.zoomLevel;
 
   State.snapshotState();
 
@@ -394,21 +378,18 @@ canvas.addEventListener(
   (e) => {
     e.preventDefault();
 
-    State.setOffset(
-      State.offsetX - e.deltaX,
-      State.offsetY - e.deltaY
-    );
+    State.setOffset(State.offsetX - e.deltaX, State.offsetY - e.deltaY);
 
     triggerRedraw();
   },
-  { passive: false }
+  { passive: false },
 );
 
-window.addEventListener("keydown", e => {
+window.addEventListener("keydown", (e) => {
   if (e.key === "Delete" && State.selectedNodeIds.size > 0) {
     State.snapshotState();
 
-    Array.from(State.selectedNodeIds).forEach(id => {
+    Array.from(State.selectedNodeIds).forEach((id) => {
       State.deleteNodeLogic(id, e.shiftKey);
     });
 
@@ -423,7 +404,7 @@ window.addEventListener("keydown", e => {
   }
 });
 
-window.addEventListener("keyup", e => {
+window.addEventListener("keyup", (e) => {
   if (e.code === "Space") {
     isSpacePressed = false;
     canvas.style.cursor = "default";

@@ -2,10 +2,8 @@ export function handleMarqueeMove(interaction, e, State, redraw) {
   interaction.marqueeCurrentX = e.clientX;
   interaction.marqueeCurrentY = e.clientY;
 
-  const startX =
-    (interaction.marqueeStartX - State.offsetX) / State.zoomLevel;
-  const startY =
-    (interaction.marqueeStartY - State.offsetY) / State.zoomLevel;
+  const startX = (interaction.marqueeStartX - State.offsetX) / State.zoomLevel;
+  const startY = (interaction.marqueeStartY - State.offsetY) / State.zoomLevel;
 
   const currentX =
     (interaction.marqueeCurrentX - State.offsetX) / State.zoomLevel;
@@ -19,7 +17,7 @@ export function handleMarqueeMove(interaction, e, State, redraw) {
 
   State.clearSelection();
 
-  State.nodes.forEach(node => {
+  State.nodes.forEach((node) => {
     const intersects =
       node.x < maxX &&
       node.x + node.width > minX &&

@@ -10,10 +10,7 @@ export function handlePanMove(interaction, e, State, redraw) {
   const dx = e.clientX - interaction.panStartX;
   const dy = e.clientY - interaction.panStartY;
 
-  State.setOffset(
-    interaction.startOffsetX + dx,
-    interaction.startOffsetY + dy
-  );
+  State.setOffset(interaction.startOffsetX + dx, interaction.startOffsetY + dy);
 
   redraw();
 }

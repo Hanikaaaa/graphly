@@ -8,13 +8,12 @@ export function handleNodeResize(interaction, e, State, ShapeRegistry, redraw) {
   interaction.lastClientX = e.clientX;
   interaction.lastClientY = e.clientY;
 
-  const shape =
-    ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
+  const shape = ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
 
   const ctx = {
     dx,
     dy,
-    resizeDir: interaction.resizeDir
+    resizeDir: interaction.resizeDir,
   };
 
   shape.applyResize?.(node, ctx);

@@ -5,12 +5,12 @@ import { rebuild } from "./main.js";
 import { queueStateSync } from "./collaboration.js";
 import { ShapeRegistry } from "./shapes.js";
 
-panel.addEventListener("mousedown", e => e.stopPropagation());
-panel.addEventListener("click", e => e.stopPropagation());
+panel.addEventListener("mousedown", (e) => e.stopPropagation());
+panel.addEventListener("click", (e) => e.stopPropagation());
 
 function getSelectedNodes() {
   return Array.from(State.selectedNodeIds)
-    .map(id => State.getNodeById(id))
+    .map((id) => State.getNodeById(id))
     .filter(Boolean);
 }
 
@@ -57,11 +57,9 @@ export function updatePanel() {
   panel.classList.remove("hidden");
   document.body.classList.add("panel-open");
 
-  // ======================
-  // CONNECTION MODE
-  // ======================
+  // Connection Mode
   if (connectionId) {
-    const conn = State.connections.find(c => c.id === connectionId);
+    const conn = State.connections.find((c) => c.id === connectionId);
     if (!conn) return;
 
     buttons.removeImage.classList.add("hidden");
@@ -73,9 +71,7 @@ export function updatePanel() {
     return;
   }
 
-  // ======================
-  // NODE MODE
-  // ======================
+  // Node Mode
 
   if (node) {
     inputs.bgColor.value = node.color;
@@ -99,39 +95,37 @@ export function updatePanel() {
   }
 }
 
-/* ===========================
-   NODE PROPERTY CONTROLS
-=========================== */
+// Node Priority Controls
 
 inputs.bgColor.oninput = () =>
-  mutateSelection(n => (n.color = inputs.bgColor.value));
+  mutateSelection((n) => (n.color = inputs.bgColor.value));
 
 inputs.borderColor.oninput = () =>
-  mutateSelection(n => (n.borderColor = inputs.borderColor.value));
+  mutateSelection((n) => (n.borderColor = inputs.borderColor.value));
 
 inputs.opacity.oninput = () =>
-  mutateSelection(n => (n.opacity = Number(inputs.opacity.value)));
+  mutateSelection((n) => (n.opacity = Number(inputs.opacity.value)));
 
 inputs.borderRadius.oninput = () =>
-  mutateSelection(n => (n.borderRadius = Number(inputs.borderRadius.value)));
+  mutateSelection((n) => (n.borderRadius = Number(inputs.borderRadius.value)));
 
 inputs.textColor.oninput = () =>
-  mutateSelection(n => (n.fontColor = inputs.textColor.value));
+  mutateSelection((n) => (n.fontColor = inputs.textColor.value));
 
 inputs.fontSize.oninput = () =>
-  mutateSelection(n => (n.fontSize = Number(inputs.fontSize.value)));
+  mutateSelection((n) => (n.fontSize = Number(inputs.fontSize.value)));
 
 inputs.textAlign.onchange = () =>
-  mutateSelection(n => (n.textAlign = inputs.textAlign.value));
+  mutateSelection((n) => (n.textAlign = inputs.textAlign.value));
 
 inputs.fontWeight.onchange = () =>
-  mutateSelection(n => (n.fontWeight = inputs.fontWeight.value));
+  mutateSelection((n) => (n.fontWeight = inputs.fontWeight.value));
 
 inputs.fontFamily.onchange = () =>
-  mutateSelection(n => (n.fontFamily = inputs.fontFamily.value));
+  mutateSelection((n) => (n.fontFamily = inputs.fontFamily.value));
 
 inputs.nodeShape.onchange = () =>
-  mutateSelection(n => {
+  mutateSelection((n) => {
     n.shape = inputs.nodeShape.value;
     const shape = ShapeRegistry[n.shape];
     shape?.enforceConstraints?.(n);
@@ -142,14 +136,14 @@ inputs.connectorColor.oninput = () => {
 
   if (connId) {
     State.snapshotState();
-    const conn = State.connections.find(c => c.id === connId);
+    const conn = State.connections.find((c) => c.id === connId);
     if (conn) conn.color = inputs.connectorColor.value;
     triggerRedraw();
     queueStateSync("node_update");
     return;
   }
 
-  mutateSelection(n => (n.connectorColor = inputs.connectorColor.value));
+  mutateSelection((n) => (n.connectorColor = inputs.connectorColor.value));
 };
 
 inputs.connectorWidth.oninput = () => {
@@ -157,14 +151,16 @@ inputs.connectorWidth.oninput = () => {
 
   if (connId) {
     State.snapshotState();
-    const conn = State.connections.find(c => c.id === connId);
+    const conn = State.connections.find((c) => c.id === connId);
     if (conn) conn.width = Number(inputs.connectorWidth.value);
     triggerRedraw();
     queueStateSync("node_update");
     return;
   }
 
-  mutateSelection(n => (n.connectorWidth = Number(inputs.connectorWidth.value)));
+  mutateSelection(
+    (n) => (n.connectorWidth = Number(inputs.connectorWidth.value)),
+  );
 };
 
 inputs.connectorStyle.onchange = () => {
@@ -172,7 +168,7 @@ inputs.connectorStyle.onchange = () => {
   if (!connId) return;
 
   State.snapshotState();
-  const conn = State.connections.find(c => c.id === connId);
+  const conn = State.connections.find((c) => c.id === connId);
   if (conn) conn.style = inputs.connectorStyle.value;
 
   triggerRedraw();
@@ -199,12 +195,10 @@ inputs.nodeImageInput.onchange = () => {
 };
 
 buttons.removeImage.onclick = () => {
-  mutateSelection(n => (n.image = null));
+  mutateSelection((n) => (n.image = null));
 };
 
-/* ===========================
-   BACKGROUND CONTROLS
-=========================== */
+// Background Controls
 
 inputs.bgType.onchange = () => {
   State.snapshotState();
@@ -276,16 +270,14 @@ inputs.bgDotOpacity.oninput = () => {
   queueStateSync("background_update");
 };
 
-/* ===========================
-   DELETE ACTIONS
-=========================== */
+// Delete
 
 buttons.deleteNode.onclick = () => {
   if (!State.selectedNodeIds.size) return;
 
   State.snapshotState();
 
-  Array.from(State.selectedNodeIds).forEach(id => {
+  Array.from(State.selectedNodeIds).forEach((id) => {
     State.deleteNodeLogic(id, false);
   });
 
@@ -299,7 +291,7 @@ buttons.deleteSubtree.onclick = () => {
 
   State.snapshotState();
 
-  Array.from(State.selectedNodeIds).forEach(id => {
+  Array.from(State.selectedNodeIds).forEach((id) => {
     State.deleteNodeLogic(id, true);
   });
 

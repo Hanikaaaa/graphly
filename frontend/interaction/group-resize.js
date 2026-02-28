@@ -62,13 +62,13 @@ export function startGroupResize(interaction, e, bounds, State, handleKey) {
 
   interaction.groupInitialNodes.clear();
 
-  State.selectedNodeIds.forEach(id => {
+  State.selectedNodeIds.forEach((id) => {
     const n = State.getNodeById(id);
     interaction.groupInitialNodes.set(id, {
       x: n.x,
       y: n.y,
       width: n.width,
-      height: n.height
+      height: n.height,
     });
   });
 

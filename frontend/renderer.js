@@ -15,16 +15,9 @@ export function clearCanvas(zoomLevel) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = State.background.color;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
+
   // apply zoom
-  ctx.setTransform(
-    zoomLevel,
-    0,
-    0,
-    zoomLevel,
-    State.offsetX,
-    State.offsetY
-  );
+  ctx.setTransform(zoomLevel, 0, 0, zoomLevel, State.offsetX, State.offsetY);
 }
 
 // Grid
@@ -140,16 +133,10 @@ export function drawConnection(fromNode, toNode) {
   const from = getNodeCenter(fromNode);
   const to = getNodeCenter(toNode);
 
-  drawBezier(
-    from.x,
-    from.y,
-    to.x,
-    to.y,
-    {
-      color: fromNode.connectorColor || "#444",
-      width: fromNode.connectorWidth || 3,
-    }
-  );
+  drawBezier(from.x, from.y, to.x, to.y, {
+    color: fromNode.connectorColor || "#444",
+    width: fromNode.connectorWidth || 3,
+  });
 }
 
 export function drawMarquee(minX, minY, width, height, zoomLevel) {
@@ -164,142 +151,128 @@ export function drawMarquee(minX, minY, width, height, zoomLevel) {
 // Preview Connection
 
 export function drawConnectionPreview(fromX, fromY, toX, toY) {
-  drawBezier(
-    fromX,
-    fromY,
-    toX,
-    toY,
-    {
-      color: "#7d7cbd",
-      width: 2,
-    }
-  );
+  drawBezier(fromX, fromY, toX, toY, {
+    color: "#7d7cbd",
+    width: 2,
+  });
 }
 
 // Full scene Render
 
-export function renderScene(nodes, connections, zoomLevel, marquee = null, connectionPreview = null) {
+export function renderScene(
+  nodes,
+  connections,
+  zoomLevel,
+  marquee = null,
+  connectionPreview = null,
+) {
   clearCanvas(zoomLevel);
   switch (State.background.type) {
-  case "grid":
-    drawGrid(zoomLevel);
-    break;
-  case "dots":
-    drawDots(zoomLevel);
-    break;
-  case "none":
-  default:
-    break;
-}
-
-  const nodeMap = new Map(nodes.map(n => [n.id, n]));
-
-connections.forEach(conn => {
-  const from = nodeMap.get(conn.from);
-  const to = nodeMap.get(conn.to);
-  if (!from || !to) return;
-
-  const isSelected = State.selectedConnectionIds.has(conn.id);
-  const fromX = from.x + from.width / 2;
-  const fromY = from.y + from.height / 2;
-  const toX = to.x + to.width / 2;
-  const toY = to.y + to.height / 2;
-  drawBezier(
-    fromX,
-    fromY,
-    toX,
-    toY,
-    {
-      color: conn.color,
-      width: conn.width,
-      type: conn.style,
-    },
-    isSelected
-  );
-});
-
-if (connectionPreview) {
-
-  const sourceNode = nodes.find(
-    n => n.id === connectionPreview.sourceId
-  );
-
-  if (sourceNode) {
-
-    const fromX =
-      sourceNode.x + sourceNode.width / 2;
-
-    const fromY =
-      sourceNode.y + sourceNode.height / 2;
-
-    const toX =
-      (connectionPreview.currentX - State.offsetX) / zoomLevel;
-
-    const toY =
-      (connectionPreview.currentY - State.offsetY) / zoomLevel;
-
-    drawConnectionPreview(fromX, fromY, toX, toY);
+    case "grid":
+      drawGrid(zoomLevel);
+      break;
+    case "dots":
+      drawDots(zoomLevel);
+      break;
+    case "none":
+    default:
+      break;
   }
-}
 
-const groupBounds = getSelectionBounds(nodes, State.selectedNodeIds);
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
-if (groupBounds) {
+  connections.forEach((conn) => {
+    const from = nodeMap.get(conn.from);
+    const to = nodeMap.get(conn.to);
+    if (!from || !to) return;
 
-  const { minX, minY, width, height, maxX, maxY } = groupBounds;
-
-  // Draw dashed bounding box
-  ctx.save();
-  ctx.setLineDash([6, 6]);
-  ctx.strokeStyle = "#4f46e5";
-  ctx.lineWidth = 1 / zoomLevel;
-  ctx.strokeRect(minX, minY, width, height);
-  ctx.restore();
-
-  // Draw resize handles
-  const handleSize = 10 / zoomLevel;
-
-  const handles = [
-    [minX, minY], // top-left
-    [maxX, minY], // top-right
-    [minX, maxY], // bottom-left
-    [maxX, maxY]  // bottom-right
-  ];
-
-  ctx.save();
-  ctx.fillStyle = "#4f46e5";
-
-  handles.forEach(([x, y]) => {
-    ctx.fillRect(
-      x - handleSize / 2,
-      y - handleSize / 2,
-      handleSize,
-      handleSize
+    const isSelected = State.selectedConnectionIds.has(conn.id);
+    const fromX = from.x + from.width / 2;
+    const fromY = from.y + from.height / 2;
+    const toX = to.x + to.width / 2;
+    const toY = to.y + to.height / 2;
+    drawBezier(
+      fromX,
+      fromY,
+      toX,
+      toY,
+      {
+        color: conn.color,
+        width: conn.width,
+        type: conn.style,
+      },
+      isSelected,
     );
   });
 
-  ctx.restore();
-}
+  if (connectionPreview) {
+    const sourceNode = nodes.find((n) => n.id === connectionPreview.sourceId);
 
-if (marquee) {
-  const { startX, startY, currentX, currentY } = marquee;
+    if (sourceNode) {
+      const fromX = sourceNode.x + sourceNode.width / 2;
 
-  const worldStartX =
-    (startX - State.offsetX) / zoomLevel;
-  const worldStartY =
-    (startY - State.offsetY) / zoomLevel;
+      const fromY = sourceNode.y + sourceNode.height / 2;
 
-  const worldCurrentX =
-    (currentX - State.offsetX) / zoomLevel;
-  const worldCurrentY =
-    (currentY - State.offsetY) / zoomLevel;
+      const toX = (connectionPreview.currentX - State.offsetX) / zoomLevel;
 
-  const minX = Math.min(worldStartX, worldCurrentX);
-  const minY = Math.min(worldStartY, worldCurrentY);
-  const width = Math.abs(worldCurrentX - worldStartX);
-  const height = Math.abs(worldCurrentY - worldStartY);
+      const toY = (connectionPreview.currentY - State.offsetY) / zoomLevel;
 
-  drawMarquee(minX, minY, width, height, zoomLevel);
-}
+      drawConnectionPreview(fromX, fromY, toX, toY);
+    }
+  }
 
+  const groupBounds = getSelectionBounds(nodes, State.selectedNodeIds);
+
+  if (groupBounds) {
+    const { minX, minY, width, height, maxX, maxY } = groupBounds;
+
+    // Draw dashed bounding box
+    ctx.save();
+    ctx.setLineDash([6, 6]);
+    ctx.strokeStyle = "#4f46e5";
+    ctx.lineWidth = 1 / zoomLevel;
+    ctx.strokeRect(minX, minY, width, height);
+    ctx.restore();
+
+    // Draw resize handles
+    const handleSize = 10 / zoomLevel;
+
+    const handles = [
+      [minX, minY], // top-left
+      [maxX, minY], // top-right
+      [minX, maxY], // bottom-left
+      [maxX, maxY], // bottom-right
+    ];
+
+    ctx.save();
+    ctx.fillStyle = "#4f46e5";
+
+    handles.forEach(([x, y]) => {
+      ctx.fillRect(
+        x - handleSize / 2,
+        y - handleSize / 2,
+        handleSize,
+        handleSize,
+      );
+    });
+
+    ctx.restore();
+  }
+
+  if (marquee) {
+    const { startX, startY, currentX, currentY } = marquee;
+
+    const worldStartX = (startX - State.offsetX) / zoomLevel;
+    const worldStartY = (startY - State.offsetY) / zoomLevel;
+
+    const worldCurrentX = (currentX - State.offsetX) / zoomLevel;
+    const worldCurrentY = (currentY - State.offsetY) / zoomLevel;
+
+    const minX = Math.min(worldStartX, worldCurrentX);
+    const minY = Math.min(worldStartY, worldCurrentY);
+    const width = Math.abs(worldCurrentX - worldStartX);
+    const height = Math.abs(worldCurrentY - worldStartY);
+
+    drawMarquee(minX, minY, width, height, zoomLevel);
+  }
 }

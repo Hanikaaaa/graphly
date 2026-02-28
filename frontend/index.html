@@ -1,233 +1,254 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Graphly - Interactive Mind Map</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Graphly - Interactive Mind Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/auth.css" /> 
-  <link rel="stylesheet" href="css/dashboard.css" />
-  <link rel="stylesheet" href="css/canvas.css" />
-  <link rel="stylesheet" href="css/panel.css" />
-  <link rel="stylesheet" href="css/node.css" />
-  <link rel="stylesheet" href="css/shapes.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+    <link rel="stylesheet" href="css/dashboard.css" />
+    <link rel="stylesheet" href="css/canvas.css" />
+    <link rel="stylesheet" href="css/panel.css" />
+    <link rel="stylesheet" href="css/node.css" />
+    <link rel="stylesheet" href="css/shapes.css" />
+  </head>
 
-</head>
+  <body>
+    <div id="auth-root" class="auth-overlay hidden"></div>
 
-<body>
-  <div id="auth-root" class="auth-overlay hidden"></div>
+    <div class="app-container app-hidden">
+      <canvas id="canvas"></canvas>
 
-  <div class="app-container app-hidden">
-    <canvas id="canvas"></canvas>
+      <div class="topbar">
+        <div class="topbar-group">
+          <button id="undo-btn" title="Undo (Ctrl+Z)">⟲</button>
+          <button id="redo-btn" title="Redo (Ctrl+Y)">⟳</button>
+        </div>
 
-    <div class="topbar">
-      <div class="topbar-group">
-        <button id="undo-btn" title="Undo (Ctrl+Z)">⟲</button>
-        <button id="redo-btn" title="Redo (Ctrl+Y)">⟳</button>
+        <div class="topbar-group">
+          <button id="zoom-out">−</button>
+          <span class="zoom-label">Zoom</span>
+          <button id="zoom-in">+</button>
+          <span id="save-indicator" class="save-indicator">Saved</span>
+        </div>
+
+        <div class="topbar-group">
+          <button id="dashboard-btn" title="My Canvases">Canvases</button>
+          <button id="auth-action-btn" title="Logout">Logout</button>
+        </div>
       </div>
 
-      <div class="topbar-group">
-        <button id="zoom-out">−</button>
-        <span class="zoom-label">Zoom</span>
-        <button id="zoom-in">+</button>
-        <span id="save-indicator" class="save-indicator">Saved</span>
-      </div>
+      <div id="custom-panel" class="custom-panel hidden">
+        <h3>Node Settings</h3>
 
-      <div class="topbar-group">
-        <button id="dashboard-btn" title="My Canvases">Canvases</button>
-        <button id="auth-action-btn" title="Logout">Logout</button>
+        <div class="panel-section">
+          <h4>Text</h4>
+          <label>
+            Font
+            <select id="font-family">
+              <option value="Arial">Arial</option>
+              <option value="Inter">Inter</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Courier New">Courier New</option>
+              <option value="Monospace">Monospace</option>
+            </select>
+          </label>
+
+          <label>
+            Color
+            <input type="color" id="text-color" />
+          </label>
+
+          <label>
+            Size
+            <input type="range" id="font-size" min="10" max="28" />
+          </label>
+
+          <label>
+            Align
+            <select id="text-align">
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+          </label>
+
+          <label>
+            Weight
+            <select id="font-weight">
+              <option value="normal">Normal</option>
+              <option value="bold">Bold</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="panel-section">
+          <h4>Node</h4>
+
+          <label>
+            Background
+            <input type="color" id="bg-color" />
+          </label>
+
+          <label>
+            Border
+            <input type="color" id="border-color" />
+          </label>
+
+          <label>
+            Opacity
+            <input type="range" id="opacity" min="0.2" max="1" step="0.1" />
+          </label>
+        </div>
+
+        <div class="panel-section">
+          <h4>Image</h4>
+
+          <label>
+            Upload
+            <input type="file" id="node-image-input" accept="image/*" />
+          </label>
+
+          <button id="remove-image" class="hidden">Remove Image</button>
+        </div>
+
+        <div class="panel-section">
+          <h4>Shape</h4>
+
+          <label>
+            Shape
+            <select id="node-shape">
+              <option value="rectangle">Rectangle</option>
+              <option value="circle">Circle</option>
+              <option value="diamond">Diamond</option>
+              <option value="triangle">Triangle</option>
+              <option value="parallelogram">Parallelogram</option>
+              <option value="hexagon">Hexagon</option>
+              <option value="trapezoid">Trapezoid</option>
+            </select>
+          </label>
+
+          <label>
+            Corner radius
+            <input type="range" id="border-radius" min="0" max="40" />
+          </label>
+        </div>
+
+        <div class="panel-section">
+          <h4>Connector</h4>
+
+          <label>
+            Color
+            <input type="color" id="connector-color" />
+          </label>
+
+          <label>
+            Thickness
+            <input type="range" id="connector-width" min="1" max="6" />
+          </label>
+
+          <label>
+            Style
+            <select id="connector-style">
+              <option value="solid">Solid</option>
+              <option value="dashed">Dashed</option>
+              <option value="dotted">Dotted</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="panel-section">
+          <h4>Background</h4>
+
+          <label>
+            Type
+            <select id="bg-type">
+              <option value="grid">Grid</option>
+              <option value="dots">Dots</option>
+              <option value="none">None</option>
+            </select>
+          </label>
+
+          <label>
+            Background
+            <input type="color" id="bg-canvas-color" />
+          </label>
+
+          <label>
+            Grid Color
+            <input type="color" id="bg-grid-color" />
+          </label>
+
+          <label>
+            Dot Color
+            <input type="color" id="bg-dot-color" />
+          </label>
+
+          <label>
+            Grid Spacing
+            <input type="range" id="bg-grid-spacing" min="10" max="120" />
+          </label>
+
+          <label>
+            Grid Thickness
+            <input
+              type="range"
+              id="bg-grid-width"
+              min="0.5"
+              max="4"
+              step="0.5"
+            />
+          </label>
+
+          <label>
+            Grid Opacity
+            <input
+              type="range"
+              id="bg-grid-opacity"
+              min="0.1"
+              max="1"
+              step="0.1"
+            />
+          </label>
+
+          <label>
+            Dot Spacing
+            <input type="range" id="bg-dot-spacing" min="10" max="120" />
+          </label>
+
+          <label>
+            Dot Radius
+            <input
+              type="range"
+              id="bg-dot-radius"
+              min="0.5"
+              max="6"
+              step="0.5"
+            />
+          </label>
+
+          <label>
+            Dot Opacity
+            <input
+              type="range"
+              id="bg-dot-opacity"
+              min="0.1"
+              max="1"
+              step="0.1"
+            />
+          </label>
+        </div>
+
+        <div class="panel-section danger">
+          <button id="delete-node">Delete Node</button>
+          <button id="delete-subtree">Delete Subtree</button>
+        </div>
       </div>
     </div>
 
-    <div id="custom-panel" class="custom-panel hidden">
-      <h3>Node Settings</h3>
-
-      <div class="panel-section">
-        <h4>Text</h4>
-        <label>
-          Font
-          <select id="font-family">
-            <option value="Arial">Arial</option>
-            <option value="Inter">Inter</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Courier New">Courier New</option>
-            <option value="Monospace">Monospace</option>
-          </select>
-        </label>
-
-        <label>
-          Color
-          <input type="color" id="text-color" />
-        </label>
-
-        <label>
-          Size
-          <input type="range" id="font-size" min="10" max="28" />
-        </label>
-
-        <label>
-          Align
-          <select id="text-align">
-            <option value="left">Left</option>
-            <option value="center">Center</option>
-            <option value="right">Right</option>
-          </select>
-        </label>
-
-        <label>
-          Weight
-          <select id="font-weight">
-            <option value="normal">Normal</option>
-            <option value="bold">Bold</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="panel-section">
-        <h4>Node</h4>
-
-        <label>
-          Background
-          <input type="color" id="bg-color" />
-        </label>
-
-        <label>
-          Border
-          <input type="color" id="border-color" />
-        </label>
-
-        <label>
-          Opacity
-          <input type="range" id="opacity" min="0.2" max="1" step="0.1" />
-        </label>
-      </div>
-
-      <div class="panel-section">
-        <h4>Image</h4>
-
-        <label>
-          Upload
-          <input type="file" id="node-image-input" accept="image/*" />
-        </label>
-
-        <button id="remove-image" class="hidden">Remove Image</button>
-      </div>
-
-      <div class="panel-section">
-        <h4>Shape</h4>
-
-        <label>
-          Shape
-          <select id="node-shape">
-          <option value="rectangle">Rectangle</option>
-          <option value="circle">Circle</option>
-          <option value="diamond">Diamond</option>
-          <option value="triangle">Triangle</option>
-          <option value="parallelogram">Parallelogram</option>
-          <option value="hexagon">Hexagon</option>
-          <option value="trapezoid">Trapezoid</option>
-          </select>
-        </label>
-
-        <label>
-          Corner radius
-          <input type="range" id="border-radius" min="0" max="40" />
-        </label>
-      </div>
-
-      <div class="panel-section">
-        <h4>Connector</h4>
-
-        <label>
-          Color
-          <input type="color" id="connector-color" />
-        </label>
-
-        <label>
-          Thickness
-          <input type="range" id="connector-width" min="1" max="6" />
-        </label>
-
-        <label>
-          Style
-          <select id="connector-style">
-            <option value="solid">Solid</option>
-            <option value="dashed">Dashed</option>
-            <option value="dotted">Dotted</option>
-          </select>
-        </label>
-
-      </div>
-
-  <div class="panel-section">
-        <h4>Background</h4>
-
-    <label>
-      Type
-      <select id="bg-type">
-       <option value="grid">Grid</option>
-       <option value="dots">Dots</option>
-       <option value="none">None</option>
-     </select>
-    </label>
-
-    <label>
-      Background
-      <input type="color" id="bg-canvas-color" />
-    </label>
-
-    <label>
-      Grid Color
-      <input type="color" id="bg-grid-color" />
-    </label>
-
-    <label>
-      Dot Color
-      <input type="color" id="bg-dot-color" />
-    </label>
-
-    <label>
-      Grid Spacing
-      <input type="range" id="bg-grid-spacing" min="10" max="120" />
-    </label>
-
-    <label>
-      Grid Thickness
-      <input type="range" id="bg-grid-width" min="0.5" max="4" step="0.5" />
-    </label>
-
-    <label>
-      Grid Opacity
-      <input type="range" id="bg-grid-opacity" min="0.1" max="1" step="0.1" />
-    </label>
-
-    <label>
-      Dot Spacing
-      <input type="range" id="bg-dot-spacing" min="10" max="120" />
-    </label>
-
-    <label>
-      Dot Radius
-      <input type="range" id="bg-dot-radius" min="0.5" max="6" step="0.5" />
-    </label>
-
-    <label>
-      Dot Opacity
-      <input type="range" id="bg-dot-opacity" min="0.1" max="1" step="0.1" />
-    </label>
-
- </div>
-
-      <div class="panel-section danger">
-        <button id="delete-node">Delete Node</button>
-        <button id="delete-subtree">Delete Subtree</button>
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="./main.js"></script>
-</body>
+    <script type="module" src="./main.js"></script>
+  </body>
 </html>

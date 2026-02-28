@@ -5,9 +5,20 @@ import { initInputHandler, attachNodeHandlers } from "./input-handler.js";
 import { updatePanel } from "./ui-panel.js";
 import { getCurrentUser, hasToken, logout } from "./auth.js";
 import { renderAuthScreen, renderLoading } from "./auth-ui.js";
-import { createCanvas, deleteCanvas, getCanvasByID, listCanvases, saveCanvasData } from "./canvas-api.js";
+import {
+  createCanvas,
+  deleteCanvas,
+  getCanvasByID,
+  listCanvases,
+  saveCanvasData,
+} from "./canvas-api.js";
 import { renderCanvasDashboard } from "./dashboard-ui.js";
-import { flushStateSync, initCollaboration, queueStateSync, setSyncHandler } from "./collaboration.js";
+import {
+  flushStateSync,
+  initCollaboration,
+  queueStateSync,
+  setSyncHandler,
+} from "./collaboration.js";
 
 const appContainer = document.querySelector(".app-container");
 const authRoot = document.querySelector("#auth-root");
@@ -23,7 +34,9 @@ if (!appContainer || !authRoot) {
       </section>
     </main>
   `;
-  throw new Error("Missing required root elements: .app-container or #auth-root");
+  throw new Error(
+    "Missing required root elements: .app-container or #auth-root",
+  );
 }
 
 let isRuntimeInitialized = false;
@@ -178,7 +191,11 @@ async function openCanvas(canvasID) {
   createInitialNodeIfEmpty();
   showApp();
   rebuild();
-  window.history.replaceState({}, "", `?canvas=${encodeURIComponent(canvas.id)}`);
+  window.history.replaceState(
+    {},
+    "",
+    `?canvas=${encodeURIComponent(canvas.id)}`,
+  );
 }
 
 function renderDashboard() {
@@ -374,5 +391,8 @@ if (dashboardButton) {
 void bootstrap().catch((error) => {
   console.error("Bootstrap failed:", error);
   showOverlay();
-  renderLoading(authRoot, "Something went wrong. Hard refresh the page (Ctrl+Shift+R).");
+  renderLoading(
+    authRoot,
+    "Something went wrong. Hard refresh the page (Ctrl+Shift+R).",
+  );
 });

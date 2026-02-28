@@ -1,5 +1,5 @@
 export let nodes = [];
-export let connections = []; 
+export let connections = [];
 export let selectedNodeIds = new Set();
 export let selectedConnectionIds = new Set();
 export let editingNodeId = null;
@@ -71,18 +71,17 @@ function restoreState(snapshot) {
   };
 
   selectedNodeIds = new Set(
-    snapshot.selectedNodeIds?.filter(id =>
-      nodes.some(n => n.id === id)
-    ) || []
+    snapshot.selectedNodeIds?.filter((id) => nodes.some((n) => n.id === id)) ||
+      [],
   );
 
   selectedConnectionIds = new Set(
-    snapshot.selectedConnectionIds?.filter(id =>
-      connections.some(c => c.id === id)
-    ) || []
+    snapshot.selectedConnectionIds?.filter((id) =>
+      connections.some((c) => c.id === id),
+    ) || [],
   );
 
-  editingNodeId = nodes.some(n => n.id === snapshot.editingNodeId)
+  editingNodeId = nodes.some((n) => n.id === snapshot.editingNodeId)
     ? snapshot.editingNodeId
     : null;
 }
@@ -127,8 +126,8 @@ export function createNodeObject(x, y) {
     // content
     text: "",
     //image
-    image: null,        
-    imageFit: "cover", 
+    image: null,
+    imageFit: "cover",
 
     // text styles
     textAlign: "left",
@@ -150,14 +149,14 @@ export function createNodeObject(x, y) {
     // connections (ID-based)
     connectorColor: "#444",
     connectorWidth: 3,
-    connections: [], 
+    connections: [],
   };
 }
 
 // Selectors
 
 export function getNodeById(id) {
-  return nodes.find(n => n.id === id) || null;
+  return nodes.find((n) => n.id === id) || null;
 }
 
 export function addNode(node) {
@@ -200,7 +199,7 @@ export function selectSingleConnection(id) {
   selectedConnectionIds.clear();
   selectedNodeIds.clear();
 
-  if (connections.some(c => c.id === id)) {
+  if (connections.some((c) => c.id === id)) {
     selectedConnectionIds.add(id);
   }
 
@@ -214,9 +213,7 @@ export function clearSelection() {
 }
 
 export function getPrimarySelectedNodeId() {
-  return selectedNodeIds.size === 1
-    ? Array.from(selectedNodeIds)[0]
-    : null;
+  return selectedNodeIds.size === 1 ? Array.from(selectedNodeIds)[0] : null;
 }
 
 export function getPrimarySelectedConnectionId() {
@@ -232,14 +229,14 @@ export function addConnection(fromId, toId) {
   const to = getNodeById(toId);
   if (!from || !to) return;
 
-  if (!connections.some(c => c.from === fromId && c.to === toId)) {
+  if (!connections.some((c) => c.from === fromId && c.to === toId)) {
     connections.push({
       id: generateId(),
       from: fromId,
       to: toId,
       color: from.connectorColor || "#444",
       width: from.connectorWidth || 3,
-      style: "solid",         
+      style: "solid",
     });
   }
 }
@@ -258,7 +255,7 @@ export function deleteNodeLogic(rootId, cascade = false) {
       if (toDelete.has(id)) return;
       toDelete.add(id);
 
-      connections.forEach(c => {
+      connections.forEach((c) => {
         if (c.from === id) {
           dfs(c.to);
         }
@@ -271,17 +268,17 @@ export function deleteNodeLogic(rootId, cascade = false) {
   }
 
   // remove nodes
-  nodes = nodes.filter(n => !toDelete.has(n.id));
+  nodes = nodes.filter((n) => !toDelete.has(n.id));
 
   // remove connections touching deleted nodes
   connections = connections.filter(
-    c => !toDelete.has(c.from) && !toDelete.has(c.to)
+    (c) => !toDelete.has(c.from) && !toDelete.has(c.to),
   );
 
   // clear selection / editing if needed
-  
+
   if (toDelete.has(editingNodeId)) editingNodeId = null;
-  selectedNodeIds.forEach(id => {
+  selectedNodeIds.forEach((id) => {
     if (toDelete.has(id)) selectedNodeIds.delete(id);
   });
   return toDelete;
@@ -313,7 +310,11 @@ export function exportCollabState() {
 }
 
 export function importCollabState(snapshot) {
-  if (!snapshot || !Array.isArray(snapshot.nodes) || !Array.isArray(snapshot.connections)) {
+  if (
+    !snapshot ||
+    !Array.isArray(snapshot.nodes) ||
+    !Array.isArray(snapshot.connections)
+  ) {
     return false;
   }
 
@@ -323,7 +324,8 @@ export function importCollabState(snapshot) {
     ...cloneDefaultBackground(),
     ...(snapshot.background || {}),
   };
-  zoomLevel = typeof snapshot.zoomLevel === "number" ? snapshot.zoomLevel : zoomLevel;
+  zoomLevel =
+    typeof snapshot.zoomLevel === "number" ? snapshot.zoomLevel : zoomLevel;
   offsetX = typeof snapshot.offsetX === "number" ? snapshot.offsetX : 0;
   offsetY = typeof snapshot.offsetY === "number" ? snapshot.offsetY : 0;
 

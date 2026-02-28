@@ -20,13 +20,13 @@ export function startGroupDrag(interaction, e, State) {
 
   interaction.dragStartPositions.clear();
 
-  State.selectedNodeIds.forEach(id => {
+  State.selectedNodeIds.forEach((id) => {
     const node = State.getNodeById(id);
     if (!node) return;
 
     interaction.dragStartPositions.set(id, {
       x: node.x,
-      y: node.y
+      y: node.y,
     });
   });
 }
