@@ -25,7 +25,6 @@ import {
 } from "./interaction/group-resize.js";
 
 let isSpacePressed = false;
-
 const DRAG_THRESHOLD = 4;
 let externalRedraw = null;
 
@@ -69,66 +68,6 @@ export function registerRedraw(fn) {
 export function triggerRedraw() {
   externalRedraw?.();
 }
-
-function redraw() {
-  const marqueeData =
-    interaction.mode === "marquee"
-      ? {
-          startX: interaction.marqueeStartX,
-          startY: interaction.marqueeStartY,
-          currentX: interaction.marqueeCurrentX,
-          currentY: interaction.marqueeCurrentY,
-        }
-      : null;
-
-  const connectionPreview =
-    interaction.mode === "connect"
-      ? {
-          sourceId: interaction.connectionSourceId,
-          currentX: interaction.connectionCurrentX,
-          currentY: interaction.connectionCurrentY,
-        }
-      : null;
-
-  Render.renderScene(
-    State.nodes,
-    State.connections,
-    State.zoomLevel,
-    marqueeData,
-    connectionPreview,
-  );
-
-  State.nodes.forEach((node) => {
-    DOM.syncNodeDOM(node, {
-      isSelected: State.selectedNodeIds.has(node.id),
-      isEditing: node.id === State.editingNodeId,
-      zoomLevel: State.zoomLevel,
-    });
-  });
-
-  updateGroupOverlay(State.zoomLevel);
-
-  updatePanel();
-}
-
-registerRedraw(redraw);
-
-document.addEventListener("mousedown", (e) => {
-  const overlay = getGroupOverlay();
-  if (!overlay) return;
-
-  const handle = e.target.closest(".group-handle");
-  if (!handle) return;
-
-  e.stopPropagation();
-
-  const dir = handle.dataset.dir;
-
-  const bounds = getSelectionBounds(State.nodes, State.selectedNodeIds);
-  if (!bounds) return;
-
-  startGroupResize(interaction, e, bounds, State, dir);
-});
 
 export function attachNodeHandlers(node) {
   DOM.createNodeDOM(node, {
@@ -198,69 +137,14 @@ export function attachNodeHandlers(node) {
   });
 }
 
-canvas.addEventListener("mousemove", (e) => {
-  // PAN
-  if (interaction.mode === "pan") {
-    handlePanMove(interaction, e, State, redraw);
-    return;
-  }
+export function initInputHandler() {
+  registerOverlayEvents();
+  registerCanvasEvents();
+  registerGlobalEvents();
+  registerToolbarEvents();
+}
 
-  if (interaction.mode === "groupResize") {
-    const applied = applyGroupResize(interaction, e, State);
-    if (applied) redraw();
-    return;
-  }
-
-  if (interaction.mode === "groupDrag") {
-    handleGroupDragMove(interaction, e, State, redraw);
-    return;
-  }
-
-  // DRAG START THRESHOLD
-  if (interaction.mode === "dragPending") {
-    handleDragPending(interaction, e, State, DRAG_THRESHOLD);
-  }
-
-  // DRAGGING
-  if (interaction.mode === "drag") {
-    handleDragMove(interaction, e, State, redraw);
-    return;
-  }
-
-  // RESIZE
-  if (interaction.mode === "resize") {
-    handleNodeResize(interaction, e, State, ShapeRegistry, redraw);
-    return;
-  }
-
-  // CONNECT MODE
-  if (interaction.mode === "connect") {
-    handleConnectMove(interaction, e, redraw);
-    return;
-  }
-
-  // MARQUEE
-  if (interaction.mode === "marquee") {
-    handleMarqueeMove(interaction, e, State, redraw);
-    return;
-  }
-});
-
-window.addEventListener("mouseup", (e) => {
-  if (interaction.mode === "connect") {
-    handleConnectEnd(interaction, State, attachNodeHandlers, queueStateSync);
-  }
-
-  if (interaction.mode === "groupDrag") {
-    queueStateSync("node_update");
-  }
-
-  if (interaction.mode === "groupResize") {
-    applyGroupResize(interaction, e, State);
-    queueStateSync("node_update");
-  }
-
-  // CRITICAL RESET
+function resetInteraction() {
   interaction.mode = "idle";
   interaction.nodeId = null;
   interaction.resizeDir = null;
@@ -268,11 +152,135 @@ window.addEventListener("mouseup", (e) => {
   interaction.groupBounds = null;
   interaction.connectionSourceId = null;
   interaction.dragStartPositions.clear();
+}
+
+export function redraw() {
+  const marqueeData =
+    interaction.mode === "marquee"
+      ? {
+          startX: interaction.marqueeStartX,
+          startY: interaction.marqueeStartY,
+          currentX: interaction.marqueeCurrentX,
+          currentY: interaction.marqueeCurrentY,
+        }
+      : null;
+
+  const connectionPreview =
+    interaction.mode === "connect"
+      ? {
+          sourceId: interaction.connectionSourceId,
+          currentX: interaction.connectionCurrentX,
+          currentY: interaction.connectionCurrentY,
+        }
+      : null;
+
+  Render.renderScene(
+    State.nodes,
+    State.connections,
+    State.zoomLevel,
+    marqueeData,
+    connectionPreview,
+  );
+
+  State.nodes.forEach((node) => {
+    DOM.syncNodeDOM(node, {
+      isSelected: State.selectedNodeIds.has(node.id),
+      isEditing: node.id === State.editingNodeId,
+      zoomLevel: State.zoomLevel,
+      offsetX: State.offsetX,
+      offsetY: State.offsetY,
+    });
+  });
+  const bounds = getSelectionBounds(State.nodes, State.selectedNodeIds);
+
+  updateGroupOverlay({
+    bounds,
+    zoomLevel: State.zoomLevel,
+    offsetX: State.offsetX,
+    offsetY: State.offsetY,
+  });
+
+  updatePanel();
+}
+
+registerRedraw(redraw);
+
+const MOVE_HANDLERS = {
+  pan: (e) => handlePanMove(interaction, e, State, redraw),
+
+  groupResize: (e) => {
+    const applied = applyGroupResize(interaction, e, State);
+    if (applied) redraw();
+  },
+
+  groupDrag: (e) => handleGroupDragMove(interaction, e, State, redraw),
+
+  dragPending: (e) => handleDragPending(interaction, e, State, DRAG_THRESHOLD),
+
+  drag: (e) => handleDragMove(interaction, e, State, redraw),
+
+  resize: (e) => handleNodeResize(interaction, e, State, ShapeRegistry, redraw),
+
+  connect: (e) => handleConnectMove(interaction, e, redraw),
+
+  marquee: (e) => handleMarqueeMove(interaction, e, State, redraw),
+};
+
+const UP_HANDLERS = {
+  connect: () =>
+    handleConnectEnd(interaction, State, attachNodeHandlers, queueStateSync),
+
+  groupDrag: () => queueStateSync("node_update"),
+
+  groupResize: (e) => {
+    applyGroupResize(interaction, e, State);
+    queueStateSync("node_update");
+  },
+};
+
+function handleWindowDoubleClick(e) {
+  if (e.target.closest(".node-input")) return;
+
+  const rect = canvas.getBoundingClientRect();
+
+  const x = (e.clientX - rect.left - State.offsetX) / State.zoomLevel;
+  const y = (e.clientY - rect.top - State.offsetY) / State.zoomLevel;
+
+  State.snapshotState();
+
+  const node = State.createNodeObject(x - 70, y - 40);
+
+  State.addNode(node);
+  attachNodeHandlers(node);
+  State.selectSingleNode(node.id);
 
   redraw();
-});
+  queueStateSync("node_create");
+}
 
-canvas.addEventListener("mousedown", (e) => {
+function registerCanvasEvents() {
+  canvas.addEventListener("mousemove", (e) => {
+    MOVE_HANDLERS[interaction.mode]?.(e);
+  });
+
+  canvas.addEventListener("mousedown", handleCanvasMouseDown);
+
+  canvas.addEventListener("dblclick", () => {
+    console.log("DOUBLE CLICK FIRED");
+  });
+
+  canvas.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+      State.setOffset(State.offsetX - e.deltaX, State.offsetY - e.deltaY);
+      triggerRedraw();
+    },
+    { passive: false },
+  );
+}
+
+function handleCanvasMouseDown(e) {
   const worldX = (e.clientX - State.offsetX) / State.zoomLevel;
   const worldY = (e.clientY - State.offsetY) / State.zoomLevel;
 
@@ -290,7 +298,6 @@ canvas.addEventListener("mousedown", (e) => {
     return;
   }
 
-  // PAN
   if (e.button === 1 || isSpacePressed) {
     startPan(interaction, e, State);
     return;
@@ -300,6 +307,7 @@ canvas.addEventListener("mousedown", (e) => {
 
   if (bounds) {
     const handleSize = 10 / State.zoomLevel;
+
     const handles = {
       br: { x: bounds.maxX, y: bounds.maxY },
       bl: { x: bounds.minX, y: bounds.maxY },
@@ -307,7 +315,6 @@ canvas.addEventListener("mousedown", (e) => {
       tl: { x: bounds.minX, y: bounds.minY },
     };
 
-    // CHECK RESIZE HANDLES FIRST
     for (const key in handles) {
       const h = handles[key];
 
@@ -323,7 +330,6 @@ canvas.addEventListener("mousedown", (e) => {
       }
     }
 
-    // THEN CHECK GROUP DRAG
     const inside =
       worldX >= bounds.minX &&
       worldX <= bounds.maxX &&
@@ -336,7 +342,6 @@ canvas.addEventListener("mousedown", (e) => {
     }
   }
 
-  // MARQUEE
   interaction.mode = "marquee";
   interaction.marqueeStartX = e.clientX;
   interaction.marqueeStartY = e.clientY;
@@ -345,94 +350,86 @@ canvas.addEventListener("mousedown", (e) => {
 
   State.clearSelection();
   redraw();
-});
+}
 
-canvas.addEventListener("dblclick", (e) => {
-  console.log("DOUBLE CLICK FIRED");
-});
-
-window.addEventListener("dblclick", (e) => {
-  // Ignore if double-clicking inside a node
-  if (e.target.closest(".node-input")) return;
-
-  const rect = canvas.getBoundingClientRect();
-
-  const x = (e.clientX - rect.left - State.offsetX) / State.zoomLevel;
-
-  const y = (e.clientY - rect.top - State.offsetY) / State.zoomLevel;
-
-  State.snapshotState();
-
-  const node = State.createNodeObject(x - 70, y - 40);
-
-  State.addNode(node);
-  attachNodeHandlers(node);
-  State.selectSingleNode(node.id);
-
-  redraw();
-  queueStateSync("node_create");
-});
-
-canvas.addEventListener(
-  "wheel",
-  (e) => {
-    e.preventDefault();
-
-    State.setOffset(State.offsetX - e.deltaX, State.offsetY - e.deltaY);
-
-    triggerRedraw();
-  },
-  { passive: false },
-);
-
-window.addEventListener("keydown", (e) => {
-  if (e.key === "Delete" && State.selectedNodeIds.size > 0) {
-    State.snapshotState();
-
-    Array.from(State.selectedNodeIds).forEach((id) => {
-      State.deleteNodeLogic(id, e.shiftKey);
-    });
-
-    State.clearSelection();
+function registerGlobalEvents() {
+  window.addEventListener("mouseup", (e) => {
+    UP_HANDLERS[interaction.mode]?.(e);
+    resetInteraction();
     redraw();
-    queueStateSync("node_delete");
-  }
+  });
 
-  if (e.code === "Space") {
-    isSpacePressed = true;
-    canvas.style.cursor = "grab";
-  }
-});
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Delete" && State.selectedNodeIds.size > 0) {
+      State.snapshotState();
 
-window.addEventListener("keyup", (e) => {
-  if (e.code === "Space") {
-    isSpacePressed = false;
-    canvas.style.cursor = "default";
-  }
-});
+      Array.from(State.selectedNodeIds).forEach((id) => {
+        State.deleteNodeLogic(id, e.shiftKey);
+      });
 
-buttons.zoomIn.onclick = () => {
-  State.setZoomLevel(Math.min(State.zoomLevel + 0.1, 3));
-  redraw();
-};
+      State.clearSelection();
+      redraw();
+      queueStateSync("node_delete");
+    }
 
-buttons.zoomOut.onclick = () => {
-  State.setZoomLevel(Math.max(State.zoomLevel - 0.1, 0.3));
-  redraw();
-};
+    if (e.code === "Space") {
+      isSpacePressed = true;
+      canvas.style.cursor = "grab";
+    }
+  });
 
-buttons.undo.onclick = () => {
-  if (State.undo()) {
-    rebuild();
-    queueStateSync("node_update");
-  }
-};
+  window.addEventListener("keyup", (e) => {
+    if (e.code === "Space") {
+      isSpacePressed = false;
+      canvas.style.cursor = "default";
+    }
+  });
 
-buttons.redo.onclick = () => {
-  if (State.redo()) {
-    rebuild();
-    queueStateSync("node_update");
-  }
-};
+  window.addEventListener("dblclick", handleWindowDoubleClick);
+}
 
-export function initInputHandler() {}
+function registerToolbarEvents() {
+  buttons.zoomIn.onclick = () => {
+    State.setZoomLevel(Math.min(State.zoomLevel + 0.1, 3));
+    redraw();
+  };
+
+  buttons.zoomOut.onclick = () => {
+    State.setZoomLevel(Math.max(State.zoomLevel - 0.1, 0.3));
+    redraw();
+  };
+
+  buttons.undo.onclick = () => {
+    if (State.undo()) {
+      rebuild();
+      queueStateSync("node_update");
+    }
+  };
+
+  buttons.redo.onclick = () => {
+    if (State.redo()) {
+      rebuild();
+      queueStateSync("node_update");
+    }
+  };
+}
+
+function registerOverlayEvents() {
+  document.addEventListener("mousedown", (e) => {
+    const overlay = getGroupOverlay();
+    if (!overlay) return;
+
+    const handle = e.target.closest(".group-handle");
+    if (!handle) return;
+
+    e.stopPropagation();
+
+    const dir = handle.dataset.dir;
+
+    const bounds = getSelectionBounds(State.nodes, State.selectedNodeIds);
+
+    if (!bounds) return;
+
+    startGroupResize(interaction, e, bounds, State, dir);
+  });
+}

@@ -1,8 +1,9 @@
 import * as State from "./state.js";
 import * as Render from "./renderer.js";
 import * as DOM from "./dom-manager.js";
+import { initInputHandler, attachNodeHandlers, triggerRedraw } from "./input-handler.js";
 import "./panel-interaction.js";
-import { initInputHandler, attachNodeHandlers } from "./input-handler.js";
+// import { initInputHandler, attachNodeHandlers } from "./input-handler.js";
 import { updatePanel } from "./ui-panel.js";
 import { getCurrentUser, hasToken, logout } from "./auth.js";
 import { renderAuthScreen, renderLoading } from "./auth-ui.js";
@@ -58,25 +59,11 @@ function setSaveStatus(text, isError = false) {
   saveIndicator.classList.toggle("error", isError);
 }
 
-function redraw() {
-  Render.renderScene(State.nodes, State.connections, State.zoomLevel);
-
-  State.nodes.forEach((node) => {
-    DOM.syncNodeDOM(node, {
-      isSelected: State.selectedNodeIds.has(node.id),
-      isEditing: node.id === State.editingNodeId,
-      zoomLevel: State.zoomLevel,
-    });
-  });
-
-  updatePanel();
-}
-
 export function rebuild() {
   State.clearSelection();
   DOM.clearAllNodes();
   State.nodes.forEach((node) => attachNodeHandlers(node));
-  redraw();
+  triggerRedraw();
 }
 
 function createInitialNodeIfEmpty() {
@@ -102,7 +89,7 @@ function initializeRuntime() {
 
   window.addEventListener("resize", () => {
     Render.resizeCanvas();
-    redraw();
+    triggerRedraw();
   });
 
   window.addEventListener("beforeunload", () => {
@@ -116,6 +103,9 @@ function showApp() {
   appContainer.classList.remove("app-hidden");
   authRoot.classList.add("hidden");
   authRoot.innerHTML = "";
+
+  Render.resizeCanvas();
+  triggerRedraw();
   setSaveStatus("Saved");
 }
 
@@ -191,6 +181,8 @@ async function openCanvas(canvasID) {
 
   createInitialNodeIfEmpty();
   showApp();
+  Render.resizeCanvas();
+  triggerRedraw();
   rebuild();
   window.history.replaceState(
     {},
