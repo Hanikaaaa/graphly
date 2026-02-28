@@ -1,4 +1,3 @@
-import * as State from "./state.js";
 import { ShapeRegistry } from "./shapes.js";
 import { getSelectionBounds } from "./geometry/bounds.js";
 
@@ -27,9 +26,7 @@ function getShape(node) {
   return ShapeRegistry[node.shape] || ShapeRegistry.rectangle;
 }
 
-export function updateGroupOverlay(zoomLevel) {
-  const bounds = getSelectionBounds(State.nodes, State.selectedNodeIds);
-
+export function updateGroupOverlay({ bounds, zoomLevel, offsetX, offsetY }) {
   if (!bounds) {
     if (groupOverlay) groupOverlay.style.display = "none";
     return;
@@ -37,10 +34,8 @@ export function updateGroupOverlay(zoomLevel) {
 
   const { minX, minY, maxX, maxY } = bounds;
 
-  const overlay = createGroupOverlay();
-  overlay.style.display = "block";
-  overlay.style.left = minX * zoomLevel + State.offsetX + "px";
-  overlay.style.top = minY * zoomLevel + State.offsetY + "px";
+  overlay.style.left = minX * zoomLevel + offsetX + "px";
+  overlay.style.top = minY * zoomLevel + offsetY + "px";
   overlay.style.width = (maxX - minX) * zoomLevel + "px";
   overlay.style.height = (maxY - minY) * zoomLevel + "px";
 }
@@ -156,7 +151,10 @@ export function createNodeDOM(node, handlers) {
   document.body.appendChild(el);
 }
 
-export function syncNodeDOM(node, { isSelected, isEditing, zoomLevel }) {
+export function syncNodeDOM(
+  node,
+  { isSelected, isEditing, zoomLevel, offsetX, offsetY },
+) {
   const el = document.getElementById(node.id);
   if (!el) return;
 
@@ -189,8 +187,8 @@ export function syncNodeDOM(node, { isSelected, isEditing, zoomLevel }) {
 
   // Position + Scale
 
-  el.style.left = `${node.x * zoomLevel + State.offsetX}px`;
-  el.style.top = `${node.y * zoomLevel + State.offsetY}px`;
+  el.style.left = `${node.x * zoomLevel + offsetX}px`;
+  el.style.top = `${node.y * zoomLevel + offsetY}px`;
 
   el.style.width = `${node.width}px`;
   el.style.height = `${node.height}px`;

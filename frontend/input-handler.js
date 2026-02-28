@@ -154,7 +154,7 @@ function resetInteraction() {
   interaction.dragStartPositions.clear();
 }
 
-function redraw() {
+export function redraw() {
   const marqueeData =
     interaction.mode === "marquee"
       ? {
@@ -187,10 +187,18 @@ function redraw() {
       isSelected: State.selectedNodeIds.has(node.id),
       isEditing: node.id === State.editingNodeId,
       zoomLevel: State.zoomLevel,
+      offsetX: State.offsetX,
+      offsetY: State.offsetY,
     });
   });
+  const bounds = getSelectionBounds(State.nodes, State.selectedNodeIds);
 
-  updateGroupOverlay(State.zoomLevel);
+  updateGroupOverlay({
+    bounds,
+    zoomLevel: State.zoomLevel,
+    offsetX: State.offsetX,
+    offsetY: State.offsetY,
+  });
 
   updatePanel();
 }
