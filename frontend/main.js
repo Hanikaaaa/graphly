@@ -1,6 +1,7 @@
 import * as State from "./state.js";
 import * as Render from "./renderer.js";
 import * as DOM from "./dom-manager.js";
+import "./panel-interaction.js";
 import { initInputHandler, attachNodeHandlers } from "./input-handler.js";
 import { updatePanel } from "./ui-panel.js";
 import { getCurrentUser, hasToken, logout } from "./auth.js";

@@ -1,56 +1,338 @@
-/* Custom Panel */
+/* ===============================
+   PANEL CONTAINER
+================================ */
 
 .custom-panel {
   position: fixed;
-  right: 0;
-  top: 0;
-  width: 260px;
-  height: 100vh;
-  background: #ffffff;
-  border-left: 1px solid #e5e5e5;
-  padding: 16px;
-  box-shadow: -4px 0 16px rgba(0,0,0,0.06);
-  z-index: 200;
-  overflow-y: auto;
+  right: 16px;
+  top: 84px;
+  bottom: 16px;
+  width: 300px;
+
   display: flex;
   flex-direction: column;
+  gap: 18px;
+
+  padding: 18px;
+
+  /* 🔷 Blue glass theme */
+  background: #081c3a;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 18px;
+
+  box-shadow:
+    0 20px 50px rgba(2, 6, 23, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  z-index: 200;
+  overflow-y: auto;
+
+  color: #e5e7eb;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 }
 
 .custom-panel.hidden {
   display: none;
 }
 
+
+
+/* ===============================
+   Make panel movable
+================================ */
+
+.custom-panel {
+  position: fixed;
+  right: 16px;
+  top: 24px;
+
+  width: 300px;
+  height: 660px;   /* ✅ IMPORTANT */
+
+  min-width: 260px;
+  min-height: 300px;
+
+  display: flex;
+  flex-direction: column;
+
+  /* overflow-y: auto;  */
+  overflow: hidden;
+  /* border-radius: 18px; */
+}
+
+.panel-scroll { 
+  /* flex: 1; */
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* padding: 18px; */
+} 
+
+.panel-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* drag cursor */
+
+.panel-header {
+  cursor: move;
+  user-select: none;
+}
+
+/* resize handle */
+
+.panel-resize {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 14px;
+  height: 14px;
+  cursor:ne-resize;
+  opacity: 0.6;
+}
+
+/* little diagonal grip look */
+
+.panel-resize::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg,
+      transparent 0%,
+      transparent 40%,
+      rgba(148,163,184,.6) 40%,
+      rgba(148,163,184,.6) 60%,
+      transparent 60%
+    );
+}
+
+
+/* ===============================
+   HEADER
+================================ */
+
+.panel-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #e2e8f0;
+  letter-spacing: 0.01em;
+}
+
+/* ===============================
+   SECTIONS
+================================ */
+
 .panel-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
 }
 
-.panel-section label {
+.panel-section:last-child {
+  border-bottom: none;
+}
+
+.section-title {
   font-size: 12px;
+  font-weight: 600;
+  color: #93c5fd;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ===============================
+   FORM ROW
+================================ */
+
+.form-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 10px;
+}
+
+.label {
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.75);
+  white-space: nowrap;
+}
+
+/* ===============================
+   SELECT INPUT
+================================ */
+
+.input-select {
+  min-width: 120px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 8px;
+  padding: 5px 8px;
+
+  color: #e5e7eb;
+  font-size: 12px;
+  cursor: pointer;
+
+  transition: all 0.18s ease;
+}
+
+.input-select:hover {
+  border-color: rgba(59, 130, 246, 0.45);
+}
+
+.input-select:focus {
+  outline: none;
+  color: #396ab5;
+  border-color: #34d399;
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.25);
+}
+
+/* ===============================
+   COLOR INPUT
+================================ */
+
+.input-color {
+  width: 44px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* ===============================
+   RANGE SLIDER
+================================ */
+
+.slider-row {
   align-items: center;
 }
 
-.panel-section input[type="color"] {
-  border: none;
-  background: none;
-  width: 36px;
-  height: 24px;
+.input-range {
+  width: 150px;
+  accent-color: #34d399;
   cursor: pointer;
 }
 
-.panel-section input[type="range"] {
-  width: 120px;
+/* nicer track for webkit */
+
+.input-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
 }
 
-.panel-section.danger button {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 8px;
+.input-range::-webkit-slider-thumb {
+  margin-top: -4px;
+}
+
+/* ===============================
+   FILE INPUT
+================================ */
+
+.input-file {
+  font-size: 11px;
+  color: #cbd5f5;
+  cursor: pointer;
+}
+
+.input-file::file-selector-button {
+  margin-right: 8px;
+  padding: 4px 8px;
+
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+
+  background: rgba(255, 255, 255, 0.06);
+  color: #e5e7eb;
+
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.input-file::file-selector-button:hover {
+  background: rgba(52, 211, 153, 0.18);
+  border-color: rgba(52, 211, 153, 0.55);
+}
+
+/* ===============================
+   SECONDARY BUTTON
+================================ */
+
+.secondary-btn {
+  margin-top: 4px;
+  padding: 8px 10px;
+
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 8px;
+
+  color: #e5e7eb;
+  font-size: 12px;
   cursor: pointer;
+
+  transition: all 0.18s ease;
+}
+
+.secondary-btn:hover {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.45);
+}
+
+/* ===============================
+   DANGER BUTTONS
+================================ */
+
+.panel-section.danger {
+  gap: 10px;
+}
+
+.danger-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: none;
+  color: white;
+
+  padding: 11px;
+  border-radius: 10px;
+
+  font-weight: 600;
+  font-size: 13px;
+
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.danger-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.35);
+}
+
+.danger-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* ===============================
+   SCROLLBAR
+================================ */
+
+.custom-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-panel::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.4);
+  border-radius: 10px;
+}
+
+.custom-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.65);
 }
