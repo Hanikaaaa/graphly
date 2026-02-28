@@ -164,60 +164,70 @@ inputs.bgType.onchange = () => {
   State.snapshotState();
   State.background.type = inputs.bgType.value;
   triggerRedraw();
+  queueStateSync("background_update");
 };
 
 inputs.bgCanvasColor.oninput = () => {
   State.snapshotState();
   State.background.color = inputs.bgCanvasColor.value;
   triggerRedraw();
+  queueStateSync("background_update");
 };
 
 inputs.bgGridColor.oninput = () => {
   State.snapshotState();
   State.background.gridColor = inputs.bgGridColor.value;
   triggerRedraw();
+  queueStateSync("background_update");
 };
 
 inputs.bgDotColor.oninput = () => {
   State.snapshotState();
   State.background.dotColor = inputs.bgDotColor.value;
   triggerRedraw();
+  queueStateSync("background_update");
 };
 
 inputs.bgGridSpacing.oninput = () => {
   State.snapshotState();
   State.background.gridSpacing = Number(inputs.bgGridSpacing.value);
   triggerRedraw();
+  queueStateSync("background_update");
 };
 
 inputs.bgGridWidth.oninput = () => {
   State.snapshotState();
   State.background.gridLineWidth = Number(inputs.bgGridWidth.value);
   triggerRedraw();
+  queueStateSync("background_update");
 };
 
 inputs.bgGridOpacity.oninput = () => {
   State.snapshotState();
   State.background.gridOpacity = Number(inputs.bgGridOpacity.value);
   triggerRedraw();
+  queueStateSync("background_update");
 };
 
 inputs.bgDotSpacing.oninput = () => {
   State.snapshotState();
   State.background.dotSpacing = Number(inputs.bgDotSpacing.value);
   triggerRedraw();
+  queueStateSync("background_update");
 };
 
 inputs.bgDotRadius.oninput = () => {
   State.snapshotState();
   State.background.dotRadius = Number(inputs.bgDotRadius.value);
   triggerRedraw();
+  queueStateSync("background_update");
 };
 
 inputs.bgDotOpacity.oninput = () => {
   State.snapshotState();
   State.background.dotOpacity = Number(inputs.bgDotOpacity.value);
   triggerRedraw();
+  queueStateSync("background_update");
 };
 
 buttons.removeImage.onclick = () => {
