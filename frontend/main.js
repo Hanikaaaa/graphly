@@ -1,6 +1,7 @@
 import * as State from "./state.js";
 import * as Render from "./renderer.js";
 import * as DOM from "./dom-manager.js";
+import { initAIUI } from "./ai-ui.js";
 import { initInputHandler, attachNodeHandlers, triggerRedraw } from "./input-handler.js";
 import "./panel-interaction.js";
 // import { initInputHandler, attachNodeHandlers } from "./input-handler.js";
@@ -98,6 +99,7 @@ function initializeRuntime() {
   });
 
   initInputHandler();
+  initAIUI();
 }
 
 function showApp() {

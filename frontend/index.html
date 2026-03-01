@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="css/panel.css" />
     <link rel="stylesheet" href="css/node.css" />
     <link rel="stylesheet" href="css/shapes.css" />
+    <link rel="stylesheet" href="css/ai.css" />
   </head>
 
   <body>
@@ -21,9 +22,49 @@
     <div class="app-container app-hidden">
       <canvas id="canvas"></canvas>
 
+      <!-- AI Floating Button -->
+      <div id="ai-fab" class="ai-fab" title="Generate with AI">✨</div>
+
+      <!-- AI Chatbox -->
+      <div id="ai-chatbox" class="ai-chatbox hidden">
+        <div class="ai-chat-header">
+          <span>Graphly AI</span>
+          <button id="ai-close-btn">✕</button>
+        </div>
+
+        <div id="ai-messages" class="ai-messages">
+          <div class="ai-message ai-system">
+            Describe the graph you want to generate.
+          </div>
+        </div>
+
+        <div class="ai-input-row">
+          <input
+            id="ai-input"
+            type="text"
+            placeholder="e.g. Microservices architecture"
+          />
+          <button id="ai-send-btn">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#081C3A"
+              stroke-width="2"
+            >
+              <path d="M22 2L11 13" />
+              <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
       <div class="topbar">
         <div class="graphly-logo">
-          <div class="graphly-logo-icon"><img src="/assets/graphly02.png" alt="G" class="graphly-image"></div>
+          <div class="graphly-logo-icon">
+            <img src="/assets/graphly02.png" alt="G" class="graphly-image" />
+          </div>
           <div class="graphly-logo-text">
             <span class="graphly-brand">Graphly</span>
             <span class="graphly-sub" id="canvas-name"></span>
@@ -51,234 +92,271 @@
         <div class="panel-header" id="panel-drag-handle">
           <h3>Node Settings</h3>
         </div>
-        
+
         <div class="panel-scroll">
-        <!-- ================= TEXT ================= -->
-        <div class="panel-section">
-          <h4 class="section-title">Text</h4>
+          <!-- ================= TEXT ================= -->
+          <div class="panel-section">
+            <h4 class="section-title">Text</h4>
 
-          <div class="form-row">
-            <span class="label">Font</span>
-            <select id="font-family" class="input-select">
-              <option value="Arial">Arial</option>
-              <option value="Inter">Inter</option>
-              <option value="Georgia">Georgia</option>
-              <option value="Times New Roman">Times New Roman</option>
-              <option value="Courier New">Courier New</option>
-              <option value="Monospace">Monospace</option>
-            </select>
+            <div class="form-row">
+              <span class="label">Font</span>
+              <select id="font-family" class="input-select">
+                <option value="Arial">Arial</option>
+                <option value="Inter">Inter</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Monospace">Monospace</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <span class="label">Color</span>
+              <input type="color" id="text-color" class="input-color" />
+            </div>
+
+            <div class="form-row slider-row">
+              <span class="label">Size</span>
+              <input
+                type="range"
+                id="font-size"
+                min="10"
+                max="28"
+                class="input-range"
+              />
+            </div>
+
+            <div class="form-row">
+              <span class="label">Align</span>
+              <select id="text-align" class="input-select">
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <span class="label">Weight</span>
+              <select id="font-weight" class="input-select">
+                <option value="normal">Normal</option>
+                <option value="bold">Bold</option>
+              </select>
+            </div>
           </div>
 
-          <div class="form-row">
-            <span class="label">Color</span>
-            <input type="color" id="text-color" class="input-color" />
+          <!-- ================= NODE ================= -->
+          <div class="panel-section">
+            <h4 class="section-title">Node</h4>
+
+            <div class="form-row">
+              <span class="label">Background</span>
+              <input type="color" id="bg-color" class="input-color" />
+            </div>
+
+            <div class="form-row">
+              <span class="label">Border</span>
+              <input type="color" id="border-color" class="input-color" />
+            </div>
+
+            <div class="form-row slider-row">
+              <span class="label">Opacity</span>
+              <input
+                type="range"
+                id="opacity"
+                min="0.2"
+                max="1"
+                step="0.1"
+                class="input-range"
+              />
+            </div>
           </div>
 
-          <div class="form-row slider-row">
-            <span class="label">Size</span>
-            <input
-              type="range"
-              id="font-size"
-              min="10"
-              max="28"
-              class="input-range"
-            />
+          <!-- ================= IMAGE ================= -->
+          <div class="panel-section">
+            <h4 class="section-title">Image</h4>
+
+            <div class="form-row">
+              <span class="label">Upload</span>
+              <input
+                type="file"
+                id="node-image-input"
+                accept="image/*"
+                class="input-file"
+              />
+            </div>
+
+            <button id="remove-image" class="secondary-btn hidden">
+              Remove Image
+            </button>
           </div>
 
-          <div class="form-row">
-            <span class="label">Align</span>
-            <select id="text-align" class="input-select">
-              <option value="left">Left</option>
-              <option value="center">Center</option>
-              <option value="right">Right</option>
-            </select>
+          <!-- ================= SHAPE ================= -->
+          <div class="panel-section">
+            <h4 class="section-title">Shape</h4>
+
+            <div class="form-row">
+              <span class="label">Shape</span>
+              <select id="node-shape" class="input-select">
+                <option value="rectangle">Rectangle</option>
+                <option value="circle">Circle</option>
+                <option value="diamond">Diamond</option>
+                <option value="triangle">Triangle</option>
+                <option value="parallelogram">Parallelogram</option>
+                <option value="hexagon">Hexagon</option>
+                <option value="trapezoid">Trapezoid</option>
+              </select>
+            </div>
+
+            <div class="form-row slider-row">
+              <span class="label">Corner radius</span>
+              <input
+                type="range"
+                id="border-radius"
+                min="0"
+                max="40"
+                class="input-range"
+              />
+            </div>
           </div>
 
-          <div class="form-row">
-            <span class="label">Weight</span>
-            <select id="font-weight" class="input-select">
-              <option value="normal">Normal</option>
-              <option value="bold">Bold</option>
-            </select>
-          </div>
-        </div>
+          <!-- ================= CONNECTOR ================= -->
+          <div class="panel-section">
+            <h4 class="section-title">Connector</h4>
 
-        <!-- ================= NODE ================= -->
-        <div class="panel-section">
-          <h4 class="section-title">Node</h4>
+            <div class="form-row">
+              <span class="label">Color</span>
+              <input type="color" id="connector-color" class="input-color" />
+            </div>
 
-          <div class="form-row">
-            <span class="label">Background</span>
-            <input type="color" id="bg-color" class="input-color" />
-          </div>
+            <div class="form-row slider-row">
+              <span class="label">Thickness</span>
+              <input
+                type="range"
+                id="connector-width"
+                min="1"
+                max="6"
+                class="input-range"
+              />
+            </div>
 
-          <div class="form-row">
-            <span class="label">Border</span>
-            <input type="color" id="border-color" class="input-color" />
-          </div>
-
-          <div class="form-row slider-row">
-            <span class="label">Opacity</span>
-            <input
-              type="range"
-              id="opacity"
-              min="0.2"
-              max="1"
-              step="0.1"
-              class="input-range"
-            />
-          </div>
-        </div>
-
-        <!-- ================= IMAGE ================= -->
-        <div class="panel-section">
-          <h4 class="section-title">Image</h4>
-
-          <div class="form-row">
-            <span class="label">Upload</span>
-            <input
-              type="file"
-              id="node-image-input"
-              accept="image/*"
-              class="input-file"
-            />
+            <div class="form-row">
+              <span class="label">Style</span>
+              <select id="connector-style" class="input-select">
+                <option value="solid">Solid</option>
+                <option value="dashed">Dashed</option>
+                <option value="dotted">Dotted</option>
+              </select>
+            </div>
           </div>
 
-          <button id="remove-image" class="secondary-btn hidden">
-            Remove Image
-          </button>
-        </div>
+          <!-- ================= BACKGROUND ================= -->
+          <div class="panel-section">
+            <h4 class="section-title">Background</h4>
 
-        <!-- ================= SHAPE ================= -->
-        <div class="panel-section">
-          <h4 class="section-title">Shape</h4>
+            <div class="form-row">
+              <span class="label">Type</span>
+              <select id="bg-type" class="input-select">
+                <option value="grid">Grid</option>
+                <option value="dots">Dots</option>
+                <option value="none">None</option>
+              </select>
+            </div>
 
-          <div class="form-row">
-            <span class="label">Shape</span>
-            <select id="node-shape" class="input-select">
-              <option value="rectangle">Rectangle</option>
-              <option value="circle">Circle</option>
-              <option value="diamond">Diamond</option>
-              <option value="triangle">Triangle</option>
-              <option value="parallelogram">Parallelogram</option>
-              <option value="hexagon">Hexagon</option>
-              <option value="trapezoid">Trapezoid</option>
-            </select>
+            <div class="form-row">
+              <span class="label">Background</span>
+              <input type="color" id="bg-canvas-color" class="input-color" />
+            </div>
+
+            <div class="form-row">
+              <span class="label">Grid Color</span>
+              <input type="color" id="bg-grid-color" class="input-color" />
+            </div>
+
+            <div class="form-row">
+              <span class="label">Dot Color</span>
+              <input type="color" id="bg-dot-color" class="input-color" />
+            </div>
+
+            <div class="form-row slider-row">
+              <span class="label">Grid Spacing</span>
+              <input
+                type="range"
+                id="bg-grid-spacing"
+                min="10"
+                max="120"
+                class="input-range"
+              />
+            </div>
+
+            <div class="form-row slider-row">
+              <span class="label">Grid Thickness</span>
+              <input
+                type="range"
+                id="bg-grid-width"
+                min="0.5"
+                max="4"
+                step="0.5"
+                class="input-range"
+              />
+            </div>
+
+            <div class="form-row slider-row">
+              <span class="label">Grid Opacity</span>
+              <input
+                type="range"
+                id="bg-grid-opacity"
+                min="0.1"
+                max="1"
+                step="0.1"
+                class="input-range"
+              />
+            </div>
+
+            <div class="form-row slider-row">
+              <span class="label">Dot Spacing</span>
+              <input
+                type="range"
+                id="bg-dot-spacing"
+                min="10"
+                max="120"
+                class="input-range"
+              />
+            </div>
+
+            <div class="form-row slider-row">
+              <span class="label">Dot Radius</span>
+              <input
+                type="range"
+                id="bg-dot-radius"
+                min="0.5"
+                max="6"
+                step="0.5"
+                class="input-range"
+              />
+            </div>
+
+            <div class="form-row slider-row">
+              <span class="label">Dot Opacity</span>
+              <input
+                type="range"
+                id="bg-dot-opacity"
+                min="0.1"
+                max="1"
+                step="0.1"
+                class="input-range"
+              />
+            </div>
           </div>
 
-          <div class="form-row slider-row">
-            <span class="label">Corner radius</span>
-            <input
-              type="range"
-              id="border-radius"
-              min="0"
-              max="40"
-              class="input-range"
-            />
+          <!-- ================= DANGER ================= -->
+          <div class="panel-section danger">
+            <button id="delete-node" class="danger-btn">Delete Node</button>
+            <button id="delete-subtree" class="danger-btn">
+              Delete Subtree
+            </button>
           </div>
-        </div>
-
-        <!-- ================= CONNECTOR ================= -->
-        <div class="panel-section">
-          <h4 class="section-title">Connector</h4>
-
-          <div class="form-row">
-            <span class="label">Color</span>
-            <input
-              type="color"
-              id="connector-color"
-              class="input-color"
-            />
-          </div>
-
-          <div class="form-row slider-row">
-            <span class="label">Thickness</span>
-            <input
-              type="range"
-              id="connector-width"
-              min="1"
-              max="6"
-              class="input-range"
-            />
-          </div>
-
-          <div class="form-row">
-            <span class="label">Style</span>
-            <select id="connector-style" class="input-select">
-              <option value="solid">Solid</option>
-              <option value="dashed">Dashed</option>
-              <option value="dotted">Dotted</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- ================= BACKGROUND ================= -->
-        <div class="panel-section">
-          <h4 class="section-title">Background</h4>
-
-          <div class="form-row">
-            <span class="label">Type</span>
-            <select id="bg-type" class="input-select">
-              <option value="grid">Grid</option>
-              <option value="dots">Dots</option>
-              <option value="none">None</option>
-            </select>
-          </div>
-
-          <div class="form-row">
-            <span class="label">Background</span>
-            <input type="color" id="bg-canvas-color" class="input-color" />
-          </div>
-
-          <div class="form-row">
-            <span class="label">Grid Color</span>
-            <input type="color" id="bg-grid-color" class="input-color" />
-          </div>
-
-          <div class="form-row">
-            <span class="label">Dot Color</span>
-            <input type="color" id="bg-dot-color" class="input-color" />
-          </div>
-
-          <div class="form-row slider-row">
-            <span class="label">Grid Spacing</span>
-            <input type="range" id="bg-grid-spacing" min="10" max="120" class="input-range" />
-          </div>
-
-          <div class="form-row slider-row">
-            <span class="label">Grid Thickness</span>
-            <input type="range" id="bg-grid-width" min="0.5" max="4" step="0.5" class="input-range" />
-          </div>
-
-          <div class="form-row slider-row">
-            <span class="label">Grid Opacity</span>
-            <input type="range" id="bg-grid-opacity" min="0.1" max="1" step="0.1" class="input-range" />
-          </div>
-
-          <div class="form-row slider-row">
-            <span class="label">Dot Spacing</span>
-            <input type="range" id="bg-dot-spacing" min="10" max="120" class="input-range" />
-          </div>
-
-          <div class="form-row slider-row">
-            <span class="label">Dot Radius</span>
-            <input type="range" id="bg-dot-radius" min="0.5" max="6" step="0.5" class="input-range" />
-          </div>
-
-          <div class="form-row slider-row">
-            <span class="label">Dot Opacity</span>
-            <input type="range" id="bg-dot-opacity" min="0.1" max="1" step="0.1" class="input-range" />
-          </div>
-        </div>
-
-        <!-- ================= DANGER ================= -->
-        <div class="panel-section danger">
-          <button id="delete-node" class="danger-btn">Delete Node</button>
-          <button id="delete-subtree" class="danger-btn">Delete Subtree</button>
-        </div>
         </div>
         <div class="panel-resize" id="panel-resize-handle"></div>
-        
       </div>
     </div>
 
