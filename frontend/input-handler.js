@@ -353,6 +353,10 @@ function handleCanvasMouseDown(e) {
 }
 
 function registerGlobalEvents() {
+  window.addEventListener("mousemove", (e) => {
+    MOVE_HANDLERS[interaction.mode]?.(e);
+  });
+
   window.addEventListener("mouseup", (e) => {
     UP_HANDLERS[interaction.mode]?.(e);
     resetInteraction();
