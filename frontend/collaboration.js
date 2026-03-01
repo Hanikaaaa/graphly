@@ -1,6 +1,11 @@
+import * as State from "./state.js";
+
 let ws = null;
 let roomId = null;
 let reconnectTimer = null;
+const clientID =
+  globalThis.crypto?.randomUUID?.() ||
+  `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 let onSync = null;         // callback to notify app after sending/receiving
 let pendingTimer = null;
@@ -21,6 +26,10 @@ export function setSyncHandler(handler) {
   onSync = typeof handler === "function" ? handler : null;
 }
 
+export function getClientID() {
+  return clientID;
+}
+
 function connectWS() {
   if (!roomId) return;
 
@@ -34,7 +43,8 @@ function connectWS() {
   ws.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data);
-      if (onSync) onSync(msg.type, msg.content, true); // third param = fromServer
+      const content = msg.payload ?? msg.content ?? {};
+      if (onSync) onSync(msg.type, content, true, msg.userId || "");
     } catch (err) {
       console.error("[Collab] Invalid message", err);
     }
@@ -66,12 +76,16 @@ function scheduleReconnect() {
  * Immediately broadcast state
  */
 export function broadcastState(type = "node_update", content = {}) {
+  const hasContent =
+    content && typeof content === "object" && Object.keys(content).length > 0;
+  const snapshot = hasContent ? content : State.exportCollabState();
+
+  if (onSync) onSync(type, snapshot, false, clientID);
+
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
-  const payload = { type, roomId, content };
+  const payload = { type, roomId, userId: clientID, payload: snapshot };
   ws.send(JSON.stringify(payload));
-
-  if (onSync) onSync(type, content, false); // false = local update
 }
 
 /**

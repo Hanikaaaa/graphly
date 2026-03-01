@@ -17,6 +17,7 @@ import {
 import { renderCanvasDashboard } from "./dashboard-ui.js";
 import {
   flushStateSync,
+  getClientID,
   initCollaboration,
   queueStateSync,
   setSyncHandler,
@@ -175,7 +176,18 @@ async function openCanvas(canvasID) {
 
   initCollaboration({ room: canvas.id });
 
-  setSyncHandler(() => {
+  setSyncHandler((_type, content, fromServer, sourceClientID) => {
+    if (fromServer) {
+      if (sourceClientID && sourceClientID === getClientID()) {
+        return;
+      }
+
+      if (State.importCollabState(content)) {
+        rebuild();
+      }
+      return;
+    }
+
     enqueueAutosave();
   });
 
