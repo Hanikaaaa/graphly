@@ -112,7 +112,7 @@ export function attachNodeHandlers(node) {
 
     onConnectStart(e, id) {
       e.stopPropagation();
-
+      e.preventDefault();
       interaction.mode = "connect";
       interaction.connectionSourceId = id;
       interaction.connectionCurrentX = e.clientX;
@@ -281,6 +281,7 @@ function registerCanvasEvents() {
 }
 
 function handleCanvasMouseDown(e) {
+  if (interaction.mode === "connect") return;
   const worldX = (e.clientX - State.offsetX) / State.zoomLevel;
   const worldY = (e.clientY - State.offsetY) / State.zoomLevel;
 

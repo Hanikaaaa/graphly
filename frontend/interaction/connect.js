@@ -48,4 +48,5 @@ export function handleConnectEnd(
   interaction.connectionSourceId = null;
   interaction.connectionCurrentX = 0;
   interaction.connectionCurrentY = 0;
+  interaction.isConnecting = false;
 }

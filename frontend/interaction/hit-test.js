@@ -5,7 +5,7 @@ export function hitTestConnection(
   getNodeById,
   zoomLevel,
 ) {
-  const HIT_DISTANCE = 8 / zoomLevel;
+  const HIT_DISTANCE = 14 / zoomLevel;
   let clickedConnection = null;
 
   connections.forEach((conn) => {
@@ -20,7 +20,7 @@ export function hitTestConnection(
 
     const controlY = (fromY + toY) / 2;
 
-    for (let t = 0; t <= 1; t += 0.05) {
+    for (let t = 0; t <= 1; t += 0.025) {
       const x =
         (1 - t) * (1 - t) * fromX + 2 * (1 - t) * t * fromX + t * t * toX;
 
