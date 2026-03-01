@@ -1,4 +1,14 @@
 import { login, register } from "./auth.js";
+import { hasToken, logout } from "./auth.js";
+
+if (window.location.pathname.startsWith("/signup") && hasToken()) {
+  logout(); 
+  window.location.replace("/signup");
+}
+
+if (window.location.pathname === "/login" && hasToken()) {
+  window.location.replace("/app");
+}
 
 function escapeHTML(value) {
   return String(value)
@@ -10,8 +20,10 @@ function escapeHTML(value) {
 }
 
 export function renderAuthScreen(root, { onAuthenticated }) {
+  const path = window.location.pathname;
+
   const state = {
-    mode: "login",
+    mode: path.startsWith("/signup") ? "register" : "login",
     loading: false,
     error: "",
   };
@@ -25,8 +37,12 @@ export function renderAuthScreen(root, { onAuthenticated }) {
         style="background:
           radial-gradient(circle at 12% 18%, rgba(52, 245, 197, 0.12), transparent 34%),
           radial-gradient(circle at 84% 11%, rgba(79, 140, 255, 0.16), transparent 40%),
-          #081c3a;"
-      >
+          #081c3a;">
+          
+        <a href="/" class="absolute left-6 top-6 z-20 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-[#020617]/40 px-3 py-2 text-sm font-medium text-gray-300 backdrop-blur-md transition-all hover:border-emerald-400/40 hover:text-white hover:shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+            Back
+        </a>
         <div aria-hidden="true" class="pointer-events-none absolute left-8 top-16 h-44 w-44 rounded-full bg-emerald-400/20 blur-3xl"></div>
         <div aria-hidden="true" class="pointer-events-none absolute bottom-12 right-8 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl"></div>
         <section class="group grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-3xl border border-white/10 bg-[#020617]/60 shadow-2xl backdrop-blur-xl md:grid-cols-2">
@@ -126,6 +142,8 @@ export function renderAuthScreen(root, { onAuthenticated }) {
         if (state.loading) return;
         const nextMode = button.dataset.mode;
         if (!nextMode || nextMode === state.mode) return;
+        const nextPath = nextMode === "login" ? "/login" : "/signup";
+        window.history.pushState({}, "", nextPath);
         state.mode = nextMode;
         state.error = "";
         render();

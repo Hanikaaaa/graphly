@@ -1,3 +1,13 @@
+import { hasToken } from "./auth.js";
+
+// if (!hasToken()) {
+//   window.location.replace("/login");
+// }
+
+if (!hasToken() && window.location.pathname === "/app") {
+  window.location.replace("/login");
+}
+
 const PREVIEW_IMAGES = [
   "/assets/hero_landing_page.png",
   "/assets/steps01.png",

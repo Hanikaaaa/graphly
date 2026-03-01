@@ -119,7 +119,7 @@ func main() {
 		Handler: router,
 	}
 
-	log.Printf("PixPlot backend listening on %s", addr)
+	log.Printf("Graphly backend listening on %s", addr)
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("server error: %v", err)
 	}

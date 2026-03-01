@@ -12,6 +12,7 @@ export function saveToken(token) {
 
 export function logout() {
   clearAuthToken();
+  window.location.replace("/login");
 }
 
 export async function register(email, password) {
@@ -26,6 +27,7 @@ export async function register(email, password) {
   }
 
   saveToken(response.token);
+  window.location.replace("/app");
   return response;
 }
 
@@ -41,6 +43,7 @@ export async function login(email, password) {
   }
 
   saveToken(response.token);
+  window.location.replace("/app");
   return response;
 }
 
