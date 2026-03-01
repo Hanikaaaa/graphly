@@ -294,6 +294,14 @@ async function refreshDashboard() {
 }
 
 async function showDashboard() {
+  if (activeCanvas) {
+    setSyncHandler(null);
+    activeCanvas = null;
+  }
+
+  State.resetCanvasState();
+  DOM.clearAllNodes();
+
   const params = new URLSearchParams(window.location.search);
   params.delete("canvas");
   const query = params.toString();
