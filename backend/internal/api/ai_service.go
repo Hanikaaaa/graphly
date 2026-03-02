@@ -80,7 +80,10 @@ Rules:
 - Examples and facts connect from concepts
 - Processes may connect from themes or concepts
 - Decisions must connect from process nodes
-- Maximum 20 nodes
+- Aim for 4 - 6 main themes
+- Each theme should have 2 - 4 children
+- Maximum 35 nodes
+- Keep the structure balanced 
 - No explanations
 `
 
