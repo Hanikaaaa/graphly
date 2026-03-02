@@ -429,6 +429,3 @@ void bootstrap().catch((error) => {
     "Something went wrong. Hard refresh the page (Ctrl+Shift+R).",
   );
 });
-
-window.__DEBUG_STATE__ = State;
-window.__DEBUG_REBUILD__ = rebuild;
