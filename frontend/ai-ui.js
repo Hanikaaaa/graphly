@@ -1,3 +1,8 @@
+import { rebuild } from "../main.js";
+import * as State from "../state.js";
+import { apiRequest } from "./api-client.js";
+import { queueStateSync } from "./collaboration.js";
+
 export function initAIUI() {
   const fab = document.getElementById("ai-fab");
   const chatbox = document.getElementById("ai-chatbox");
@@ -25,17 +30,41 @@ export function initAIUI() {
     messages.scrollTop = messages.scrollHeight;
   }
 
-  function handleSend() {
+  async function handleSend() {
     const value = input.value.trim();
     if (!value) return;
 
     appendMessage(value, "user");
     input.value = "";
 
-    // placeholder response
-    setTimeout(() => {
-      appendMessage("AI integration coming soon.", "system");
-    }, 600);
+    try {
+      appendMessage("Generating graph...", "system");
+
+      const graph = await apiRequest("/ai/generate", {
+        method: "POST",
+        body: { prompt: value },
+      });
+
+      // Replace current canvas with AI graph
+      State.snapshotState();
+
+    State.importCollabState({
+      nodes: graph.nodes,
+      connections: graph.connections,
+      zoomLevel: State.zoomLevel,
+      offsetX: State.offsetX,
+      offsetY: State.offsetY,
+    });
+
+rebuild();
+queueStateSync("node_update");
+
+      appendMessage("Graph generated successfully.", "system");
+
+    } catch (err) {
+      console.error(err);
+      appendMessage("Failed to generate graph.", "system");
+    }
   }
 
   sendBtn.addEventListener("click", handleSend);

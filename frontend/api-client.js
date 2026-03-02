@@ -74,4 +74,24 @@ export async function apiRequest(path, options = {}) {
   return payload;
 }
 
+export async function generateGraphFromAI(prompt) {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch("/ai/generate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({ prompt })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "AI generation failed");
+  }
+
+  return response.json();
+}
+
 export { TOKEN_KEY, clearAuthToken, getAuthToken };
