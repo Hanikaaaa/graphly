@@ -2,6 +2,7 @@ import { rebuild } from "../main.js";
 import * as State from "../state.js";
 import { apiRequest } from "./api-client.js";
 import { queueStateSync } from "./collaboration.js";
+import { transformAIToGraphlyState } from "./ai-transformer.js";
 
 export function initAIUI() {
   const fab = document.getElementById("ai-fab");
@@ -48,19 +49,20 @@ export function initAIUI() {
       // Replace current canvas with AI graph
       State.snapshotState();
 
-    State.importCollabState({
-      nodes: graph.nodes,
-      connections: graph.connections,
-      zoomLevel: State.zoomLevel,
-      offsetX: State.offsetX,
-      offsetY: State.offsetY,
-    });
+      const transformed = transformAIToGraphlyState(graph);
 
-rebuild();
-queueStateSync("node_update");
+      State.importCollabState({
+        nodes: transformed.nodes,
+        connections: transformed.connections,
+        zoomLevel: 1,
+        offsetX: 200,
+        offsetY: 100,
+      });
+
+      rebuild();
+      queueStateSync("node_update");
 
       appendMessage("Graph generated successfully.", "system");
-
     } catch (err) {
       console.error(err);
       appendMessage("Failed to generate graph.", "system");

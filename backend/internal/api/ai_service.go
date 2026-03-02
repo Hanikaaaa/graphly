@@ -33,6 +33,7 @@ type aiGraph struct {
 	Nodes []struct {
 		Key  string `json:"key"`
 		Text string `json:"text"`
+		Role string `json:"role"` // core, category, detail
 	} `json:"nodes"`
 	Connections []struct {
 		From string `json:"from"`
@@ -54,17 +55,26 @@ func (s *AIService) GenerateGraph(prompt string) (*GeneratedGraph, error) {
 		return nil, errors.New("GOOGLE_API_KEY not set")
 	}
 
-	systemPrompt := `
-You generate graph JSON only.
+systemPrompt := `
+You generate structured graph JSON only.
 Return ONLY valid JSON.
 Do NOT wrap in markdown.
+
 Format:
 {
-  "nodes": [{ "key": "n1", "text": "Node text" }],
-  "connections": [{ "from": "n1", "to": "n2" }]
+  "nodes": [
+    { "key": "n1", "text": "Node text", "role": "core|category|detail" }
+  ],
+  "connections": [
+    { "from": "n1", "to": "n2" }
+  ]
 }
-Maximum 10 nodes.
-Do not include explanations.
+
+Rules:
+- Exactly one node must have role "core"
+- Other nodes must be "category" or "detail"
+- Maximum 10 nodes
+- No explanations
 `
 
 	fullPrompt := systemPrompt + "\nUser Input:\n" + prompt
@@ -172,23 +182,14 @@ func mapToGraphlyModel(input aiGraph) *GeneratedGraph {
 	nodes := []map[string]interface{}{}
 	connections := []map[string]interface{}{}
 
-	// simple vertical layout
-	x := 200
-	y := 200
-	spacing := 180
-
-	for i, n := range input.Nodes {
+	for _, n := range input.Nodes {
 		id := uuid.New().String()
 		keyToID[n.Key] = id
 
 		node := map[string]interface{}{
-			"id":     id,
-			"x":      x,
-			"y":      y + i*spacing,
-			"width":  140,
-			"height": 80,
-			"text":   n.Text,
-			"shape":  "rectangle",
+			"id":   id,
+			"text": n.Text,
+			"role": n.Role,
 		}
 
 		nodes = append(nodes, node)
