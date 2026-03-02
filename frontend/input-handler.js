@@ -142,6 +142,10 @@ export function initInputHandler() {
   registerCanvasEvents();
   registerGlobalEvents();
   registerToolbarEvents();
+
+  window.addEventListener("node-hover-change", () => {
+    triggerRedraw();
+  });
 }
 
 function resetInteraction() {
