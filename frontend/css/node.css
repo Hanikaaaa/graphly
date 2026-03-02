@@ -16,9 +16,14 @@
 
   overflow: visible;
   padding: 0;
+
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-
+.node-input:hover {
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
 
 .node-input.selected {
   box-shadow: 0 0 0 2px #7d7cbd,

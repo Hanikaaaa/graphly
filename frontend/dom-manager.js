@@ -1,5 +1,6 @@
 import { ShapeRegistry } from "./shapes.js";
 import { getSelectionBounds } from "./geometry/bounds.js";
+import { triggerRedraw } from "./input-handler.js";
 
 // Group Overlay
 
@@ -148,6 +149,21 @@ export function createNodeDOM(node, handlers) {
   el.appendChild(textDisplay);
   el.appendChild(textInput);
 
+  // ⭐ ADD THIS BLOCK HERE
+  el._isHovered = false;
+
+  el.addEventListener("mouseenter", () => {
+    el._isHovered = true;
+    window.dispatchEvent(new Event("node-hover-change"));
+  });
+
+  el.addEventListener("mouseleave", () => {
+    el._isHovered = false;
+    window.dispatchEvent(new Event("node-hover-change"));
+  });
+
+  // ⬇️ keep this line LAST
+
   document.body.appendChild(el);
 }
 
@@ -193,7 +209,9 @@ export function syncNodeDOM(
   el.style.width = `${node.width}px`;
   el.style.height = `${node.height}px`;
 
-  el.style.transform = `scale(${zoomLevel})`;
+  // el.style.transform = `scale(${zoomLevel})`;
+  const hoverScale = el._isHovered && !isSelected ? 1.12 : 1;
+  el.style.transform = `scale(${zoomLevel * hoverScale})`;
   el.style.transformOrigin = "top left";
 
   // Visual Styles
