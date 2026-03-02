@@ -48,4 +48,8 @@ func RegisterRoutes(
 	protectedCanvases.GET("/:id", canvasHandlers.GetCanvas)
 	protectedCanvases.PUT("/:id", canvasHandlers.UpdateCanvas)
 	protectedCanvases.DELETE("/:id", canvasHandlers.DeleteCanvas)
+
+	aiHandlers := NewAIHandlers()
+	protectedAI := router.Group("/ai", authMiddleware)
+	protectedAI.POST("/generate", aiHandlers.Generate)
 }
