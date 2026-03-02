@@ -23,7 +23,7 @@ func NewAIService() *AIService {
 	return &AIService{
 		apiKey: os.Getenv("GOOGLE_API_KEY"),
 		client: &http.Client{
-			Timeout: 20 * time.Second,
+			Timeout: 60 * time.Second,
 		},
 	}
 }
@@ -33,7 +33,7 @@ type aiGraph struct {
 	Nodes []struct {
 		Key  string `json:"key"`
 		Text string `json:"text"`
-		Role string `json:"role"` // core, category, detail
+		Role string `json:"role"`
 	} `json:"nodes"`
 	Connections []struct {
 		From string `json:"from"`
@@ -72,14 +72,21 @@ Format:
 
 Rules:
 - Exactly one node must have role "core"
-- Other nodes must be "category" or "detail"
-- Maximum 10 nodes
+- Other nodes must use ONLY these roles:
+  "theme", "concept", "process", "decision",
+  "example", "fact", "warning", "question"
+- Themes connect from core
+- Concepts connect from themes
+- Examples and facts connect from concepts
+- Processes may connect from themes or concepts
+- Decisions must connect from process nodes
+- Maximum 20 nodes
 - No explanations
 `
 
 	fullPrompt := systemPrompt + "\nUser Input:\n" + prompt
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	url := "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" + s.apiKey	
@@ -191,6 +198,25 @@ func mapToGraphlyModel(input aiGraph) *GeneratedGraph {
 			"text": n.Text,
 			"role": n.Role,
 		}
+		role := strings.ToLower(strings.TrimSpace(n.Role))
+
+		validRoles := map[string]bool{
+			"core": true,
+			"theme": true,
+			"concept": true,
+			"process": true,
+			"decision": true,
+			"example": true,
+			"fact": true,
+			"warning": true,
+			"question": true,
+		}
+
+		if !validRoles[role] {
+			role = "concept"
+		}
+
+		node["role"] = role
 
 		nodes = append(nodes, node)
 	}
