@@ -46,31 +46,44 @@ export function transformAIToGraphlyState(graph) {
 
   const horizontalSpacing = 240;
   const verticalSpacing = 180;
-  const levelCount = {};
+  const startY = 200;
+  const centerX = 800; // adjust if needed
 
-  graph.nodes.forEach((aiNode) => {
-    const level = levels[aiNode.id] ?? 0;
-
-    if (!levelCount[level]) levelCount[level] = 0;
-
-    const x = 200 + levelCount[level] * horizontalSpacing;
-    const y = 200 + level * verticalSpacing;
-
-    levelCount[level]++;
-
-    const node = State.createNodeObject(x, y);
-
-    node.id = aiNode.id;
-    node.text = aiNode.text || "Untitled";
-
-    applySemanticStyle(node, aiNode);
-
-    transformedNodes.push(node);
+  // Group nodes by level
+  const levelGroups = {};
+  graph.nodes.forEach((n) => {
+    const level = levels[n.id] ?? 0;
+    if (!levelGroups[level]) levelGroups[level] = [];
+    levelGroups[level].push(n);
   });
 
+  // Position nodes level by level (CENTERED)
+  Object.keys(levelGroups).forEach((levelKey) => {
+    const level = Number(levelKey);
+    const nodesAtLevel = levelGroups[level];
+
+    const totalWidth = (nodesAtLevel.length - 1) * horizontalSpacing;
+    const startX = centerX - totalWidth / 2;
+
+    nodesAtLevel.forEach((aiNode, index) => {
+      const x = startX + index * horizontalSpacing;
+      const y = startY + level * verticalSpacing;
+
+      const node = State.createNodeObject(x, y);
+
+      node.id = aiNode.id;
+      node.text = aiNode.text || "Untitled";
+
+      applySemanticStyle(node, aiNode);
+
+      transformedNodes.push(node);
+    });
+  });
+
+  // Connections
   graph.connections.forEach((conn) => {
     transformedConnections.push({
-      id: crypto.randomUUID(),
+      id: conn.id,
       from: conn.from,
       to: conn.to,
       color: "#94a3b8",
