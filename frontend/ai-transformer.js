@@ -44,8 +44,6 @@ export function transformAIToGraphlyState(graph) {
 
   const levels = computeLevels(graph.nodes, graph.connections);
 
-  const horizontalSpacing = 240;
-  const verticalSpacing = 180;
   const startY = 200;
   const centerX = 800; // adjust if needed
 
@@ -62,21 +60,53 @@ export function transformAIToGraphlyState(graph) {
     const level = Number(levelKey);
     const nodesAtLevel = levelGroups[level];
 
-    const totalWidth = (nodesAtLevel.length - 1) * horizontalSpacing;
-    const startX = centerX - totalWidth / 2;
+    // Measure nodes
+    const tempNodes = nodesAtLevel.map((aiNode) => {
+      const temp = State.createNodeObject(0, 0);
+      applySemanticStyle(temp, aiNode);
+      return { aiNode, width: temp.width, height: temp.height };
+    });
 
-    nodesAtLevel.forEach((aiNode, index) => {
-      const x = startX + index * horizontalSpacing;
-      const y = startY + level * verticalSpacing;
+    const gap = 80;
+
+    const totalWidth =
+      tempNodes.reduce((sum, n) => sum + n.width, 0) +
+      gap * (tempNodes.length - 1);
+
+    let currentX = centerX - totalWidth / 2;
+
+    // Calculate max height in this level
+    const maxHeight = Math.max(...tempNodes.map((n) => n.height));
+
+    // Compute Y dynamically using accumulated level heights
+    const verticalGap = 100;
+
+    const previousLevelsHeight = Object.keys(levelGroups)
+      .filter((k) => Number(k) < level)
+      .reduce((sum, k) => {
+        const prevNodes = levelGroups[k];
+        const heights = prevNodes.map((aiNode) => {
+          const temp = State.createNodeObject(0, 0);
+          applySemanticStyle(temp, aiNode);
+          return temp.height;
+        });
+        return sum + Math.max(...heights) + verticalGap;
+      }, 0);
+
+    const y = startY + previousLevelsHeight;
+
+    tempNodes.forEach(({ aiNode, width }) => {
+      const x = currentX + width / 2;
 
       const node = State.createNodeObject(x, y);
-
       node.id = aiNode.id;
       node.text = aiNode.text || "Untitled";
 
       applySemanticStyle(node, aiNode);
 
       transformedNodes.push(node);
+
+      currentX += width + gap;
     });
   });
 
