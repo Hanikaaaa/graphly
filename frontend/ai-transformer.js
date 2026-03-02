@@ -43,74 +43,140 @@ export function transformAIToGraphlyState(graph) {
   const transformedConnections = [];
 
   const levels = computeLevels(graph.nodes, graph.connections);
+  const layoutMode = "radial"; // "tree" or "radial"
 
-  const startY = 200;
-  const centerX = 800; // adjust if needed
-
-  // Group nodes by level
   const levelGroups = {};
+
   graph.nodes.forEach((n) => {
     const level = levels[n.id] ?? 0;
     if (!levelGroups[level]) levelGroups[level] = [];
     levelGroups[level].push(n);
   });
 
-  // Position nodes level by level (CENTERED)
-  Object.keys(levelGroups).forEach((levelKey) => {
-    const level = Number(levelKey);
-    const nodesAtLevel = levelGroups[level];
+  // Tree Layout
 
-    // Measure nodes
-    const tempNodes = nodesAtLevel.map((aiNode) => {
-      const temp = State.createNodeObject(0, 0);
-      applySemanticStyle(temp, aiNode);
-      return { aiNode, width: temp.width, height: temp.height };
-    });
+  if (layoutMode === "tree") {
+    const startY = 200;
+    const centerX = 800;
+    const verticalGap = 120;
+    const horizontalGap = 80;
 
-    const gap = 80;
+    Object.keys(levelGroups)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .forEach((level) => {
+        const nodesAtLevel = levelGroups[level];
 
-    const totalWidth =
-      tempNodes.reduce((sum, n) => sum + n.width, 0) +
-      gap * (tempNodes.length - 1);
-
-    let currentX = centerX - totalWidth / 2;
-
-    // Calculate max height in this level
-    const maxHeight = Math.max(...tempNodes.map((n) => n.height));
-
-    // Compute Y dynamically using accumulated level heights
-    const verticalGap = 100;
-
-    const previousLevelsHeight = Object.keys(levelGroups)
-      .filter((k) => Number(k) < level)
-      .reduce((sum, k) => {
-        const prevNodes = levelGroups[k];
-        const heights = prevNodes.map((aiNode) => {
+        const tempNodes = nodesAtLevel.map((aiNode) => {
           const temp = State.createNodeObject(0, 0);
           applySemanticStyle(temp, aiNode);
-          return temp.height;
+          return { aiNode, width: temp.width, height: temp.height };
         });
-        return sum + Math.max(...heights) + verticalGap;
-      }, 0);
 
-    const y = startY + previousLevelsHeight;
+        const totalWidth =
+          tempNodes.reduce((sum, n) => sum + n.width, 0) +
+          horizontalGap * (tempNodes.length - 1);
 
-    tempNodes.forEach(({ aiNode, width }) => {
-      const x = currentX + width / 2;
+        let currentX = centerX - totalWidth / 2;
+
+        const previousLevelsHeight = Object.keys(levelGroups)
+          .map(Number)
+          .filter((k) => k < level)
+          .reduce((sum, k) => {
+            const heights = levelGroups[k].map((aiNode) => {
+              const temp = State.createNodeObject(0, 0);
+              applySemanticStyle(temp, aiNode);
+              return temp.height;
+            });
+            return sum + Math.max(...heights) + verticalGap;
+          }, 0);
+
+        const y = startY + previousLevelsHeight;
+
+        tempNodes.forEach(({ aiNode, width }) => {
+          const x = currentX + width / 2;
+
+          const node = State.createNodeObject(x, y);
+          node.id = aiNode.id;
+          node.text = aiNode.text || "Untitled";
+
+          applySemanticStyle(node, aiNode);
+          transformedNodes.push(node);
+
+          currentX += width + horizontalGap;
+        });
+      });
+  }
+
+  // Radial Layout
+
+  if (layoutMode === "radial") {
+    const centerX = 800;
+    const centerY = 400;
+    const radiusStep = 340;
+
+    // Build adjacency map (parent -> children)
+    const childrenMap = {};
+    graph.nodes.forEach((n) => {
+      childrenMap[n.id] = [];
+    });
+
+    graph.connections.forEach((c) => {
+      if (childrenMap[c.from]) {
+        childrenMap[c.from].push(c.to);
+      }
+    });
+
+    // Find root
+    const root = graph.nodes.find((n) => n.role === "core");
+    if (!root) return;
+
+    // Helper to get node by id
+    const nodeMap = {};
+    graph.nodes.forEach((n) => {
+      nodeMap[n.id] = n;
+    });
+
+    function placeNode(nodeId, level, angleStart, angleEnd) {
+      const angle = (angleStart + angleEnd) / 2;
+      const radius = level * radiusStep;
+
+      let x, y;
+
+      if (level === 0) {
+        x = centerX;
+        y = centerY;
+      } else {
+        x = centerX + radius * Math.cos(angle);
+        y = centerY + radius * Math.sin(angle);
+      }
+
+      const aiNode = nodeMap[nodeId];
 
       const node = State.createNodeObject(x, y);
       node.id = aiNode.id;
       node.text = aiNode.text || "Untitled";
 
       applySemanticStyle(node, aiNode);
-
       transformedNodes.push(node);
 
-      currentX += width + gap;
-    });
-  });
+      const children = childrenMap[nodeId];
+      if (!children || children.length === 0) return;
+
+      const sectorSize = (angleEnd - angleStart) / children.length;
+
+      children.forEach((childId, index) => {
+        const childStart = angleStart + index * sectorSize;
+        const childEnd = childStart + sectorSize;
+
+        placeNode(childId, level + 1, childStart, childEnd);
+      });
+    }
+    placeNode(root.id, 0, -Math.PI / 2, (3 * Math.PI) / 2);
+  }
 
   // Connections
+
   graph.connections.forEach((conn) => {
     transformedConnections.push({
       id: conn.id,
