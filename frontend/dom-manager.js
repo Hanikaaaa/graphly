@@ -210,7 +210,7 @@ export function syncNodeDOM(
   el.style.height = `${node.height}px`;
 
   // el.style.transform = `scale(${zoomLevel})`;
-  const hoverScale = el._isHovered ? 1.12 : 1;
+  const hoverScale = el._isHovered && !isSelected ? 1.12 : 1;
   el.style.transform = `scale(${zoomLevel * hoverScale})`;
   el.style.transformOrigin = "top left";
 
