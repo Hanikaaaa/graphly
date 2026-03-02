@@ -15,6 +15,7 @@ import { handleDragPending, handleDragMove } from "./interaction/drag.js";
 import { handleMarqueeMove } from "./interaction/marquee.js";
 import { handleNodeResize } from "./interaction/resize.js";
 import { handleConnectMove, handleConnectEnd } from "./interaction/connect.js";
+import { isCanvasActive } from "./main.js";
 import {
   handleGroupDragMove,
   startGroupDrag,
@@ -243,6 +244,7 @@ const UP_HANDLERS = {
 };
 
 function handleWindowDoubleClick(e) {
+  if (!isCanvasActive()) return;
   if (e.target.closest(".node-input")) return;
 
   const rect = canvas.getBoundingClientRect();
@@ -268,10 +270,6 @@ function registerCanvasEvents() {
   });
 
   canvas.addEventListener("mousedown", handleCanvasMouseDown);
-
-  canvas.addEventListener("dblclick", () => {
-    console.log("DOUBLE CLICK FIRED");
-  });
 
   canvas.addEventListener(
     "wheel",

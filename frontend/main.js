@@ -59,6 +59,10 @@ const dashboardState = {
   canvases: [],
 };
 
+export function isCanvasActive() {
+  return Boolean(activeCanvas);
+}
+
 function setSaveStatus(text, isError = false) {
   if (!saveIndicator) return;
   saveIndicator.textContent = text;
