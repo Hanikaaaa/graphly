@@ -1,50 +1,66 @@
 .ai-fab {
   position: fixed;
-  bottom: 28px;
   right: 28px;
-  width: 56px;
-  height: 56px;
+  bottom: 28px;
+  width: 58px;
+  height: 58px;
+  /* border: 1px solid rgba(255, 255, 255, 0.24); */
   border-radius: 18px;
-  background: linear-gradient(135deg, #34F5C5, #4F8CFF);
-  color: #081C3A;
+  background: linear-gradient(145deg, #42e8ca, #08213f);
+  color: #08213f;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 23px;
   cursor: pointer;
-  box-shadow: 0 20px 45px -15px rgba(52, 245, 197, 0.5);
-  transition: all 0.2s ease;
   z-index: 1000;
+  box-shadow: 0 16px 36px rgba(13, 50, 99, 0.28);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .ai-fab:hover {
-  transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 28px 60px -15px rgba(79, 140, 255, 0.6);
-}
-
-.ai-fab:hover {
-  transform: scale(1.1);
-  box-shadow: 0 15px 40px rgba(79, 140, 255, 0.5);
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 22px 46px rgba(11, 56, 115, 0.34);
 }
 
 .ai-chatbox {
   position: fixed;
-  bottom: 100px;
   right: 28px;
-  width: 400px;
-  height: 500px;
+  bottom: 98px;
+  width: 420px;
+  max-width: calc(100vw - 44px);
   min-width: 320px;
+  height: 520px;
+  max-height: calc(100vh - 128px);
   min-height: 360px;
-  background: rgba(15, 42, 82, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(
+    160deg,
+    rgba(10, 27, 54, 0.74),
+    rgba(7, 21, 45, 0.67)
+  );
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 1001;
-  box-shadow: 0 35px 80px -25px rgba(2, 10, 28, 0.9);
+  box-shadow: 0 20px 55px rgba(2, 10, 28, 0.34);
   resize: both;
+  opacity: 0;
+  transform: translateY(12px) scale(0.985);
+  transition: opacity 0.18s ease, transform 0.2s ease;
+}
+
+.ai-chatbox.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.ai-chatbox.is-closing {
+  opacity: 0;
+  transform: translateY(10px) scale(0.985);
 }
 
 .hidden {
@@ -52,147 +68,196 @@
 }
 
 .ai-chat-header {
-  padding: 16px 18px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   background: linear-gradient(
     135deg,
-    rgba(52, 245, 197, 0.12),
-    rgba(79, 140, 255, 0.12)
+    rgba(56, 189, 248, 0.12),
+    rgba(52, 211, 153, 0.08)
   );
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-weight: 600;
-  color: #F8FAFC;
-  font-size: 14px;
-  letter-spacing: 0.3px;
+  justify-content: space-between;
+  color: #eaf2ff;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
 }
 
 .ai-chat-header button {
-  background: none;
-  border: none;
-  color: #9FB3C8;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #d5e6ff;
   cursor: pointer;
-  font-size: 14px;
-  transition: color 0.2s ease;
+  transition: all 0.18s ease;
 }
 
 .ai-chat-header button:hover {
-  color: white;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
 }
 
 .ai-messages {
   flex: 1;
-  padding: 18px;
+  padding: 14px 14px 10px;
   overflow-y: auto;
-  font-size: 14px;
-  color: #D6E1F0;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+}
+
+.ai-messages::-webkit-scrollbar {
+  width: 7px;
+}
+
+.ai-messages::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.42);
 }
 
 .ai-message {
-  padding: 10px 14px;
-  border-radius: 14px;
-  max-width: 85%;
-  line-height: 1.5;
+  max-width: 84%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  line-height: 1.48;
+  font-size: 13px;
   word-break: break-word;
-}
-
-.ai-system {
-  background: rgba(79, 140, 255, 0.18);
-  border: 1px solid rgba(79, 140, 255, 0.2);
+  white-space: pre-wrap;
 }
 
 .ai-user {
-  background: rgba(52, 245, 197, 0.18);
-  border: 1px solid rgba(52, 245, 197, 0.2);
   align-self: flex-end;
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  color: #e5f4ff;
+  border-bottom-right-radius: 6px;
+}
+
+.ai-system {
+  align-self: flex-start;
+  background: rgba(15, 23, 42, 0.36);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  color: #dbeafe;
+  border-bottom-left-radius: 6px;
 }
 
 .ai-input-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px;
-  background: rgba(2, 6, 23, 0.6);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  align-items: flex-end;
+  gap: 10px;
+  padding: 12px 12px 13px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(5, 15, 33, 0.42);
 }
 
-.ai-input-row input {
+.ai-input-row textarea {
   flex: 1;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #F8FAFC;
-  font-size: 14px;
+  min-height: 40px;
+  max-height: 140px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: rgba(255, 255, 255, 0.06);
+  color: #eff6ff;
+  font-size: 13px;
+  line-height: 1.4;
+  resize: none;
+  overflow-y: auto;
   outline: none;
 }
 
-.ai-input-row input:focus {
-  border-color: rgba(52, 245, 197, 0.5);
+.ai-input-row textarea::placeholder {
+  color: rgba(191, 219, 254, 0.64);
+}
+
+.ai-input-row textarea:focus {
+  border-color: rgba(56, 189, 248, 0.64);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.16);
 }
 
 .ai-input-row button {
   width: 40px;
   height: 40px;
+  flex: 0 0 40px;
   border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg, #34F5C5, #4F8CFF);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: linear-gradient(140deg, #4de6cd, #4a86ff);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .ai-input-row button:hover {
-  transform: scale(1.08);
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 10px 22px rgba(59, 130, 246, 0.28);
 }
 
 .hover-preview {
   position: fixed;
   left: 16px;
   top: 16px;
-  width: 320px;
-  /* max-width: 320px; */
-  /* min-width: 120px; */
-  height: auto;
-  min-height: 0;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  min-height: 84px;
   z-index: 1200;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.55);
-  background: rgba(2, 6, 23, 0.40);
-  color: #031935;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  box-shadow: none;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.35),
+    rgba(255, 255, 255, 0.14)
+  );
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  box-shadow: 0 10px 26px rgba(2, 6, 23, 0.16);
   pointer-events: none;
+  opacity: 0;
+  transform: translateY(-5px) scale(0.99);
+  transition: opacity 0.14s ease, transform 0.18s ease;
+}
+
+.hover-preview.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.hover-preview.is-hiding {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.99);
 }
 
 .hover-preview-title {
-  font-size: 16px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #031e3c;
   text-transform: uppercase;
+  color: rgba(15, 23, 42, 0.66);
+  margin-bottom: 4px;
 }
 
 .hover-preview-image {
   width: 100%;
-  height: 92px;
+  height: 88px;
   object-fit: cover;
   border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  margin-bottom: 6px;
 }
 
 .hover-preview-text {
-  font-size: 16px;
-  line-height: 1.35;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(15, 23, 42, 0.9);
   overflow: hidden;
-  white-space: pre-wrap;
-  max-width: 300px;
-  color: rgba(3, 22, 46, 0.95);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }

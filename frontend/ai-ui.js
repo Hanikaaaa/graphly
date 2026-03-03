@@ -1,4 +1,4 @@
-import { isCanvasEditable } from "../main.js";
+import { isCanvasEditable } from "./main.js";
 import * as State from "../state.js";
 import { apiRequest } from "./api-client.js";
 import { queueStateSync } from "./collaboration.js";
@@ -152,12 +152,23 @@ function reapplyLastAIGraphLayout() {
 }
 
 function closeChatbox() {
-  aiState.elements?.chatbox?.classList.add("hidden");
+  const chatbox = aiState.elements?.chatbox;
+  if (!chatbox || chatbox.classList.contains("hidden")) return;
+
+  chatbox.classList.remove("is-open");
+  chatbox.classList.add("is-closing");
+
+  window.setTimeout(() => {
+    chatbox.classList.add("hidden");
+    chatbox.classList.remove("is-closing");
+  }, 180);
 }
 
 function openChatbox() {
   const { chatbox, input } = aiState.elements || {};
   if (!chatbox) return;
+  chatbox.classList.remove("hidden", "is-closing");
+  requestAnimationFrame(() => chatbox.classList.add("is-open"));
   chatbox.classList.remove("hidden");
   input?.focus();
 }
@@ -222,6 +233,15 @@ export function initAIUI() {
   closeBtn.addEventListener("click", closeChatbox);
   registerOutsideClickClose();
 
+  function autoSizeInput() {
+    if (!input) return;
+    input.style.height = "auto";
+    input.style.height = `${Math.min(input.scrollHeight, 140)}px`;
+  }
+
+  autoSizeInput();
+  input.addEventListener("input", autoSizeInput);
+
   async function handleSend() {
     if (!isCanvasEditable()) {
       appendMessage("This canvas is read-only for viewers.", "system");
@@ -233,6 +253,7 @@ export function initAIUI() {
 
     appendMessage(value, "user");
     input.value = "";
+    autoSizeInput();
 
     if (aiState.abortController) {
       aiState.abortController.abort();
@@ -270,7 +291,7 @@ export function initAIUI() {
 
   sendBtn.addEventListener("click", handleSend);
   input.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
+    if (e.key !== "Enter" || e.shiftKey) return;
     e.preventDefault();
     handleSend();
   });

@@ -111,6 +111,10 @@ ShapeRegistry.circle = createBaseShape({
   applyLayout(node, el) {
     const shapeLayer = el.querySelector(".node-shape-layer");
     shapeLayer.style.clipPath = "circle(50% at 50% 50%)";
+    if (el._text && el._input) {
+      el._text.style.clipPath = "circle(50% at 50% 50%)";
+      el._input.style.clipPath = "circle(50% at 50% 50%)";
+    }
   },
 
   enforceConstraints(node) {
@@ -135,7 +139,14 @@ ShapeRegistry.diamond = createBaseShape({
   applyLayout(node, el) {
     const shapeLayer = el.querySelector(".node-shape-layer");
 
-    shapeLayer.style.clipPath = "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)";
+    const diamondClip = "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)";
+    shapeLayer.style.clipPath = diamondClip;
+    if (el._text && el._input) {
+      el._text.style.clipPath = diamondClip;
+      el._input.style.clipPath = diamondClip;
+      el._text.style.padding = "18% 16%";
+      el._input.style.padding = "18% 16%";
+    }
   },
 
   enforceConstraints(node) {
@@ -218,7 +229,15 @@ ShapeRegistry.triangle = createBaseShape({
 ShapeRegistry.parallelogram = createBaseShape({
   applyLayout(node, el) {
     const shapeLayer = el.querySelector(".node-shape-layer");
-    shapeLayer.style.clipPath = "polygon(20% 0%, 100% 0%, 80% 100%, 0% 100%)";
+    const paraClip = "polygon(20% 0%, 100% 0%, 80% 100%, 0% 100%)";
+    shapeLayer.style.clipPath = paraClip;
+    if (el._text && el._input) {
+      const innerParaClip = "polygon(24% 8%, 96% 8%, 78% 92%, 4% 92%)";
+      el._text.style.clipPath = innerParaClip;
+      el._input.style.clipPath = innerParaClip;
+      el._text.style.padding = "12% 16%";
+      el._input.style.padding = "12% 16%";
+    }
   },
 
   enforceConstraints(node) {
@@ -234,8 +253,17 @@ ShapeRegistry.parallelogram = createBaseShape({
 ShapeRegistry.hexagon = createBaseShape({
   applyLayout(node, el) {
     const shapeLayer = el.querySelector(".node-shape-layer");
-    shapeLayer.style.clipPath =
+    const hexClip =
       "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)";
+    shapeLayer.style.clipPath = hexClip;
+    if (el._text && el._input) {
+      const innerHexClip =
+        "polygon(28% 8%, 72% 8%, 92% 50%, 72% 92%, 28% 92%, 8% 50%)";
+      el._text.style.clipPath = innerHexClip;
+      el._input.style.clipPath = innerHexClip;
+      el._text.style.padding = "14% 16%";
+      el._input.style.padding = "14% 16%";
+    }
   },
 
   enforceConstraints(node) {
@@ -251,7 +279,15 @@ ShapeRegistry.hexagon = createBaseShape({
 ShapeRegistry.trapezoid = createBaseShape({
   applyLayout(node, el) {
     const shapeLayer = el.querySelector(".node-shape-layer");
-    shapeLayer.style.clipPath = "polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)";
+    const trapClip = "polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)";
+    shapeLayer.style.clipPath = trapClip;
+    if (el._text && el._input) {
+      const innerTrapClip = "polygon(24% 8%, 76% 8%, 92% 92%, 8% 92%)";
+      el._text.style.clipPath = innerTrapClip;
+      el._input.style.clipPath = innerTrapClip;
+      el._text.style.padding = "14% 14% 12%";
+      el._input.style.padding = "14% 14% 12%";
+    }
   },
 
   enforceConstraints(node) {

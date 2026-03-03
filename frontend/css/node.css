@@ -62,6 +62,8 @@
   box-sizing: border-box;
   overflow: hidden;
   word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .node-text-input {

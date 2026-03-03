@@ -6,6 +6,14 @@ import { hideHoverPreview, showHoverPreview } from "./hover-preview.js";
 // Group Overlay
 
 let groupOverlay = null;
+const autoResizeQueue = new Set();
+const autoResizeDraftText = new Map();
+let autoResizeRAF = 0;
+
+const MIN_NODE_WIDTH = 80;
+const MIN_NODE_HEIGHT = 60;
+const AUTO_RESIZE_BUFFER_X = 16;
+const AUTO_RESIZE_BUFFER_Y = 16;
 
 function createGroupOverlay() {
   if (groupOverlay) return groupOverlay;
@@ -53,6 +61,7 @@ export function createNodeDOM(node, handlers) {
   const el = document.createElement("div");
   el.className = "node-input";
   el.id = node.id;
+  el._nodeRef = node;
 
   const shapeLayer = document.createElement("div");
   shapeLayer.className = "node-shape-layer";
@@ -87,6 +96,9 @@ export function createNodeDOM(node, handlers) {
   const textInput = document.createElement("textarea");
   textInput.className = "node-text-input";
   textInput.value = node.text || "";
+  textInput.addEventListener("input", () => {
+    queueAutoResizeNode(node.id, textInput.value);
+  });
 
   textInput.onblur = () => {
     handlers.onSave(node.id, textInput.value);
@@ -175,6 +187,82 @@ export function createNodeDOM(node, handlers) {
   // ⬇️ keep this line LAST
 
   document.body.appendChild(el);
+}
+
+function processAutoResizeQueue() {
+  autoResizeRAF = 0;
+  let hasAnySizeChange = false;
+
+  autoResizeQueue.forEach((nodeId) => {
+    const resized = autoResizeNodeToFitText(nodeId);
+    hasAnySizeChange = hasAnySizeChange || resized;
+  });
+
+  autoResizeQueue.clear();
+  autoResizeDraftText.clear();
+
+  if (hasAnySizeChange) {
+    triggerRedraw();
+  }
+}
+
+function queueAutoResizeNode(nodeId, draftText) {
+  if (!nodeId) return;
+
+  autoResizeQueue.add(nodeId);
+  if (typeof draftText === "string") {
+    autoResizeDraftText.set(nodeId, draftText);
+  }
+
+  if (autoResizeRAF) return;
+  autoResizeRAF = requestAnimationFrame(processAutoResizeQueue);
+}
+
+export function autoResizeNodeToFitText(nodeId) {
+  const el = document.getElementById(nodeId);
+  if (!el || !el._nodeRef) return false;
+
+  const node = el._nodeRef;
+  const textEl = el._text;
+  const inputEl = el._input;
+  if (!node || !textEl || !inputEl) return false;
+
+  const isEditing = inputEl.style.display !== "none";
+  const measureEl = isEditing ? inputEl : textEl;
+  const draftText = autoResizeDraftText.get(nodeId);
+
+  if (typeof draftText === "string") {
+    if (isEditing) {
+      inputEl.value = draftText;
+    } else {
+      textEl.textContent = draftText;
+    }
+  }
+
+  const overflowX = measureEl.scrollWidth - measureEl.clientWidth;
+  const overflowY = measureEl.scrollHeight - measureEl.clientHeight;
+
+  if (overflowX <= 1 && overflowY <= 1) {
+    return false;
+  }
+
+  const targetWidth = Math.max(
+    MIN_NODE_WIDTH,
+    node.width + Math.max(0, overflowX) + AUTO_RESIZE_BUFFER_X,
+  );
+  const targetHeight = Math.max(
+    MIN_NODE_HEIGHT,
+    node.height + Math.max(0, overflowY) + AUTO_RESIZE_BUFFER_Y,
+  );
+
+  if (targetWidth <= node.width && targetHeight <= node.height) {
+    return false;
+  }
+
+  node.width = Math.ceil(Math.max(node.width, targetWidth));
+  node.height = Math.ceil(Math.max(node.height, targetHeight));
+
+  return true;
 }
 
 export function syncNodeDOM(
@@ -293,6 +381,21 @@ export function syncNodeDOM(
   // STATE CLASSES
   el.classList.toggle("selected", isSelected);
   el.classList.toggle("editing", isEditing);
+
+  // Auto-grow node to fit current content and typography. Queueing prevents
+  // layout thrash and batches redraw to one frame.
+  const autoResizeSignature = [
+    node.text || "",
+    node.fontSize,
+    node.fontFamily,
+    node.fontWeight,
+    isEditing ? input.value : "",
+  ].join("|");
+
+  if (el._autoResizeSignature !== autoResizeSignature) {
+    el._autoResizeSignature = autoResizeSignature;
+    queueAutoResizeNode(node.id);
+  }
 }
 
 export function removeNodeDOM(id) {

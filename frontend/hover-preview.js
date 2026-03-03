@@ -1,5 +1,6 @@
 let previewEl = null;
 let lastPreviewKey = null;
+let hideTimer = null;
 
 function ensurePreviewElement() {
   if (previewEl) return previewEl;
@@ -23,6 +24,10 @@ function escapeHTML(value) {
 
 export function showHoverPreview(data) {
   if (!data || (data.type !== "node" && data.type !== "edge")) return;
+  if (hideTimer) {
+    clearTimeout(hideTimer);
+    hideTimer = null;
+  }
 
   const key = JSON.stringify(data);
   if (key === lastPreviewKey) return;
@@ -37,29 +42,25 @@ export function showHoverPreview(data) {
   el.innerHTML = `
     <div class="hover-preview-title">${escapeHTML(title)}</div>
     ${image ? `<img class="hover-preview-image" src="${escapeHTML(image)}" alt="Preview image" />` : ""}
-    <div class="hover-preview-text">${escapeHTML(text || "(empty)")}</div>
+    <div class="hover-preview-text">${escapeHTML(text || "No content available")}</div>
   `;
 
-  el.classList.remove("hidden");
+  el.classList.remove("hidden", "is-hiding");
+  requestAnimationFrame(() => el.classList.add("is-visible"));
 }
 
 export function hideHoverPreview() {
   if (!previewEl) return;
-  previewEl.classList.add("hidden");
+  previewEl.classList.remove("is-visible");
+  previewEl.classList.add("is-hiding");
+  hideTimer = setTimeout(() => {
+    previewEl.classList.add("hidden");
+    previewEl.classList.remove("is-hiding");
+    hideTimer = null;
+  }, 120);
   lastPreviewKey = null; // ⭐ add this line
 }
 
 export function initHoverPreview() {
   ensurePreviewElement();
 }
-
-function autoSizeInput(input) {
-  input.style.width = "auto";
-  input.style.width = input.scrollWidth + 2 + "px";
-}
-
-document.addEventListener("input", (e) => {
-  if (e.target.classList.contains("input-text")) {
-    autoSizeInput(e.target);
-  }
-});
