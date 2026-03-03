@@ -1,4 +1,5 @@
 import { rebuild } from "../main.js";
+import { isCanvasEditable } from "../main.js";
 import * as State from "../state.js";
 import { apiRequest } from "./api-client.js";
 import { queueStateSync } from "./collaboration.js";
@@ -34,6 +35,11 @@ export function initAIUI() {
   }
 
   async function handleSend() {
+    if (!isCanvasEditable()) {
+      appendMessage("This canvas is read-only for viewers.", "system");
+      return;
+    }
+
     const value = input.value.trim();
     if (!value) return;
 

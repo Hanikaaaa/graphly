@@ -11,6 +11,7 @@ let onSync = null;         // callback to notify app after sending/receiving
 let pendingTimer = null;
 let pendingType = "node_update";
 let pendingContent = {};
+let writeEnabled = true;
 
 const RECONNECT_DELAY = 2000; // ms
 
@@ -24,6 +25,14 @@ export function initCollaboration(options = {}) {
 
 export function setSyncHandler(handler) {
   onSync = typeof handler === "function" ? handler : null;
+}
+
+export function setCollaborationWriteEnabled(enabled) {
+  writeEnabled = Boolean(enabled);
+  if (!writeEnabled && pendingTimer) {
+    clearTimeout(pendingTimer);
+    pendingTimer = null;
+  }
 }
 
 export function getClientID() {
@@ -76,6 +85,8 @@ function scheduleReconnect() {
  * Immediately broadcast state
  */
 export function broadcastState(type = "node_update", content = {}) {
+  if (!writeEnabled) return;
+
   const hasContent =
     content && typeof content === "object" && Object.keys(content).length > 0;
   const snapshot = hasContent ? content : State.exportCollabState();
@@ -92,6 +103,8 @@ export function broadcastState(type = "node_update", content = {}) {
  * Queue state for debounced broadcasting
  */
 export function queueStateSync(type = "node_update", content = {}, delayMs = 700) {
+  if (!writeEnabled) return;
+
   pendingType = type;
   pendingContent = content;
 
@@ -107,6 +120,8 @@ export function queueStateSync(type = "node_update", content = {}, delayMs = 700
  * Flush any pending sync immediately
  */
 export async function flushStateSync() {
+  if (!writeEnabled) return;
+
   if (pendingTimer) {
     clearTimeout(pendingTimer);
     pendingTimer = null;

@@ -118,10 +118,13 @@ func (h *CanvasHandlers) GetCanvas(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"id":        canvas.ID,
-		"title":     canvas.Title,
-		"data":      json.RawMessage(defaultJSON(canvas.Data)),
-		"updatedAt": canvas.UpdatedAt,
+		"id":         canvas.ID,
+		"title":      canvas.Title,
+		"data":       json.RawMessage(defaultJSON(canvas.Data)),
+		"updatedAt":  canvas.UpdatedAt,
+		"accessType": canvas.AccessType,
+		"ownerId":    canvas.OwnerID,
+		"canEdit":    canvas.CanEdit,
 	})
 }
 
