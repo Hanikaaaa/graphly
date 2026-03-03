@@ -31,6 +31,12 @@ import {
 } from "./collaboration.js";
 import { initHoverPreview } from "./hover-preview.js";
 import { initMiniMap } from "./minimap.js";
+import { canvas as mainCanvas } from "./elements.js";
+import {
+  exportSelectionAsImage,
+  exportSelectionAsPDF,
+} from "./selection-export.js";
+import { startRegionSelection } from "./export-region.js";
 
 const appContainer = document.querySelector(".app-container");
 const authRoot = document.querySelector("#auth-root");
@@ -38,6 +44,11 @@ const authActionButton = document.querySelector("#auth-action-btn");
 const dashboardButton = document.querySelector("#dashboard-btn");
 const saveIndicator = document.querySelector("#save-indicator");
 const canvasElement = document.querySelector("#canvas");
+const exportPNGButton = document.querySelector("#export-png-btn");
+const exportPDFButton = document.querySelector("#export-pdf-btn");
+const exportMenuButton = document.querySelector("#export-menu-btn");
+const exportMenu = document.querySelector("#export-menu");
+let cancelExportSelection = null;
 
 if (!appContainer || !authRoot) {
   document.body.innerHTML = `
@@ -76,6 +87,63 @@ function setSaveStatus(text, isError = false) {
   if (!saveIndicator) return;
   saveIndicator.textContent = text;
   saveIndicator.classList.toggle("error", isError);
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function closeExportMenu() {
+  exportMenu?.classList.add("hidden");
+}
+
+function openExportMenu() {
+  exportMenu?.classList.remove("hidden");
+}
+
+function beginRegionExport(format) {
+  closeExportMenu();
+  cancelExportSelection?.();
+  setSaveStatus(`Drag region for ${format.toUpperCase()} export`);
+
+  cancelExportSelection = startRegionSelection(mainCanvas, {
+    async onComplete(bounds) {
+      try {
+        setSaveStatus(`Exporting ${format.toUpperCase()}...`);
+        if (format === "png") {
+          const blob = await exportSelectionAsImage(mainCanvas, bounds);
+          downloadBlob(blob, "graphly-region.png");
+        } else {
+          const blob = await exportSelectionAsPDF(mainCanvas, bounds);
+          downloadBlob(blob, "graphly-region.pdf");
+        }
+        setSaveStatus("Saved");
+      } catch (error) {
+        console.error(error);
+        setSaveStatus(`Export failed (${format.toUpperCase()})`, true);
+      } finally {
+        cancelExportSelection = null;
+      }
+    },
+    onCancel() {
+      cancelExportSelection = null;
+      setSaveStatus(isCanvasEditable() ? "Saved" : "Read-only");
+    },
+  });
+}
+
+async function handleExportSelection(format) {
+  if (!isCanvasActive()) {
+    setSaveStatus("Open a canvas first", true);
+    return;
+  }
+
+  beginRegionExport(format);
 }
 
 export function rebuild() {
@@ -524,6 +592,35 @@ if (dashboardButton) {
     void flushStateSync()
       .catch(() => undefined)
       .then(() => showDashboard());
+  });
+}
+
+if (exportMenuButton && exportMenu) {
+  exportMenuButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (exportMenu.classList.contains("hidden")) {
+      openExportMenu();
+    } else {
+      closeExportMenu();
+    }
+  });
+
+  exportMenu.addEventListener("click", (e) => e.stopPropagation());
+
+  document.addEventListener("click", () => {
+    closeExportMenu();
+  });
+}
+
+if (exportPNGButton) {
+  exportPNGButton.addEventListener("click", () => {
+    void handleExportSelection("png");
+  });
+}
+
+if (exportPDFButton) {
+  exportPDFButton.addEventListener("click", () => {
+    void handleExportSelection("pdf");
   });
 }
 

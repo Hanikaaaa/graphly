@@ -39,6 +39,8 @@ export const buttons = {
   redo: document.getElementById("redo-btn"),
   zoomIn: document.getElementById("zoom-in"),
   zoomOut: document.getElementById("zoom-out"),
+  exportPNG: document.getElementById("export-png-btn"),
+  exportPDF: document.getElementById("export-pdf-btn"),
 
   //  ACTION BUTTON
   removeImage: document.getElementById("remove-image"),

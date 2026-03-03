@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Graphly - Interactive Mind Map</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
     <link rel="stylesheet" href="css/base.css" />
     <!-- <link rel="stylesheet" href="css/auth.css" /> -->
@@ -84,6 +85,20 @@
           <span class="zoom-label">Zoom</span>
           <button id="zoom-in">+</button>
           <span id="save-indicator" class="save-indicator">Saved</span>
+        </div>
+
+        <div class="topbar-group export-group">
+          <button id="export-menu-btn" title="Export selected region">
+            Export
+          </button>
+          <div id="export-menu" class="export-menu hidden">
+            <button id="export-png-btn" title="Drag region and export as PNG">
+              Export as PNG
+            </button>
+            <button id="export-pdf-btn" title="Drag region and export as PDF">
+              Export as PDF
+            </button>
+          </div>
         </div>
 
         <div class="topbar-group">
