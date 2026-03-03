@@ -25,6 +25,7 @@ import {
   startGroupResize,
 } from "./interaction/group-resize.js";
 import { hideHoverPreview, showHoverPreview } from "./hover-preview.js";
+import { renderMiniMap } from "./minimap.js";
 
 let isSpacePressed = false;
 const DRAG_THRESHOLD = 4;
@@ -193,6 +194,7 @@ export function redraw() {
     marqueeData,
     connectionPreview,
   );
+  renderMiniMap();
 
   State.nodes.forEach((node) => {
     DOM.syncNodeDOM(node, {

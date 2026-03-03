@@ -30,6 +30,7 @@ import {
   setSyncHandler,
 } from "./collaboration.js";
 import { initHoverPreview } from "./hover-preview.js";
+import { initMiniMap } from "./minimap.js";
 
 const appContainer = document.querySelector(".app-container");
 const authRoot = document.querySelector("#auth-root");
@@ -115,6 +116,7 @@ function initializeRuntime() {
   });
 
   initInputHandler();
+  initMiniMap({ onNavigate: triggerRedraw });
   registerAIHooks({ rebuild });
   initAIUI();
   initHoverPreview();
