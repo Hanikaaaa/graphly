@@ -6,6 +6,8 @@ export let editingNodeId = null;
 export let zoomLevel = 1;
 export let offsetX = 0;
 export let offsetY = 0;
+export let currentLayoutMode = "radial";
+export let lastAIGraph = null;
 
 export const DEFAULT_BACKGROUND = Object.freeze({
   type: "grid",
@@ -30,6 +32,14 @@ export const DEFAULT_BACKGROUND = Object.freeze({
 
 function cloneDefaultBackground() {
   return structuredClone(DEFAULT_BACKGROUND);
+}
+
+export function setLayoutMode(mode) {
+  currentLayoutMode = mode;
+}
+
+export function setLastAIGraph(graph) {
+  lastAIGraph = graph;
 }
 
 export let background = cloneDefaultBackground();
@@ -296,6 +306,7 @@ export function resetCanvasState() {
   background = cloneDefaultBackground();
   undoStack = [];
   redoStack = [];
+  lastAIGraph = null;
 }
 
 export function exportCollabState() {

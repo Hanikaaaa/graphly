@@ -43,7 +43,7 @@ export function transformAIToGraphlyState(graph) {
   const transformedConnections = [];
 
   const levels = computeLevels(graph.nodes, graph.connections);
-  const layoutMode = "radial"; // "tree" or "radial"
+  const layoutMode = State.currentLayoutMode; // "tree" or "radial"
 
   const levelGroups = {};
 
