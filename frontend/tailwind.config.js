@@ -1,4 +1,15 @@
 module.exports = {
+  content: [
+    "./index.html",
+    "./pages/**/*.html",
+    "./*.js",
+    "./js/**/*.js",
+    "./interaction/**/*.js",
+    "./geometry/**/*.js",
+    "../backend/**/*.tmpl",
+    "../backend/**/*.gohtml",
+    "../backend/**/*.html"
+  ],
   theme: {
     extend: {
       fontFamily: {
@@ -26,4 +37,5 @@ module.exports = {
       },
     },
   },
+  plugins: [],
 };

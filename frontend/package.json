@@ -1,0 +1,12 @@
+{
+  "name": "graphly-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "tailwind:watch": "tailwindcss -i ./css/tailwind.input.css -o ./css/tailwind.css --watch",
+    "tailwind:build": "tailwindcss -i ./css/tailwind.input.css -o ./css/tailwind.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

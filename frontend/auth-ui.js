@@ -36,7 +36,7 @@ export function renderAuthScreen(root, { onAuthenticated }) {
         <div aria-hidden="true" class="pointer-events-none absolute left-8 top-16 h-44 w-44 rounded-full bg-emerald-400/20 blur-3xl"></div>
         <div aria-hidden="true" class="pointer-events-none absolute bottom-12 right-8 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl"></div>
         <section class="group grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-3xl border border-white/10 bg-[#020617]/60 shadow-2xl backdrop-blur-xl md:grid-cols-2">
-          <div class="relative hidden md:block">
+          <div class="relative block min-h-[320px] md:min-h-full">
             <img
               src="/assets/graphly02.png"
               alt="Graphly collaboration workspace"

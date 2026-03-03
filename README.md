@@ -1,129 +1,103 @@
 # Graphly
 
-Graphly is a visual canvas / mind-mapping app with:
-- Go backend (`Gin`)
-- PostgreSQL persistence
-- JWT auth
-- Frontend served by backend (landing + app)
+Graphly is a collaborative visual canvas and mind-mapping platform built with a Go backend and a modular HTML/JavaScript frontend.
 
-## What Is Current
+## Description
 
-Current codebase behavior:
-- `GET /` serves landing page (`frontend/pages/landing.html`)
-- `GET /login`, `GET /signup`, `GET /app` serve app shell (`frontend/index.html`)
-- Auth APIs are active (`/auth/register`, `/auth/login`, `/auth/me`)
-- Canvas APIs are active (`/canvases`)
-- Canvas access model supports `private`, `shared`, `public`
-- Database model includes `canvas_shares`
+Graphly helps teams and individuals:
+- map ideas visually on an infinite canvas
+- collaborate in near real-time
+- organize nodes and connectors with flexible styling
+- save and manage canvases with access control
+- generate graph structures from prompts using AI
 
-## Project Layout
+## Core Features
+
+- Canvas editing
+- Draggable nodes, connectors, grouping, resizing, panning, and zooming
+- Grid/dot/none background options
+- Node styling controls (color, typography, shape, border, opacity)
+- Export options
+- PNG and PDF export for selected regions
+- Authentication
+- User registration, login, JWT-based session flow
+- Canvas management
+- Create, list, get, update, delete canvases
+- Access model: `private`, `shared`, `public`
+- Collaboration foundation
+- WebSocket room support and room client visibility
+- AI-assisted graph generation
+- Prompt-based graph generation endpoint and frontend integration
+- Landing page + app shell routing
+- `/` serves landing page
+- `/login`, `/signup`, `/app` serve app shell
+- Production-ready Tailwind CSS setup
+- Tailwind CLI build pipeline with purge/content scanning and minified output
+
+## Tech Stack
+
+- Backend: Go 1.24, Gin, pgx, Gorilla WebSocket, JWT
+- Database: PostgreSQL
+- Frontend: HTML, CSS, JavaScript (ES modules)
+- Styling: Tailwind CSS 
+
+## Repository Structure
 
 ```text
 graphly/
 ├── backend/
 │   ├── cmd/server/main.go
 │   ├── db/schema.sql
+│   ├── go.mod
 │   └── internal/
 │       ├── api/
 │       ├── auth/
 │       ├── db/
 │       ├── models/
 │       └── websocket/
-└── frontend/
-    ├── index.html
-    ├── pages/landing.html
-    ├── js/landing.js
-    ├── main.js
-    └── ...
+├── frontend/
+│   ├── assets/
+│   ├── css/
+│   │   ├── tailwind.input.css
+│   │   └── tailwind.css
+│   ├── geometry/
+│   ├── interaction/
+│   ├── js/
+│   ├── pages/
+│   │   └── landing.html
+│   ├── index.html
+│   ├── main.js
+│   ├── package.json
+│   └── tailwind.config.js
+├── architecture.md
+└── README.md
 ```
 
 ## Prerequisites
 
-- Go `1.24+`
-- PostgreSQL `14+`
-- Optional: Python 3 (only if you want standalone frontend serving)
+- Go 1.24+
+- Node.js 18+ and npm
+- PostgreSQL 14+
 
-Check:
+Quick checks:
 
 ```powershell
 go version
+node -v
+npm -v
 psql --version
-python --version
 ```
 
-## Recommended Run Flow (Current Project)
+## Environment Variables
 
-Run backend and use backend-served frontend routes.
+Set these in the same shell where backend runs:
 
-### 1) Create database and schema (one-time)
+- `DATABASE_URL` (required)
+- `JWT_SECRET` (required)
+- `GOOGLE_API_KEY` (required for AI endpoint)
+- `PORT` (optional, defaults to `8080`)
 
-Open psql:
-
-```powershell
-psql -h 127.0.0.1 -U postgres -d postgres
-```
-
-Create DB if needed:
-
-```sql
-CREATE DATABASE graphly;
-```
-
-Connect:
-
-```sql
-\c graphly
-```
-
-Create/update schema:
-
-```sql
-CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY,
-  email TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS canvases (
-  id UUID PRIMARY KEY,
-  owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  title TEXT NOT NULL DEFAULT 'Untitled Canvas',
-  data JSONB NOT NULL DEFAULT '{}'::jsonb,
-  access_type TEXT NOT NULL DEFAULT 'private',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS canvas_shares (
-  canvas_id UUID NOT NULL REFERENCES canvases(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  PRIMARY KEY (canvas_id, user_id)
-);
-```
-
-Verify:
-
-```sql
-\dt
-```
-
-Exit:
-
-```sql
-\q
-```
-
-### 2) Start backend
-
-From `graphly/backend`:
-
-```powershell
-cd C:\Users\amoll\OneDrive\Desktop\Graphly_WE\graphly\backend
-```
-
-Set env vars in the same terminal:
+Example PowerShell setup:
 
 ```powershell
 $pw = Read-Host "Enter Postgres password" -AsSecureString
@@ -132,113 +106,122 @@ $enc = [uri]::EscapeDataString($plain)
 
 $env:DATABASE_URL = "postgres://postgres:$enc@127.0.0.1:5432/graphly?sslmode=disable"
 $env:JWT_SECRET = "change-this-to-a-long-random-secret"
+$env:GOOGLE_API_KEY = "your-google-api-key"
 $env:PORT = "8080"
-$env:GOOGLE_API_KEY="Add API key"
 ```
 
-Run:
+## Setup and Run (Windows PowerShell)
+
+### 1) Database setup (one time)
 
 ```powershell
+psql -h 127.0.0.1 -U postgres -d postgres
+```
+
+Inside `psql`:
+
+```sql
+CREATE DATABASE graphly;
+\c graphly
+\i backend/db/schema.sql
+\q
+```
+
+If `\i` path fails, use full absolute path to `schema.sql`.
+
+### 2) Install frontend dependencies
+
+```powershell
+cd \graphly\frontend
+npm install
+```
+
+### 3) Build Tailwind CSS (production)
+
+```powershell
+npm run tailwind:build
+```
+
+For development watch mode (in a separate terminal):
+
+```powershell
+npm run tailwind:watch
+```
+
+### 4) Run backend server
+
+```powershell
+cd \graphly\backend
 go mod tidy
 go run cmd/server/main.go
 ```
 
-### 3) Open app
+### 5) Open the app
 
 - Landing page: `http://localhost:8080/`
-- App route: `http://localhost:8080/app`
+- App shell: `http://localhost:8080/app`
 - Health check: `http://localhost:8080/health`
 
-## Optional: Frontend Standalone Mode
+## Tailwind Commands
 
-Use this only if you explicitly want a separate static server for frontend files.
+Run from `frontend/`:
 
 ```powershell
-cd C:\Users\amoll\OneDrive\Desktop\Graphly_WE\graphly\frontend
-python -m http.server 5500
+npm run tailwind:watch
+npm run tailwind:build
 ```
 
-Open:
-- `http://localhost:5500/index.html`
+`tailwind.config.js` is configured to scan:
+- frontend HTML files
+- frontend JS files
+- backend template-like files (`.tmpl`, `.gohtml`, `.html`)
 
-Notes:
-- Backend must still run on `http://localhost:8080`.
-- Standalone mode does not provide backend-managed routes like `/`, `/login`, `/signup`, `/app`.
+This keeps production CSS small by removing unused classes.
 
-## Environment Variables
+## API Overview
 
-Required:
-- `DATABASE_URL`
-- `JWT_SECRET`
+### Public
 
-Optional:
-- `PORT` (default `8080`)
-
-## API Endpoints
-
-Public:
 - `GET /health`
-- `POST /auth/register`
-- `POST /auth/login`
 - `GET /rooms`
 - `GET /rooms/:id/clients`
+- `POST /auth/register`
+- `POST /auth/login`
 - `GET /ws/:roomId`
 
-Protected (`Authorization: Bearer <token>`):
+### Protected (Bearer token)
+
 - `GET /auth/me`
 - `POST /canvases`
 - `GET /canvases`
 - `GET /canvases/:id`
 - `PUT /canvases/:id`
+- `DELETE /canvases/:id`
+- `POST /ai/generate`
+
+## Team Members
+
+- Amolly Choudhary
+- Ananya Kuchhal
+- Hanika Reddy
 
 ## Troubleshooting
 
-### Password auth failed for postgres
-
-Error example:
-- `password authentication failed for user "postgres"`
-
-Fix:
-1. Verify credentials:
-   ```powershell
-   psql -h 127.0.0.1 -U postgres -d postgres -c "select 1;"
-   ```
-2. Re-export `DATABASE_URL` with correct password in same backend terminal.
-3. Restart `go run cmd/server/main.go`.
-
-### Canvas create fails / Missing DB columns after old setup
-
-If you see `failed to create canvas` (or errors referencing `access_type` / `canvas_shares`), your local schema is likely behind the current backend model.
-
-Run:
-
-```sql
-ALTER TABLE canvases
-ADD COLUMN IF NOT EXISTS data JSONB NOT NULL DEFAULT '{}'::jsonb,
-ADD COLUMN IF NOT EXISTS access_type TEXT NOT NULL DEFAULT 'private',
-ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
-
-CREATE TABLE IF NOT EXISTS canvas_shares (
-  canvas_id UUID NOT NULL REFERENCES canvases(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  PRIMARY KEY (canvas_id, user_id)
-);
-```
-
-Verify table shape:
-
-```sql
-\d+ canvases
-```
-
 ### `DATABASE_URL is not set`
 
-- Set `DATABASE_URL` in the same shell session before running backend.
+Set `DATABASE_URL` in the same terminal before starting backend.
 
 ### `JWT_SECRET is not set`
 
-- Set `JWT_SECRET` before starting backend.
+Set `JWT_SECRET` in the same terminal before starting backend.
+
+### PostgreSQL password/auth errors
+
+```powershell
+psql -h 127.0.0.1 -U postgres -d postgres -c "select 1;"
+```
+
+Then re-export `DATABASE_URL` with correct credentials.
 
 ### Port already in use
 
@@ -247,8 +230,20 @@ Get-NetTCPConnection -LocalPort 8080 -State Listen | Select-Object OwningProcess
 Stop-Process -Id <PID> -Force
 ```
 
-## Notes
+### Tailwind output not updating
 
-- Data persistence is PostgreSQL-backed.
-- Autosave path is REST (`PUT /canvases/:id`).
-- WebSocket endpoints exist for collaboration messaging.
+From `frontend/`:
+
+```powershell
+npm run tailwind:watch
+```
+
+Confirm HTML links to `/css/tailwind.css` and no Tailwind CDN script remains.
+
+## Documentation
+
+- High-level architecture: [architecture.md](architecture.md)
+
+## License
+
+No license file is currently included in this repository.

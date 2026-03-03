@@ -103,9 +103,10 @@ function DashboardHeader({ userEmail, search, filter, sort, view }) {
         </div>
 
         <div class="flex items-center gap-2">
-          <div class="flex items-center gap-2 rounded-full border border-white/10 bg-[#0B1220]/70 px-2 py-1.5">
+          <div class="group relative flex items-center gap-2 rounded-full border border-white/10 bg-[#0B1220]/70 px-2 py-1.5">
             <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 text-xs font-bold text-white">${escapeHTML(avatar)}</div>
             <span class="hidden max-w-[180px] truncate text-xs text-slate-200 sm:block">${escapeHTML(userEmail || "")}</span>
+            <span class="pointer-events-none absolute -bottom-9 left-1/2 z-40 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-white/15 bg-[#020617] px-2 py-1 text-[11px] text-slate-100 shadow-xl group-hover:block group-active:block">${escapeHTML(userEmail || "")}</span>
           </div>
           <button id="dashboard-logout-btn" type="button" class="rounded-xl border border-white/10 bg-[#0B1220]/70 px-3 py-2 text-sm font-medium text-slate-200 transition hover:border-white/20 hover:text-white">Sign out</button>
         </div>
@@ -587,3 +588,8 @@ function showToast(message, type = "info") {
     toast.addEventListener("transitionend", () => toast.remove(), { once: true });
   }, 2600);
 }
+
+
+
+
+
