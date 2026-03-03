@@ -14,6 +14,7 @@ type Canvas struct {
 	UpdatedAt time.Time       `json:"updatedAt" db:"updated_at"`
 	AccessType string   	  `json:"accessType"`
 	SharedWith []string 	  `json:"sharedWith"`
+	CanEdit    bool            `json:"canEdit"`
 }
 
 type CanvasListItem struct {

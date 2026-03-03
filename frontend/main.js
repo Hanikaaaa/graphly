@@ -24,9 +24,9 @@ import {
 import { renderCanvasDashboard } from "./dashboard-ui.js";
 import {
   flushStateSync,
-  getClientID,
   initCollaboration,
   queueStateSync,
+  setCollaborationWriteEnabled,
   setSyncHandler,
 } from "./collaboration.js";
 import { initHoverPreview } from "./hover-preview.js";
@@ -36,6 +36,7 @@ const authRoot = document.querySelector("#auth-root");
 const authActionButton = document.querySelector("#auth-action-btn");
 const dashboardButton = document.querySelector("#dashboard-btn");
 const saveIndicator = document.querySelector("#save-indicator");
+const canvasElement = document.querySelector("#canvas");
 
 if (!appContainer || !authRoot) {
   document.body.innerHTML = `
@@ -64,6 +65,10 @@ const dashboardState = {
 
 export function isCanvasActive() {
   return Boolean(activeCanvas);
+}
+
+export function isCanvasEditable() {
+  return Boolean(activeCanvas?.canEdit);
 }
 
 function setSaveStatus(text, isError = false) {
@@ -119,10 +124,18 @@ function showApp() {
   appContainer.classList.remove("app-hidden");
   authRoot.classList.add("hidden");
   authRoot.innerHTML = "";
+  appContainer.classList.toggle("canvas-readonly", !isCanvasEditable());
+  if (canvasElement) {
+    if (!isCanvasEditable()) {
+      canvasElement.style.cursor = "not-allowed";
+    } else {
+      canvasElement.style.cursor = "default";
+    }
+  }
 
   Render.resizeCanvas();
   triggerRedraw();
-  setSaveStatus("Saved");
+  setSaveStatus(isCanvasEditable() ? "Saved" : "Read-only");
 }
 
 function showOverlay() {
@@ -131,7 +144,7 @@ function showOverlay() {
 }
 
 async function persistCanvasSnapshot() {
-  if (!activeCanvas) return;
+  if (!activeCanvas || !isCanvasEditable()) return;
 
   const snapshot = State.exportCollabState();
   setSaveStatus("Saving...");
@@ -140,7 +153,7 @@ async function persistCanvasSnapshot() {
 }
 
 function enqueueAutosave() {
-  if (!activeCanvas) return;
+  if (!activeCanvas || !isCanvasEditable()) return;
 
   autosaveQueue = autosaveQueue
     .catch(() => undefined)
@@ -188,16 +201,15 @@ async function openCanvas(canvasID) {
     id: canvas.id,
     title: canvas.title,
     updatedAt: canvas.updatedAt,
+    accessType: canvas.accessType || "private",
+    canEdit: Boolean(canvas.canEdit ?? true),
   };
+  setCollaborationWriteEnabled(activeCanvas.canEdit);
 
   initCollaboration({ room: canvas.id });
 
   setSyncHandler((_type, content, fromServer, sourceClientID) => {
     if (fromServer) {
-      if (sourceClientID && sourceClientID === getClientID()) {
-        return;
-      }
-
       if (State.importCollabState(content)) {
         rebuild();
       }
@@ -207,7 +219,9 @@ async function openCanvas(canvasID) {
     enqueueAutosave();
   });
 
-  createInitialNodeIfEmpty();
+  if (isCanvasEditable()) {
+    createInitialNodeIfEmpty();
+  }
   showApp();
   setCanvasTitle(canvas.title);
   Render.resizeCanvas();
@@ -326,6 +340,7 @@ async function showDashboard() {
     setSyncHandler(null);
     activeCanvas = null;
   }
+  setCollaborationWriteEnabled(false);
 
   resetAIChat();
   State.resetCanvasState();
@@ -356,6 +371,7 @@ function showAuth() {
 
   renderAuthScreen(authRoot, {
     onAuthenticated: async () => {
+      window.history.replaceState({}, "", "/app");
       await showDashboard();
     },
   });
@@ -371,6 +387,7 @@ async function handleLogout() {
   }
 
   setSyncHandler(null);
+  setCollaborationWriteEnabled(false);
   activeCanvas = null;
   resetAIChat();
   State.resetCanvasState();

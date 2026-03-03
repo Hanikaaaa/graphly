@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"strings"
 	"time"
 
@@ -174,6 +173,12 @@ func (r *CanvasRepository) GetCanvasByID(ctx context.Context, canvasID string, u
 		canvas.SharedWith = sharedUsers
 	}
 
+	canEdit, err := r.canUserEditCanvas(ctx, canvasID, userID)
+	if err != nil {
+		return nil, err
+	}
+	canvas.CanEdit = canEdit
+
 	return canvas, nil
 }
 
@@ -253,16 +258,22 @@ func (r *CanvasRepository) canvasExists(ctx context.Context, canvasID string) (b
 	return true, nil
 }
 func (r *CanvasRepository) isCanvasSharedWith(ctx context.Context, canvasID, userID string) (bool, error) {
+	parsedUserID, err := uuid.Parse(strings.TrimSpace(userID))
+	if err != nil {
+		// Invalid user id cannot have explicit share access.
+		return false, nil
+	}
+
 	queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
 	defer cancel()
 
 	var exists bool
-	err := r.pool.QueryRow(queryCtx, `
+	err = r.pool.QueryRow(queryCtx, `
         SELECT EXISTS (
             SELECT 1 FROM canvas_shares
-            WHERE canvas_id = $1 AND user_id = $2::uuid
+            WHERE canvas_id = $1 AND user_id = $2
         )
-    `, canvasID, userID).Scan(&exists)
+    `, canvasID, parsedUserID).Scan(&exists)
 	if err != nil {
 		return false, err
 	}
@@ -297,11 +308,17 @@ func (r *CanvasRepository) getSharedUsers(ctx context.Context, canvasID string) 
 	return users, nil
 }
 func (r *CanvasRepository) canUserEditCanvas(ctx context.Context, canvasID, userID string) (bool, error) {
+	parsedUserID, err := uuid.Parse(strings.TrimSpace(userID))
+	if err != nil {
+		// Treat invalid ids as read-only instead of failing canvas load.
+		return false, nil
+	}
+
 	queryCtx, cancel := context.WithTimeout(ctx, defaultDBTimeout)
 	defer cancel()
 
 	var canEdit bool
-	err := r.pool.QueryRow(queryCtx, `
+	err = r.pool.QueryRow(queryCtx, `
         SELECT EXISTS (
             SELECT 1
             FROM canvases c
@@ -309,13 +326,12 @@ func (r *CanvasRepository) canUserEditCanvas(ctx context.Context, canvasID, user
         ) OR EXISTS (
             SELECT 1
             FROM canvas_shares cs
-            WHERE cs.canvas_id = $1 AND cs.user_id = $2::uuid
+            WHERE cs.canvas_id = $1 AND cs.user_id = $2
         )
-    `, canvasID, userID).Scan(&canEdit)
+    `, canvasID, parsedUserID).Scan(&canEdit)
 	if err != nil {
 		return false, err
 	}
-	log.Println("CHECK EDIT:", canvasID, userID, canEdit)
 	return canEdit, nil
 }
 func normalizeCanvasTitle(title string) string {

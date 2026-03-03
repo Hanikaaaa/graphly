@@ -15,7 +15,7 @@ import { handleDragPending, handleDragMove } from "./interaction/drag.js";
 import { handleMarqueeMove } from "./interaction/marquee.js";
 import { handleNodeResize } from "./interaction/resize.js";
 import { handleConnectMove, handleConnectEnd } from "./interaction/connect.js";
-import { isCanvasActive } from "./main.js";
+import { isCanvasActive, isCanvasEditable } from "./main.js";
 import {
   handleGroupDragMove,
   startGroupDrag,
@@ -74,6 +74,7 @@ export function triggerRedraw() {
 export function attachNodeHandlers(node) {
   DOM.createNodeDOM(node, {
     onSelect(id, event) {
+      if (!isCanvasEditable()) return;
       if (event?.shiftKey) {
         State.toggleNodeSelection(id);
       } else {
@@ -83,11 +84,13 @@ export function attachNodeHandlers(node) {
     },
 
     onEdit(id) {
+      if (!isCanvasEditable()) return;
       State.setEditingNodeId(id);
       redraw();
     },
 
     onSave(id, value) {
+      if (!isCanvasEditable()) return;
       const n = State.getNodeById(id);
       if (!n) return;
 
@@ -99,6 +102,7 @@ export function attachNodeHandlers(node) {
     },
 
     onDragStart(e, id) {
+      if (!isCanvasEditable()) return;
       if (State.editingNodeId) return;
 
       // If multiple nodes selected → let group logic handle it
@@ -113,6 +117,7 @@ export function attachNodeHandlers(node) {
     },
 
     onConnectStart(e, id) {
+      if (!isCanvasEditable()) return;
       e.stopPropagation();
       e.preventDefault();
       interaction.mode = "connect";
@@ -122,6 +127,7 @@ export function attachNodeHandlers(node) {
     },
 
     onResizeStart(e, id, direction) {
+      if (!isCanvasEditable()) return;
       e.stopPropagation();
 
       const node = State.getNodeById(id);
@@ -245,7 +251,7 @@ const UP_HANDLERS = {
 };
 
 function handleWindowDoubleClick(e) {
-  if (!isCanvasActive()) return;
+  if (!isCanvasActive() || !isCanvasEditable()) return;
   if (e.target.closest(".node-input")) return;
 
   const rect = canvas.getBoundingClientRect();
@@ -318,6 +324,14 @@ function registerCanvasEvents() {
 }
 
 function handleCanvasMouseDown(e) {
+  if (!isCanvasEditable()) {
+    if (e.button === 1 || isSpacePressed) {
+      startPan(interaction, e, State);
+      return;
+    }
+    return;
+  }
+
   if (interaction.mode === "connect") return;
   const worldX = (e.clientX - State.offsetX) / State.zoomLevel;
   const worldY = (e.clientY - State.offsetY) / State.zoomLevel;
@@ -402,6 +416,14 @@ function registerGlobalEvents() {
   });
 
   window.addEventListener("keydown", (e) => {
+    if (!isCanvasEditable()) {
+      if (e.code === "Space") {
+        isSpacePressed = true;
+        canvas.style.cursor = "grab";
+      }
+      return;
+    }
+
     if (e.key === "Delete" && State.selectedNodeIds.size > 0) {
       State.snapshotState();
 
@@ -423,7 +445,7 @@ function registerGlobalEvents() {
   window.addEventListener("keyup", (e) => {
     if (e.code === "Space") {
       isSpacePressed = false;
-      canvas.style.cursor = "default";
+      canvas.style.cursor = isCanvasEditable() ? "default" : "not-allowed";
     }
   });
 
@@ -442,6 +464,7 @@ function registerToolbarEvents() {
   };
 
   buttons.undo.onclick = () => {
+    if (!isCanvasEditable()) return;
     if (State.undo()) {
       rebuild();
       queueStateSync("node_update");
@@ -449,6 +472,7 @@ function registerToolbarEvents() {
   };
 
   buttons.redo.onclick = () => {
+    if (!isCanvasEditable()) return;
     if (State.redo()) {
       rebuild();
       queueStateSync("node_update");

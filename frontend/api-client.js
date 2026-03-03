@@ -64,10 +64,6 @@ export async function apiRequest(path, options = {}) {
     ? await response.json()
     : null;
 
-  if (response.status === 401) {
-    clearAuthToken();
-  }
-
   if (!response.ok) {
     const message = payload?.error || payload?.message || `Request failed: ${response.status}`;
     throw new APIError(message, response.status, payload);
@@ -77,7 +73,7 @@ export async function apiRequest(path, options = {}) {
 }
 
 export async function generateGraphFromAI(prompt) {
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
 
   const response = await fetch("/ai/generate", {
     method: "POST",
