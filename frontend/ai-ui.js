@@ -11,6 +11,8 @@ export function initAIUI() {
   const input = document.getElementById("ai-input");
   const sendBtn = document.getElementById("ai-send-btn");
   const messages = document.getElementById("ai-messages");
+  const treeBtn = document.getElementById("layout-tree-btn");
+  const radialBtn = document.getElementById("layout-radial-btn");
 
   if (!fab || !chatbox) return;
 
@@ -48,6 +50,7 @@ export function initAIUI() {
 
       // Replace current canvas with AI graph
       State.snapshotState();
+      State.setLastAIGraph(graph);
 
       const transformed = transformAIToGraphlyState(graph);
 
@@ -76,5 +79,41 @@ export function initAIUI() {
       e.preventDefault();
       handleSend();
     }
+  });
+
+  treeBtn?.addEventListener("click", () => {
+    if (!State.lastAIGraph) return;
+
+    State.setLayoutMode("tree");
+
+    const transformed = transformAIToGraphlyState(State.lastAIGraph);
+
+    State.importCollabState({
+      nodes: transformed.nodes,
+      connections: transformed.connections,
+      zoomLevel: State.zoomLevel || 1,
+      offsetX: State.offsetX || 0,
+      offsetY: State.offsetY || 0,
+    });
+
+    rebuild();
+  });
+
+  radialBtn?.addEventListener("click", () => {
+    if (!State.lastAIGraph) return;
+
+    State.setLayoutMode("radial");
+
+    const transformed = transformAIToGraphlyState(State.lastAIGraph);
+
+    State.importCollabState({
+      nodes: transformed.nodes,
+      connections: transformed.connections,
+      zoomLevel: State.zoomLevel || 1,
+      offsetX: State.offsetX || 0,
+      offsetY: State.offsetY || 0,
+    });
+
+    rebuild();
   });
 }
