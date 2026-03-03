@@ -34,6 +34,9 @@ export function updateGroupOverlay({ bounds, zoomLevel, offsetX, offsetY }) {
     return;
   }
 
+  const overlay = createGroupOverlay();
+  overlay.style.display = "block";
+
   const { minX, minY, maxX, maxY } = bounds;
 
   overlay.style.left = minX * zoomLevel + offsetX + "px";

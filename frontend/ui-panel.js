@@ -2,7 +2,7 @@ import * as State from "./state.js";
 import { inputs, buttons, panel } from "./elements.js";
 import { triggerRedraw } from "./input-handler.js";
 import { rebuild } from "./main.js";
-import { queueStateSync } from "./collaboration.js";
+import { queueStateSync, sendDelta } from "./collaboration.js";
 import { ShapeRegistry } from "./shapes.js";
 
 panel.addEventListener("mousedown", (e) => e.stopPropagation());
@@ -19,7 +19,7 @@ function getSingleSelectedNode() {
   return nodes.length === 1 ? nodes[0] : null;
 }
 
-function mutateSelection(fn) {
+function mutateSelection(fn, deltaChanges = null) {
   const nodes = getSelectedNodes();
   if (!nodes.length) return;
 
@@ -27,6 +27,17 @@ function mutateSelection(fn) {
   nodes.forEach(fn);
 
   triggerRedraw();
+
+  if (deltaChanges) {
+    nodes.forEach((node) => {
+      const changes =
+        typeof deltaChanges === "function" ? deltaChanges(node) : deltaChanges;
+      if (!changes || typeof changes !== "object") return;
+      sendDelta("node_style", { nodeId: node.id, changes });
+    });
+    return;
+  }
+
   queueStateSync("node_update");
 }
 
@@ -102,38 +113,61 @@ export function updatePanel() {
 // Node Priority Controls
 
 inputs.bgColor.oninput = () =>
-  mutateSelection((n) => (n.color = inputs.bgColor.value));
+  mutateSelection((n) => (n.color = inputs.bgColor.value), {
+    color: inputs.bgColor.value,
+  });
 
 inputs.borderColor.oninput = () =>
-  mutateSelection((n) => (n.borderColor = inputs.borderColor.value));
+  mutateSelection((n) => (n.borderColor = inputs.borderColor.value), {
+    borderColor: inputs.borderColor.value,
+  });
 
 inputs.opacity.oninput = () =>
-  mutateSelection((n) => (n.opacity = Number(inputs.opacity.value)));
+  mutateSelection((n) => (n.opacity = Number(inputs.opacity.value)), {
+    opacity: Number(inputs.opacity.value),
+  });
 
 inputs.borderRadius.oninput = () =>
-  mutateSelection((n) => (n.borderRadius = Number(inputs.borderRadius.value)));
+  mutateSelection((n) => (n.borderRadius = Number(inputs.borderRadius.value)), {
+    borderRadius: Number(inputs.borderRadius.value),
+  });
 
 inputs.textColor.oninput = () =>
-  mutateSelection((n) => (n.fontColor = inputs.textColor.value));
+  mutateSelection((n) => (n.fontColor = inputs.textColor.value), {
+    fontColor: inputs.textColor.value,
+  });
 
 inputs.fontSize.oninput = () =>
-  mutateSelection((n) => (n.fontSize = Number(inputs.fontSize.value)));
+  mutateSelection((n) => (n.fontSize = Number(inputs.fontSize.value)), {
+    fontSize: Number(inputs.fontSize.value),
+  });
 
 inputs.textAlign.onchange = () =>
-  mutateSelection((n) => (n.textAlign = inputs.textAlign.value));
+  mutateSelection((n) => (n.textAlign = inputs.textAlign.value), {
+    textAlign: inputs.textAlign.value,
+  });
 
 inputs.fontWeight.onchange = () =>
-  mutateSelection((n) => (n.fontWeight = inputs.fontWeight.value));
+  mutateSelection((n) => (n.fontWeight = inputs.fontWeight.value), {
+    fontWeight: inputs.fontWeight.value,
+  });
 
 inputs.fontFamily.onchange = () =>
-  mutateSelection((n) => (n.fontFamily = inputs.fontFamily.value));
+  mutateSelection((n) => (n.fontFamily = inputs.fontFamily.value), {
+    fontFamily: inputs.fontFamily.value,
+  });
 
 inputs.nodeShape.onchange = () =>
   mutateSelection((n) => {
     n.shape = inputs.nodeShape.value;
     const shape = ShapeRegistry[n.shape];
     shape?.enforceConstraints?.(n);
-  });
+  }, (n) => ({
+    shape: n.shape,
+    width: n.width,
+    height: n.height,
+    borderRadius: n.borderRadius,
+  }));
 
 inputs.connectorColor.oninput = () => {
   const connId = State.getPrimarySelectedConnectionId();
@@ -143,11 +177,16 @@ inputs.connectorColor.oninput = () => {
     const conn = State.connections.find((c) => c.id === connId);
     if (conn) conn.color = inputs.connectorColor.value;
     triggerRedraw();
-    queueStateSync("node_update");
+    sendDelta("connection_style", {
+      connectionId: connId,
+      changes: { color: inputs.connectorColor.value },
+    });
     return;
   }
 
-  mutateSelection((n) => (n.connectorColor = inputs.connectorColor.value));
+  mutateSelection((n) => (n.connectorColor = inputs.connectorColor.value), {
+    connectorColor: inputs.connectorColor.value,
+  });
 };
 
 inputs.connectorLabel.oninput = () => {
@@ -159,7 +198,10 @@ inputs.connectorLabel.oninput = () => {
   if (conn) conn.label = inputs.connectorLabel.value;
 
   triggerRedraw();
-  queueStateSync("node_update");
+  sendDelta("connection_style", {
+    connectionId: connId,
+    changes: { label: inputs.connectorLabel.value },
+  });
 };
 
 inputs.connectorWidth.oninput = () => {
@@ -170,12 +212,16 @@ inputs.connectorWidth.oninput = () => {
     const conn = State.connections.find((c) => c.id === connId);
     if (conn) conn.width = Number(inputs.connectorWidth.value);
     triggerRedraw();
-    queueStateSync("node_update");
+    sendDelta("connection_style", {
+      connectionId: connId,
+      changes: { width: Number(inputs.connectorWidth.value) },
+    });
     return;
   }
 
   mutateSelection(
     (n) => (n.connectorWidth = Number(inputs.connectorWidth.value)),
+    { connectorWidth: Number(inputs.connectorWidth.value) },
   );
 };
 
@@ -188,7 +234,10 @@ inputs.connectorLabelSize.oninput = () => {
   if (conn) conn.labelFontSize = Number(inputs.connectorLabelSize.value);
 
   triggerRedraw();
-  queueStateSync("node_update");
+  sendDelta("connection_style", {
+    connectionId: connId,
+    changes: { labelFontSize: Number(inputs.connectorLabelSize.value) },
+  });
 };
 
 inputs.connectorStyle.onchange = () => {
@@ -200,7 +249,10 @@ inputs.connectorStyle.onchange = () => {
   if (conn) conn.style = inputs.connectorStyle.value;
 
   triggerRedraw();
-  queueStateSync("node_update");
+  sendDelta("connection_style", {
+    connectionId: connId,
+    changes: { style: inputs.connectorStyle.value },
+  });
 };
 
 inputs.nodeImageInput.onchange = () => {
@@ -327,4 +379,3 @@ buttons.deleteSubtree.onclick = () => {
   rebuild();
   queueStateSync("node_delete");
 };
-

@@ -4,7 +4,7 @@ import * as DOM from "./dom-manager.js";
 import { canvas, buttons } from "./elements.js";
 import { updatePanel } from "./ui-panel.js";
 import { rebuild } from "./main.js";
-import { queueStateSync } from "./collaboration.js";
+import { queueStateSync, sendDelta } from "./collaboration.js";
 import { ShapeRegistry } from "./shapes.js";
 import { updateGroupOverlay } from "./dom-manager.js";
 import { getGroupOverlay } from "./dom-manager.js";
@@ -242,11 +242,66 @@ const UP_HANDLERS = {
   connect: () =>
     handleConnectEnd(interaction, State, attachNodeHandlers, queueStateSync),
 
-  groupDrag: () => queueStateSync("node_update"),
+  drag: () => {
+    if (!interaction.dragStartPositions.size) return;
+    const movedNodes = [];
+    interaction.dragStartPositions.forEach((_startPos, id) => {
+      const node = State.getNodeById(id);
+      if (!node) return;
+      movedNodes.push({ nodeId: id, x: node.x, y: node.y });
+    });
+
+    if (!movedNodes.length) return;
+    if (movedNodes.length === 1) {
+      const only = movedNodes[0];
+      sendDelta("node_move", only);
+      return;
+    }
+
+    sendDelta("nodes_move", { nodes: movedNodes });
+  },
+
+  groupDrag: () => {
+    const movedNodes = [];
+    interaction.dragStartPositions.forEach((_startPos, id) => {
+      const node = State.getNodeById(id);
+      if (!node) return;
+      movedNodes.push({ nodeId: id, x: node.x, y: node.y });
+    });
+    if (movedNodes.length) {
+      sendDelta("nodes_move", { nodes: movedNodes });
+    }
+  },
 
   groupResize: (e) => {
     applyGroupResize(interaction, e, State);
-    queueStateSync("node_update");
+    const resizedNodes = [];
+    interaction.groupInitialNodes.forEach((_initial, id) => {
+      const node = State.getNodeById(id);
+      if (!node) return;
+      resizedNodes.push({
+        nodeId: id,
+        x: node.x,
+        y: node.y,
+        width: node.width,
+        height: node.height,
+      });
+    });
+    if (resizedNodes.length) {
+      sendDelta("nodes_resize", { nodes: resizedNodes });
+    }
+  },
+
+  resize: () => {
+    const node = State.getNodeById(interaction.nodeId);
+    if (!node) return;
+    sendDelta("node_resize", {
+      nodeId: node.id,
+      x: node.x,
+      y: node.y,
+      width: node.width,
+      height: node.height,
+    });
   },
 };
 

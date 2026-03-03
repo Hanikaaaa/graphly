@@ -87,9 +87,16 @@ function scheduleReconnect() {
 export function broadcastState(type = "node_update", content = {}) {
   if (!writeEnabled) return;
 
-  const hasContent =
-    content && typeof content === "object" && Object.keys(content).length > 0;
+  const hasContent = content && typeof content === "object" && Object.keys(content).length > 0;
+
   const snapshot = hasContent ? content : State.exportCollabState();
+  
+  const isDeltaPayload = type === "node_update" && snapshot && typeof snapshot === "object" && typeof snapshot.op === "string";
+  if (isDeltaPayload) {
+    console.log("[Collab] Sending delta:", snapshot.op, snapshot);
+  } else {
+    console.log("[Collab] Sending full-state sync:", type);
+  }
 
   if (onSync) onSync(type, snapshot, false, clientID);
 
@@ -114,6 +121,15 @@ export function queueStateSync(type = "node_update", content = {}, delayMs = 700
     pendingTimer = null;
     broadcastState(pendingType, pendingContent);
   }, delayMs);
+}
+
+// Delta transport over existing node_update message type.
+export function sendDelta(op, payload = {}) {
+  broadcastState("node_update", { op, ...payload });
+}
+
+export function sendFullSnapshot() {
+  broadcastState("node_update", State.exportCollabState());
 }
 
 /**

@@ -149,7 +149,7 @@ async function persistCanvasSnapshot() {
   const snapshot = State.exportCollabState();
   setSaveStatus("Saving...");
   const result = await saveCanvasData(activeCanvas.id, snapshot);
-  setSaveStatus(result?.status === "saved" ? "Saved" : "Saved");
+  setSaveStatus("Saved");
 }
 
 function enqueueAutosave() {
@@ -185,6 +185,77 @@ function normalizeCanvasState(data) {
   return normalized;
 }
 
+function applyIncomingDelta(content) {
+  const op = content?.op;
+  if (!op || typeof op !== "string") {
+    return false;
+  }
+
+  if (op === "node_move") {
+    const node = State.getNodeById(content.nodeId);
+    if (!node) return false;
+    if (typeof content.x === "number") node.x = content.x;
+    if (typeof content.y === "number") node.y = content.y;
+    return true;
+  }
+
+  if (op === "nodes_move" && Array.isArray(content.nodes)) {
+    let changed = false;
+    content.nodes.forEach((entry) => {
+      const node = State.getNodeById(entry?.nodeId);
+      if (!node) return;
+      if (typeof entry.x === "number") node.x = entry.x;
+      if (typeof entry.y === "number") node.y = entry.y;
+      changed = true;
+    });
+    return changed;
+  }
+
+  if (op === "node_resize") {
+    const node = State.getNodeById(content.nodeId);
+    if (!node) return false;
+    if (typeof content.x === "number") node.x = content.x;
+    if (typeof content.y === "number") node.y = content.y;
+    if (typeof content.width === "number") node.width = content.width;
+    if (typeof content.height === "number") node.height = content.height;
+    return true;
+  }
+
+  if (op === "nodes_resize" && Array.isArray(content.nodes)) {
+    let changed = false;
+    content.nodes.forEach((entry) => {
+      const node = State.getNodeById(entry?.nodeId);
+      if (!node) return;
+      if (typeof entry.x === "number") node.x = entry.x;
+      if (typeof entry.y === "number") node.y = entry.y;
+      if (typeof entry.width === "number") node.width = entry.width;
+      if (typeof entry.height === "number") node.height = entry.height;
+      changed = true;
+    });
+    return changed;
+  }
+
+  if (op === "node_style") {
+    const node = State.getNodeById(content.nodeId);
+    if (!node || !content.changes || typeof content.changes !== "object") {
+      return false;
+    }
+    Object.assign(node, content.changes);
+    return true;
+  }
+
+  if (op === "connection_style") {
+    const conn = State.connections.find((c) => c.id === content.connectionId);
+    if (!conn || !content.changes || typeof content.changes !== "object") {
+      return false;
+    }
+    Object.assign(conn, content.changes);
+    return true;
+  }
+
+  return false;
+}
+
 async function openCanvas(canvasID) {
   renderLoading(authRoot, "Opening canvas...");
   showOverlay();
@@ -208,8 +279,12 @@ async function openCanvas(canvasID) {
 
   initCollaboration({ room: canvas.id });
 
-  setSyncHandler((_type, content, fromServer, sourceClientID) => {
+  setSyncHandler((type, content, fromServer) => {
     if (fromServer) {
+      if (type === "node_update" && applyIncomingDelta(content)) {
+        rebuild();
+        return;
+      }
       if (State.importCollabState(content)) {
         rebuild();
       }
