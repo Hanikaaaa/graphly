@@ -4,6 +4,11 @@ import { apiRequest } from "./api-client.js";
 import { queueStateSync } from "./collaboration.js";
 import { transformAIToGraphlyState } from "./ai-transformer.js";
 import { getGraphBounds } from "./geometry/bounds.js";
+import {
+  applyNodePositions,
+  computeRadialLayoutPositions,
+  computeTreeLayoutPositions,
+} from "./layout-engine.js";
 
 const aiState = {
   initialized: false,
@@ -164,6 +169,21 @@ function closeChatbox() {
   }, 180);
 }
 
+function applyLayoutFromCurrentGraph(mode) {
+  if (!isCanvasEditable()) return;
+  if (!State.nodes.length) return;
+
+  const positions =
+    mode === "tree"
+      ? computeTreeLayoutPositions(State.nodes, State.connections)
+      : computeRadialLayoutPositions(State.nodes, State.connections);
+
+  State.snapshotState();
+  applyNodePositions(State.nodes, positions);
+  aiHooks.rebuild();
+  queueStateSync("node_update");
+}
+
 function openChatbox() {
   const { chatbox, input } = aiState.elements || {};
   if (!chatbox) return;
@@ -297,14 +317,20 @@ export function initAIUI() {
   });
 
   treeBtn?.addEventListener("click", () => {
-    if (!State.lastAIGraph) return;
     State.setLayoutMode("tree");
+    if (State.nodes.length) {
+      applyLayoutFromCurrentGraph("tree");
+      return;
+    }
     reapplyLastAIGraphLayout();
   });
 
   radialBtn?.addEventListener("click", () => {
-    if (!State.lastAIGraph) return;
     State.setLayoutMode("radial");
+    if (State.nodes.length) {
+      applyLayoutFromCurrentGraph("radial");
+      return;
+    }
     reapplyLastAIGraphLayout();
   });
 }

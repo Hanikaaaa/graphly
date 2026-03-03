@@ -130,8 +130,8 @@
 .panel-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-bottom: 16px;
+  gap: 10px;
+  padding-bottom: 18px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.14);
 }
 
@@ -145,6 +145,36 @@
   color: #93c5fd;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.layout-toggle-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.layout-btn {
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.layout-btn:hover {
+  border-color: rgba(52, 211, 153, 0.5);
+  background: rgba(52, 211, 153, 0.16);
+  color: #ecfeff;
+  transform: translateY(-1px);
+}
+
+.layout-btn:active {
+  transform: translateY(0);
 }
 
 /* ===============================
@@ -326,7 +356,7 @@
 ================================ */
 
 .panel-section.danger {
-  gap: 10px;
+  gap: 9px;
 }
 
 .danger-btn {
