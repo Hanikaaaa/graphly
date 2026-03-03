@@ -170,7 +170,7 @@
 
 .input-select {
   min-width: 120px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(189, 174, 174, 0.06);
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 8px;
   padding: 5px 8px;
@@ -191,6 +191,44 @@
   color: #396ab5;
   border-color: #34d399;
   box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.25);
+}
+
+.input-text {
+  /* size only as needed */
+  width: fit-content;
+  min-width: 0;
+  max-width: 100%;
+  display: inline-block;
+
+  /* tight padding */
+  padding: 2px 4px;
+
+  /* transparent background */
+  background: transparent;
+
+  /* clean border */
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 4px;
+
+  /* text */
+  color: #e5e7eb;
+  font-size: 12px;
+
+  /* important for shrink-to-text */
+  box-sizing: content-box;
+}
+
+/* Placeholder */
+.input-text::placeholder {
+  color: rgba(226, 232, 240, 0.4);
+}
+
+/* Focus state */
+.input-text:focus {
+  outline: none;
+  border-color: #34d399;
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.25);
+  background: transparent; /* ensure stays transparent */
 }
 
 /* ===============================

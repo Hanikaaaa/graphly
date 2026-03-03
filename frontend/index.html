@@ -224,6 +224,16 @@
             <h4 class="section-title">Connector</h4>
 
             <div class="form-row">
+              <span class="label">Label</span>
+              <input
+                type="text"
+                id="connector-label"
+                class="input-text"
+                placeholder="Enter connector label"
+              />
+            </div>
+
+            <div class="form-row">
               <span class="label">Color</span>
               <input type="color" id="connector-color" class="input-color" />
             </div>
@@ -235,6 +245,17 @@
                 id="connector-width"
                 min="1"
                 max="6"
+                class="input-range"
+              />
+            </div>
+
+            <div class="form-row slider-row">
+              <span class="label">Label size</span>
+              <input
+                type="range"
+                id="connector-label-size"
+                min="10"
+                max="32"
                 class="input-range"
               />
             </div>

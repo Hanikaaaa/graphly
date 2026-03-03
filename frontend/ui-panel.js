@@ -64,8 +64,10 @@ export function updatePanel() {
 
     buttons.removeImage.classList.add("hidden");
 
+    inputs.connectorLabel.value = conn.label || "";
     inputs.connectorColor.value = conn.color;
     inputs.connectorWidth.value = conn.width;
+    inputs.connectorLabelSize.value = conn.labelFontSize || 14;
     inputs.connectorStyle.value = conn.style;
 
     return;
@@ -86,8 +88,10 @@ export function updatePanel() {
     inputs.fontWeight.value = node.fontWeight;
     inputs.fontFamily.value = node.fontFamily;
 
+    inputs.connectorLabel.value = "";
     inputs.connectorColor.value = node.connectorColor;
     inputs.connectorWidth.value = node.connectorWidth;
+    inputs.connectorLabelSize.value = node.fontSize || 14;
 
     buttons.removeImage.classList.toggle("hidden", !node.image);
   } else {
@@ -146,6 +150,18 @@ inputs.connectorColor.oninput = () => {
   mutateSelection((n) => (n.connectorColor = inputs.connectorColor.value));
 };
 
+inputs.connectorLabel.oninput = () => {
+  const connId = State.getPrimarySelectedConnectionId();
+  if (!connId) return;
+
+  State.snapshotState();
+  const conn = State.connections.find((c) => c.id === connId);
+  if (conn) conn.label = inputs.connectorLabel.value;
+
+  triggerRedraw();
+  queueStateSync("node_update");
+};
+
 inputs.connectorWidth.oninput = () => {
   const connId = State.getPrimarySelectedConnectionId();
 
@@ -161,6 +177,18 @@ inputs.connectorWidth.oninput = () => {
   mutateSelection(
     (n) => (n.connectorWidth = Number(inputs.connectorWidth.value)),
   );
+};
+
+inputs.connectorLabelSize.oninput = () => {
+  const connId = State.getPrimarySelectedConnectionId();
+  if (!connId) return;
+
+  State.snapshotState();
+  const conn = State.connections.find((c) => c.id === connId);
+  if (conn) conn.labelFontSize = Number(inputs.connectorLabelSize.value);
+
+  triggerRedraw();
+  queueStateSync("node_update");
 };
 
 inputs.connectorStyle.onchange = () => {

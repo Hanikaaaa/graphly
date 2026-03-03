@@ -15,6 +15,12 @@ function createBaseShape(config) {
         .forEach((c) => el.classList.remove(c));
 
       el.classList.add(`shape-${node.shape}`);
+      if (el._text && el._input) {
+        el._text.style.clipPath = "";
+        el._input.style.clipPath = "";
+        el._text.style.padding = "12px";
+        el._input.style.padding = "12px";
+      }
 
       config.applyLayout?.(node, el);
     },
@@ -153,6 +159,13 @@ ShapeRegistry.triangle = createBaseShape({
     shapeLayer.style.clipPath = "polygon(50% 0%, 100% 100%, 0% 100%)";
 
     shapeLayer.style.borderRadius = "0px";
+    if (el._text && el._input) {
+      const innerTriangle = "polygon(50% 10%, 88% 92%, 12% 92%)";
+      el._text.style.clipPath = innerTriangle;
+      el._input.style.clipPath = innerTriangle;
+      el._text.style.padding = "22% 14% 14%";
+      el._input.style.padding = "22% 14% 14%";
+    }
   },
 
   enforceConstraints(node) {

@@ -60,6 +60,8 @@
 
   font: inherit;
   box-sizing: border-box;
+  overflow: hidden;
+  word-break: break-word;
 }
 
 .node-text-input {

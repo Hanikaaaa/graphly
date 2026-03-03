@@ -93,8 +93,209 @@ function getNodeCenter(node) {
   };
 }
 
+function getConnectionCurvePoints(fromX, fromY, toX, toY) {
+  return {
+    fromX,
+    fromY,
+    toX,
+    toY,
+    controlX: fromX,
+    controlY: (fromY + toY) / 2,
+  };
+}
+
+function getQuadraticPointAt(curve, t) {
+  const oneMinusT = 1 - t;
+  return {
+    x:
+      oneMinusT * oneMinusT * curve.fromX +
+      2 * oneMinusT * t * curve.controlX +
+      t * t * curve.toX,
+    y:
+      oneMinusT * oneMinusT * curve.fromY +
+      2 * oneMinusT * t * curve.controlY +
+      t * t * curve.toY,
+  };
+}
+
+export function getConnectionMidpoint(fromX, fromY, toX, toY) {
+  const curve = getConnectionCurvePoints(fromX, fromY, toX, toY);
+  return getQuadraticPointAt(curve, 0.5);
+}
+
+function isPointInsideNode(node, point, pad = 8) {
+  return (
+    point.x >= node.x - pad &&
+    point.x <= node.x + node.width + pad &&
+    point.y >= node.y - pad &&
+    point.y <= node.y + node.height + pad
+  );
+}
+
+function isScreenPointVisible(screenPoint, margin = 16) {
+  return (
+    screenPoint.x >= margin &&
+    screenPoint.x <= canvas.width - margin &&
+    screenPoint.y >= margin &&
+    screenPoint.y <= canvas.height - margin
+  );
+}
+
+function boxesOverlap(a, b) {
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y
+  );
+}
+
+function getNodeScreenBox(node, zoomLevel) {
+  return {
+    x: node.x * zoomLevel + State.offsetX,
+    y: node.y * zoomLevel + State.offsetY,
+    width: node.width * zoomLevel,
+    height: node.height * zoomLevel,
+  };
+}
+
+function estimateLabelScreenBox(anchorWorldPoint, zoomLevel, label, labelFontSize) {
+  const screenPoint = toScreenPoint(anchorWorldPoint.x, anchorWorldPoint.y, zoomLevel);
+  const fontSize = Math.max(10, Number(labelFontSize) || 14) * zoomLevel;
+  ctx.font = `${fontSize}px "Courier New", monospace`;
+  const textWidth = ctx.measureText(label).width;
+  const padX = 9;
+  const padY = 5;
+  const shiftedY = screenPoint.y - 12;
+
+  return {
+    x: screenPoint.x - (textWidth + padX * 2) / 2,
+    y: shiftedY - (fontSize * 0.95 + padY * 2) / 2,
+    width: textWidth + padX * 2,
+    height: fontSize * 0.95 + padY * 2,
+  };
+}
+
+function isLabelBoxClearOfNodes(labelBox, allNodes, zoomLevel, fromId, toId) {
+  return allNodes.every((node) => {
+    if (node.id === fromId || node.id === toId) return true;
+    return !boxesOverlap(labelBox, getNodeScreenBox(node, zoomLevel));
+  });
+}
+
+function getVisibleLabelAnchor(allNodes, from, to, zoomLevel, label, labelFontSize) {
+  const fromCenter = getNodeCenter(from);
+  const toCenter = getNodeCenter(to);
+  const curve = getConnectionCurvePoints(
+    fromCenter.x,
+    fromCenter.y,
+    toCenter.x,
+    toCenter.y,
+  );
+  const candidates = [0.5, 0.42, 0.58, 0.35, 0.65, 0.28, 0.72, 0.2, 0.8];
+
+  for (const t of candidates) {
+    const worldPoint = getQuadraticPointAt(curve, t);
+    if (isPointInsideNode(from, worldPoint) || isPointInsideNode(to, worldPoint)) {
+      continue;
+    }
+
+    const screenPoint = toScreenPoint(worldPoint.x, worldPoint.y, zoomLevel);
+    if (!isScreenPointVisible(screenPoint)) continue;
+    const labelBox = estimateLabelScreenBox(
+      worldPoint,
+      zoomLevel,
+      label,
+      labelFontSize,
+    );
+    if (
+      !isScreenPointVisible({ x: labelBox.x, y: labelBox.y }, 0) ||
+      !isScreenPointVisible(
+        { x: labelBox.x + labelBox.width, y: labelBox.y + labelBox.height },
+        0,
+      )
+    ) {
+      continue;
+    }
+    if (!isLabelBoxClearOfNodes(labelBox, allNodes, zoomLevel, from.id, to.id)) {
+      continue;
+    }
+
+    return worldPoint;
+  }
+
+  return null;
+}
+
+function toScreenPoint(worldX, worldY, zoomLevel) {
+  return {
+    x: worldX * zoomLevel + State.offsetX,
+    y: worldY * zoomLevel + State.offsetY,
+  };
+}
+
+function fitLabelTextToWidth(label, maxWidthPx) {
+  if (!label) return "";
+  if (ctx.measureText(label).width <= maxWidthPx) return label;
+
+  let visibleChars = label.length;
+  while (visibleChars > 0) {
+    const candidate = `${label.slice(0, visibleChars)}...`;
+    if (ctx.measureText(candidate).width <= maxWidthPx) return candidate;
+    visibleChars -= 1;
+  }
+
+  return "...";
+}
+
+function drawConnectionLabel(
+  label,
+  midpoint,
+  zoomLevel,
+  labelFontSize,
+  isSelected = false,
+  isHovered = false,
+) {
+  if (!label) return;
+
+  const HOVER_SCALE = 1.22;
+  const sizeScale = isHovered ? HOVER_SCALE : 1;
+  const screenPoint = toScreenPoint(midpoint.x, midpoint.y, zoomLevel);
+  const shiftedY = screenPoint.y - 12 * sizeScale;
+
+  // Keep label typography aligned with node text: base size is configurable per connector,
+  // and rendered size follows zoom like node text does.
+  const baseWorldFont = Math.max(10, Number(labelFontSize) || 14);
+  const fontSize = baseWorldFont * zoomLevel * sizeScale;
+  ctx.font = `${fontSize}px "Courier New", monospace`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  const maxLabelWidth = isHovered ? Number.POSITIVE_INFINITY : 180 * zoomLevel;
+  const labelToRender = fitLabelTextToWidth(label, maxLabelWidth);
+  const metrics = ctx.measureText(labelToRender);
+  const textWidth = metrics.width;
+  const padX = 9 * sizeScale;
+  const padY = 5 * sizeScale;
+  const textHeight = fontSize * 0.95;
+  const bgWidth = textWidth + padX * 2;
+  const bgHeight = textHeight + padY * 2;
+  const bgX = screenPoint.x - bgWidth / 2;
+  const bgY = shiftedY - bgHeight / 2;
+
+  ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+  ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+
+  ctx.strokeStyle = isSelected || isHovered ? "#ff7a00" : "rgba(15, 23, 42, 0.22)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(bgX, bgY, bgWidth, bgHeight);
+
+  ctx.fillStyle = isHovered ? "#7c2d12" : "#0f172a";
+  ctx.fillText(labelToRender, screenPoint.x, shiftedY);
+}
+
 export function drawBezier(fromX, fromY, toX, toY, style, isSelected = false) {
-  const controlY = (fromY + toY) / 2;
+  const curve = getConnectionCurvePoints(fromX, fromY, toX, toY);
 
   ctx.save();
   if (isSelected) {
@@ -104,7 +305,7 @@ export function drawBezier(fromX, fromY, toX, toY, style, isSelected = false) {
 
     ctx.beginPath();
     ctx.moveTo(fromX, fromY);
-    ctx.quadraticCurveTo(fromX, controlY, toX, toY);
+    ctx.quadraticCurveTo(curve.controlX, curve.controlY, toX, toY);
     ctx.stroke();
   }
 
@@ -122,7 +323,7 @@ export function drawBezier(fromX, fromY, toX, toY, style, isSelected = false) {
 
   ctx.beginPath();
   ctx.moveTo(fromX, fromY);
-  ctx.quadraticCurveTo(fromX, controlY, toX, toY);
+  ctx.quadraticCurveTo(curve.controlX, curve.controlY, toX, toY);
   ctx.stroke();
   ctx.restore();
 }
@@ -180,6 +381,7 @@ export function renderScene(
   }
 
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+  const connectionLabels = [];
 
   connections.forEach((conn) => {
     const from = nodeMap.get(conn.from);
@@ -203,7 +405,46 @@ export function renderScene(
       },
       isSelected,
     );
+
+    if (typeof conn.label === "string" && conn.label.trim()) {
+      const labelFontSize = conn.labelFontSize || from.fontSize || 14;
+      const labelAnchor = getVisibleLabelAnchor(
+        nodes,
+        from,
+        to,
+        zoomLevel,
+        conn.label.trim(),
+        labelFontSize,
+      );
+      if (!labelAnchor) return;
+
+      connectionLabels.push({
+        id: conn.id,
+        label: conn.label.trim(),
+        labelFontSize,
+        midpoint: labelAnchor,
+        isSelected,
+      });
+    }
   });
+
+  if (connectionLabels.length) {
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    connectionLabels.forEach(
+      ({ id, label, labelFontSize, midpoint, isSelected }) => {
+      drawConnectionLabel(
+        label,
+        midpoint,
+        zoomLevel,
+        labelFontSize,
+        isSelected,
+        State.hoveredConnectionId === id,
+      );
+      },
+    );
+    ctx.restore();
+  }
 
   if (connectionPreview) {
     const sourceNode = nodes.find((n) => n.id === connectionPreview.sourceId);

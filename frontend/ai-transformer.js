@@ -1,6 +1,12 @@
 import * as State from "../state.js";
 import { applySemanticStyle } from "./ai-style-mapper.js";
 
+function resolveConnectionLabel(conn) {
+  const candidates = [conn.label, conn.text, conn.title, conn.relation, conn.name];
+  const value = candidates.find((v) => typeof v === "string" && v.trim() !== "");
+  return value ? value.trim() : "";
+}
+
 function computeLevels(nodes, connections) {
   const levels = {};
   const adjacency = {};
@@ -41,8 +47,13 @@ function computeLevels(nodes, connections) {
 export function transformAIToGraphlyState(graph) {
   const transformedNodes = [];
   const transformedConnections = [];
+  const aiConnections = Array.isArray(graph.connections)
+    ? graph.connections
+    : Array.isArray(graph.edges)
+      ? graph.edges
+      : [];
 
-  const levels = computeLevels(graph.nodes, graph.connections);
+  const levels = computeLevels(graph.nodes, aiConnections);
   const layoutMode = State.currentLayoutMode; // "tree" or "radial"
 
   const levelGroups = {};
@@ -121,7 +132,7 @@ export function transformAIToGraphlyState(graph) {
       childrenMap[n.id] = [];
     });
 
-    graph.connections.forEach((c) => {
+    aiConnections.forEach((c) => {
       if (childrenMap[c.from]) {
         childrenMap[c.from].push(c.to);
       }
@@ -177,11 +188,13 @@ export function transformAIToGraphlyState(graph) {
 
   // Connections
 
-  graph.connections.forEach((conn) => {
+  aiConnections.forEach((conn) => {
     transformedConnections.push({
       id: conn.id,
       from: conn.from,
       to: conn.to,
+      label: resolveConnectionLabel(conn),
+      labelFontSize: conn.labelFontSize || 14,
       color: "#94a3b8",
       width: 2.5,
       style: "solid",

@@ -2,6 +2,7 @@ export let nodes = [];
 export let connections = [];
 export let selectedNodeIds = new Set();
 export let selectedConnectionIds = new Set();
+export let hoveredConnectionId = null;
 export let editingNodeId = null;
 export let zoomLevel = 1;
 export let offsetX = 0;
@@ -184,6 +185,7 @@ export function setZoomLevel(val) {
 export function selectSingleNode(id) {
   selectedNodeIds.clear();
   selectedConnectionIds.clear();
+  hoveredConnectionId = null;
 
   if (getNodeById(id)) {
     selectedNodeIds.add(id);
@@ -216,9 +218,14 @@ export function selectSingleConnection(id) {
   editingNodeId = null;
 }
 
+export function setHoveredConnectionId(id) {
+  hoveredConnectionId = connections.some((c) => c.id === id) ? id : null;
+}
+
 export function clearSelection() {
   selectedNodeIds.clear();
   selectedConnectionIds.clear();
+  hoveredConnectionId = null;
   editingNodeId = null;
 }
 
@@ -244,11 +251,34 @@ export function addConnection(fromId, toId) {
       id: generateId(),
       from: fromId,
       to: toId,
+      label: "",
+      labelFontSize: from.fontSize || 14,
       color: from.connectorColor || "#444",
       width: from.connectorWidth || 3,
       style: "solid",
     });
   }
+}
+
+export function removeNodesAndConnections(nodeIds = new Set(), connectionIds = new Set()) {
+  const nodeIdSet = nodeIds instanceof Set ? nodeIds : new Set(nodeIds);
+  const connectionIdSet =
+    connectionIds instanceof Set ? connectionIds : new Set(connectionIds);
+
+  nodes = nodes.filter((n) => !nodeIdSet.has(n.id));
+  connections = connections.filter(
+    (c) =>
+      !connectionIdSet.has(c.id) &&
+      !nodeIdSet.has(c.from) &&
+      !nodeIdSet.has(c.to),
+  );
+
+  selectedNodeIds.forEach((id) => {
+    if (nodeIdSet.has(id)) selectedNodeIds.delete(id);
+  });
+  selectedConnectionIds.forEach((id) => {
+    if (connectionIdSet.has(id)) selectedConnectionIds.delete(id);
+  });
 }
 
 export function deleteNodeLogic(rootId, cascade = false) {
@@ -299,6 +329,7 @@ export function resetCanvasState() {
   connections = [];
   selectedNodeIds.clear();
   selectedConnectionIds.clear();
+  hoveredConnectionId = null;
   editingNodeId = null;
   zoomLevel = 1;
   offsetX = 0;
@@ -342,6 +373,7 @@ export function importCollabState(snapshot) {
 
   selectedNodeIds.clear();
   selectedConnectionIds.clear();
+  hoveredConnectionId = null;
   editingNodeId = null;
 
   return true;

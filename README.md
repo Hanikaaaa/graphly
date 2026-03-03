@@ -133,6 +133,7 @@ $enc = [uri]::EscapeDataString($plain)
 $env:DATABASE_URL = "postgres://postgres:$enc@127.0.0.1:5432/graphly?sslmode=disable"
 $env:JWT_SECRET = "change-this-to-a-long-random-secret"
 $env:PORT = "8080"
+$env:GOOGLE_API_KEY="Add API key"
 ```
 
 Run:

@@ -2,6 +2,8 @@ import * as State from "./state.js";
 import * as Render from "./renderer.js";
 import * as DOM from "./dom-manager.js";
 import { initAIUI } from "./ai-ui.js";
+import { resetAIChat } from "./ai-ui.js";
+import { registerAIHooks } from "./ai-ui.js";
 import {
   initInputHandler,
   attachNodeHandlers,
@@ -27,6 +29,7 @@ import {
   queueStateSync,
   setSyncHandler,
 } from "./collaboration.js";
+import { initHoverPreview } from "./hover-preview.js";
 
 const appContainer = document.querySelector(".app-container");
 const authRoot = document.querySelector("#auth-root");
@@ -107,7 +110,9 @@ function initializeRuntime() {
   });
 
   initInputHandler();
+  registerAIHooks({ rebuild });
   initAIUI();
+  initHoverPreview();
 }
 
 function showApp() {
@@ -175,6 +180,7 @@ async function openCanvas(canvasID) {
   const normalizedState = normalizeCanvasState(canvas.data);
 
   initializeRuntime();
+  resetAIChat();
   State.resetCanvasState();
   State.importCollabState(normalizedState);
 
@@ -321,6 +327,7 @@ async function showDashboard() {
     activeCanvas = null;
   }
 
+  resetAIChat();
   State.resetCanvasState();
   DOM.clearAllNodes();
 
@@ -365,6 +372,7 @@ async function handleLogout() {
 
   setSyncHandler(null);
   activeCanvas = null;
+  resetAIChat();
   State.resetCanvasState();
   DOM.clearAllNodes();
   logout();

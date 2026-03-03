@@ -1,6 +1,7 @@
 import { ShapeRegistry } from "./shapes.js";
 import { getSelectionBounds } from "./geometry/bounds.js";
 import { triggerRedraw } from "./input-handler.js";
+import { hideHoverPreview, showHoverPreview } from "./hover-preview.js";
 
 // Group Overlay
 
@@ -154,11 +155,17 @@ export function createNodeDOM(node, handlers) {
 
   el.addEventListener("mouseenter", () => {
     el._isHovered = true;
+    showHoverPreview({
+      type: "node",
+      text: node.text || "",
+      image: node.image || "",
+    });
     window.dispatchEvent(new Event("node-hover-change"));
   });
 
   el.addEventListener("mouseleave", () => {
     el._isHovered = false;
+    hideHoverPreview();
     window.dispatchEvent(new Event("node-hover-change"));
   });
 

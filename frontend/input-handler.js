@@ -24,6 +24,7 @@ import {
   applyGroupResize,
   startGroupResize,
 } from "./interaction/group-resize.js";
+import { hideHoverPreview, showHoverPreview } from "./hover-preview.js";
 
 let isSpacePressed = false;
 const DRAG_THRESHOLD = 4;
@@ -267,6 +268,40 @@ function handleWindowDoubleClick(e) {
 function registerCanvasEvents() {
   canvas.addEventListener("mousemove", (e) => {
     MOVE_HANDLERS[interaction.mode]?.(e);
+
+    if (interaction.mode !== "idle") {
+      if (State.hoveredConnectionId !== null) {
+        State.setHoveredConnectionId(null);
+        triggerRedraw();
+      }
+      return;
+    }
+
+    const worldX = (e.clientX - State.offsetX) / State.zoomLevel;
+    const worldY = (e.clientY - State.offsetY) / State.zoomLevel;
+    const hoveredConn = hitTestConnection(
+      worldX,
+      worldY,
+      State.connections,
+      State.getNodeById,
+      State.zoomLevel,
+    );
+    const hoveredId = hoveredConn?.id || null;
+
+    if (State.hoveredConnectionId !== hoveredId) {
+      State.setHoveredConnectionId(hoveredId);
+      canvas.style.cursor = hoveredId ? "pointer" : "default";
+      if (hoveredId) {
+        const conn = State.connections.find((c) => c.id === hoveredId);
+        showHoverPreview({
+          type: "edge",
+          label: conn?.label || "",
+        });
+      } else {
+        hideHoverPreview();
+      }
+      triggerRedraw();
+    }
   });
 
   canvas.addEventListener("mousedown", handleCanvasMouseDown);

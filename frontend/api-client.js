@@ -33,6 +33,7 @@ export async function apiRequest(path, options = {}) {
     body,
     headers = {},
     auth = true,
+    signal,
   } = options;
 
   const finalHeaders = {
@@ -55,6 +56,7 @@ export async function apiRequest(path, options = {}) {
     method,
     headers: finalHeaders,
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    signal,
   });
 
   const contentType = response.headers.get("content-type") || "";

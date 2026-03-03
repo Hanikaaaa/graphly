@@ -12,6 +12,8 @@ export const inputs = {
   fontWeight: document.getElementById("font-weight"),
   borderRadius: document.getElementById("border-radius"),
   connectorColor: document.getElementById("connector-color"),
+  connectorLabel: document.getElementById("connector-label"),
+  connectorLabelSize: document.getElementById("connector-label-size"),
   connectorWidth: document.getElementById("connector-width"),
   connectorStyle: document.getElementById("connector-style"),
   fontFamily: document.getElementById("font-family"),
