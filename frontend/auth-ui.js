@@ -1,14 +1,4 @@
 import { login, register } from "./auth.js";
-import { hasToken, logout } from "./auth.js";
-
-if (window.location.pathname.startsWith("/signup") && hasToken()) {
-  logout(); 
-  window.location.replace("/signup");
-}
-
-if (window.location.pathname === "/login" && hasToken()) {
-  window.location.replace("/app");
-}
 
 function escapeHTML(value) {
   return String(value)

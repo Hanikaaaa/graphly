@@ -349,6 +349,7 @@ function showAuth() {
 
   renderAuthScreen(authRoot, {
     onAuthenticated: async () => {
+      window.history.replaceState({}, "", "/app");
       await showDashboard();
     },
   });
