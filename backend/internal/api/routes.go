@@ -20,12 +20,14 @@ func RegisterRoutes(
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	router.GET("/rooms", func(c *gin.Context) {
+	api := router.Group("/api")
+
+	api.GET("/rooms", func(c *gin.Context) {
 		rooms := hub.ListRooms()
 		c.JSON(http.StatusOK, gin.H{"rooms": rooms})
 	})
 
-	router.GET("/rooms/:id/clients", func(c *gin.Context) {
+	api.GET("/rooms/:id/clients", func(c *gin.Context) {
 		id := c.Param("id")
 		count := hub.RoomClientCount(id)
 		c.JSON(http.StatusOK, gin.H{"roomId": id, "clients": count})
@@ -34,15 +36,15 @@ func RegisterRoutes(
 	authMiddleware := auth.AuthMiddleware()
 	authHandlers := auth.NewHandlers(userRepo)
 
-	publicAuth := router.Group("/auth")
+	publicAuth := api.Group("/auth")
 	publicAuth.POST("/register", authHandlers.Register)
 	publicAuth.POST("/login", authHandlers.Login)
 
-	protectedAuth := router.Group("/auth", authMiddleware)
+	protectedAuth := api.Group("/auth", authMiddleware)
 	protectedAuth.GET("/me", authHandlers.Me)
 
 	canvasHandlers := NewCanvasHandlers(canvasRepo, userRepo)
-	protectedCanvases := router.Group("/canvases", authMiddleware)
+	protectedCanvases := api.Group("/canvases", authMiddleware)
 	protectedCanvases.POST("", canvasHandlers.CreateCanvas)
 	protectedCanvases.GET("", canvasHandlers.ListCanvases)
 	protectedCanvases.GET("/:id", canvasHandlers.GetCanvas)
@@ -50,6 +52,6 @@ func RegisterRoutes(
 	protectedCanvases.DELETE("/:id", canvasHandlers.DeleteCanvas)
 
 	aiHandlers := NewAIHandlers()
-	protectedAI := router.Group("/ai", authMiddleware)
+	protectedAI := api.Group("/ai", authMiddleware)
 	protectedAI.POST("/generate", aiHandlers.Generate)
 }

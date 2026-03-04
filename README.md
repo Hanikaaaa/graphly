@@ -132,26 +132,30 @@ If `\i` path fails, use full absolute path to `schema.sql`.
 ### 2) Install frontend dependencies
 
 ```powershell
-cd \graphly\frontend
+cd frontend
 npm install
+cd ..
 ```
 
 ### 3) Build Tailwind CSS (production)
 
 ```powershell
+cd frontend
 npm run tailwind:build
+cd ..
 ```
 
 For development watch mode (in a separate terminal):
 
 ```powershell
+cd frontend
 npm run tailwind:watch
 ```
 
 ### 4) Run backend server
 
 ```powershell
-cd \graphly\backend
+cd backend
 go mod tidy
 go run cmd/server/main.go
 ```
@@ -161,6 +165,34 @@ go run cmd/server/main.go
 - Landing page: `http://localhost:8080/`
 - App shell: `http://localhost:8080/app`
 - Health check: `http://localhost:8080/health`
+
+## Quick Start (two terminals)
+
+From project root:
+
+Terminal 1 (backend):
+
+```powershell
+cd backend
+$env:DATABASE_URL = "postgres://postgres:<password>@127.0.0.1:5432/graphly?sslmode=disable"
+$env:JWT_SECRET = "change-this"
+$env:GOOGLE_API_KEY = "your-google-api-key"
+$env:PORT = "8080"
+go run cmd/server/main.go
+```
+
+Terminal 2 (frontend CSS watcher, optional for active UI edits):
+
+```powershell
+cd frontend
+npm install
+npm run tailwind:watch
+```
+
+Notes:
+- Backend serves the frontend at `/`, `/login`, `/signup`, `/app`.
+- API is under `/api/*`.
+- WebSocket endpoints are `/ws/:roomId` and `/ws?roomId=<id>`.
 
 ## Tailwind Commands
 
@@ -183,21 +215,22 @@ This keeps production CSS small by removing unused classes.
 ### Public
 
 - `GET /health`
-- `GET /rooms`
-- `GET /rooms/:id/clients`
-- `POST /auth/register`
-- `POST /auth/login`
+- `GET /api/rooms`
+- `GET /api/rooms/:id/clients`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
 - `GET /ws/:roomId`
+- `GET /ws?roomId=<id>`
 
 ### Protected (Bearer token)
 
-- `GET /auth/me`
-- `POST /canvases`
-- `GET /canvases`
-- `GET /canvases/:id`
-- `PUT /canvases/:id`
-- `DELETE /canvases/:id`
-- `POST /ai/generate`
+- `GET /api/auth/me`
+- `POST /api/canvases`
+- `GET /api/canvases`
+- `GET /api/canvases/:id`
+- `PUT /api/canvases/:id`
+- `DELETE /api/canvases/:id`
+- `POST /api/ai/generate`
 
 ## Team Members
 

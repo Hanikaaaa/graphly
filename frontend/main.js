@@ -109,7 +109,6 @@ function openExportMenu() {
 function beginRegionExport(format) {
   closeExportMenu();
   cancelExportSelection?.();
-  setSaveStatus(`Drag region for ${format.toUpperCase()} export`);
 
   cancelExportSelection = startRegionSelection(mainCanvas, {
     async onComplete(bounds) {

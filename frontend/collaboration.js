@@ -42,7 +42,8 @@ export function getClientID() {
 function connectWS() {
   if (!roomId) return;
 
-  ws = new WebSocket(`ws://localhost:8080/ws/${roomId}`);
+  const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+  ws = new WebSocket(`${protocol}//${location.host}/ws/${roomId}`);
 
   ws.onopen = () => {
     console.log("[Collab] WebSocket connected");

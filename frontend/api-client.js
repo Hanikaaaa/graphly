@@ -1,5 +1,5 @@
 const TOKEN_KEY = "pixplot_token";
-const DEFAULT_API_BASE_URL = "http://localhost:8080";
+const DEFAULT_API_BASE_URL = `${location.origin}/api`;
 
 export class APIError extends Error {
   constructor(message, status, data) {
@@ -73,23 +73,10 @@ export async function apiRequest(path, options = {}) {
 }
 
 export async function generateGraphFromAI(prompt) {
-  const token = getAuthToken();
-
-  const response = await fetch("/ai/generate", {
+  return apiRequest("/ai/generate", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token
-    },
-    body: JSON.stringify({ prompt })
+    body: { prompt },
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "AI generation failed");
-  }
-
-  return response.json();
 }
 
 export { TOKEN_KEY, clearAuthToken, getAuthToken };
