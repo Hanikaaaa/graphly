@@ -222,12 +222,16 @@ async function persistCanvasSnapshot() {
   setSaveStatus("Saved");
 }
 
+async function saveGraph() {
+  await persistCanvasSnapshot();
+}
+
 function enqueueAutosave() {
   if (!activeCanvas || !isCanvasEditable()) return;
 
   autosaveQueue = autosaveQueue
     .catch(() => undefined)
-    .then(() => persistCanvasSnapshot())
+    .then(() => saveGraph())
     .catch((error) => {
       setSaveStatus("Save failed", true);
       if (error?.status === 401) {
@@ -352,11 +356,13 @@ async function openCanvas(canvasID) {
   setSyncHandler((type, content, fromServer) => {
     if (fromServer) {
       if (type === "node_update" && applyIncomingDelta(content)) {
-        rebuild();
+        triggerRedraw();
         return;
       }
       if (State.importCollabState(content)) {
-        rebuild();
+        DOM.clearAllNodes();
+        State.nodes.forEach((node) => attachNodeHandlers(node));
+        triggerRedraw();
       }
       return;
     }

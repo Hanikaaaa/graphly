@@ -5,8 +5,13 @@ import { rebuild } from "./main.js";
 import { queueStateSync, sendDelta } from "./collaboration.js";
 import { ShapeRegistry } from "./shapes.js";
 
-panel.addEventListener("mousedown", (e) => e.stopPropagation());
-panel.addEventListener("click", (e) => e.stopPropagation());
+const stopPanelEvent = (e) => e.stopPropagation();
+panel.addEventListener("mousedown", stopPanelEvent);
+panel.addEventListener("click", stopPanelEvent);
+panel.addEventListener("pointerdown", stopPanelEvent);
+panel.addEventListener("pointerup", stopPanelEvent);
+panel.addEventListener("input", stopPanelEvent);
+panel.addEventListener("change", stopPanelEvent);
 
 function getSelectedNodes() {
   return Array.from(State.selectedNodeIds)
